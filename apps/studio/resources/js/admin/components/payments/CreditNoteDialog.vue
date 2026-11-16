@@ -4,7 +4,6 @@
  * ist der Normalfall, deshalb bleibt das Feld bedienbar. Bei Stripe löst das
  * Absenden zugleich die Rückerstattung aus.
  */
-import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
 import {
@@ -22,9 +21,9 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Textarea } from '@/ui/textarea'
 import { centsToEuros, eurosToCents } from '@/lib/money'
 
-const props = defineProps<{ invoiceId: string; amount: number }>()
+const props = defineProps<{ invoiceId: string; amount: number; bare?: boolean }>()
 
-const open = ref(false)
+const open = defineModel<boolean>('open', { default: false })
 const form = useForm({ amount: centsToEuros(props.amount), reason: '' })
 
 function submit() {
@@ -42,7 +41,7 @@ function submit() {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogTrigger as-child>
+    <DialogTrigger v-if="!bare" as-child>
       <Button variant="outline" type="button">{{ $t('payments.creditNote') }}</Button>
     </DialogTrigger>
 

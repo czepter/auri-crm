@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import { EllipsisVertical } from 'lucide-vue-next'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -8,6 +9,7 @@ import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import Chip from '@/ui/page/Chip.vue'
@@ -78,9 +80,18 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
                 <TableCell align="right" class="whitespace-nowrap">−{{ formatEuros(draft.amount) }}</TableCell>
                 <TableCell class="whitespace-nowrap"><Chip>{{ $t('creditNotesOverview.draft') }}</Chip></TableCell>
                 <TableCell align="right">
-                  <div class="flex flex-wrap justify-end gap-1.5">
+                  <div class="flex items-center justify-end gap-1.5">
                     <Button :as="Link" variant="outline" :href="`/rechnungen/${draft.invoiceId}/gutschrift/neu`">{{ $t('common.edit') }}</Button>
-                    <Button variant="outline" type="button" @click="router.delete(`/rechnungen/${draft.invoiceId}/gutschrift/entwurf`, { preserveScroll: true })">{{ $t('common.delete') }}</Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')">
+                          <EllipsisVertical />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem class="text-destructive" @select="router.delete(`/rechnungen/${draft.invoiceId}/gutschrift/entwurf`, { preserveScroll: true })">{{ $t('common.delete') }}</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </TableCell>
               </TableRow>

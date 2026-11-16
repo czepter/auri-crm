@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import { EllipsisVertical } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -43,6 +44,14 @@ const openRows = computed(() => props.invoices.filter((invoice) => OPEN.includes
 const lateRows = computed(() => props.invoices.filter((invoice) => invoice.status === 'overdue'))
 const paidRows = computed(() => props.invoices.filter((invoice) => invoice.status === 'paid' && invoice.issuedOn.startsWith(String(new Date().getFullYear()))))
 const paidTotal = computed(() => formatEuros(paidRows.value.reduce((sum, row) => sum + row.paidAmount, 0)))
+
+const dialog = ref<string | null>(null)
+const bind = (kind: string, id: string) => ({ open: dialog.value === `${kind}:${id}`, 'onUpdate:open': (open: boolean) => (dialog.value = open ? `${kind}:${id}` : null) })
+
+const unpaid = (invoice: App.Payments.Data.InvoiceRowData) => invoice.status !== 'cancelled' && invoice.openInstallments.length > 0
+const creditable = (invoice: App.Payments.Data.InvoiceRowData) => invoice.status !== 'cancelled' && invoice.paidAmount > invoice.credited
+const quick = (invoice: App.Payments.Data.InvoiceRowData) => unpaid(invoice) ? (invoice.sentOn ? 'paid' : 'send') : creditable(invoice) ? 'credit' : null
+const hasMenu = (invoice: App.Payments.Data.InvoiceRowData) => unpaid(invoice) || (invoice.status !== 'cancelled' && invoice.paidAmount === 0) || creditable(invoice) || invoice.hasDocument
 
 const needle = computed(() => query.value.trim().toLocaleLowerCase('de'))
 
@@ -126,9 +135,18 @@ const shown = computed(() =>
                 <TableCell align="right" class="whitespace-nowrap">{{ formatEuros(draft.amount) }}</TableCell>
                 <TableCell class="whitespace-nowrap"><Chip>{{ $t('invoicesOverview.draft') }}</Chip></TableCell>
                 <TableCell align="right">
-                  <div class="flex flex-wrap justify-end gap-1.5">
+                  <div class="flex items-center justify-end gap-1.5">
                     <Button :as="Link" variant="outline" :href="`/rechnungen/entwuerfe/${draft.id}`">{{ $t('common.edit') }}</Button>
-                    <Button variant="outline" type="button" @click="router.delete(`/rechnungen/entwuerfe/${draft.id}`, { preserveScroll: true })">{{ $t('common.delete') }}</Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')">
+                          <EllipsisVertical />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem class="text-destructive" @select="router.delete(`/rechnungen/entwuerfe/${draft.id}`, { preserveScroll: true })">{{ $t('common.delete') }}</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </TableCell>
               </TableRow>
@@ -167,26 +185,45 @@ const shown = computed(() =>
                     </span>
                   </TableCell>
                   <TableCell align="right">
-                    <div v-if="invoice.status !== 'cancelled'" class="flex flex-wrap justify-end gap-1.5">
-                      <Button
-                        v-if="OPEN.includes(invoice.status)"
-                        :as="Link"
-                        variant="outline"
-                        :href="`/rechnungen/${invoice.id}/versenden`"
-                      >{{ $t('invoicesOverview.send') }}</Button>
-                      <!-- ponytail: pays the earliest open rate; an invoice with two books them one after the other. -->
-                      <InstallmentPaidDialog
-                        v-if="invoice.openInstallments.length"
-                        :installment-id="invoice.openInstallments[0].id"
-                        :remaining="invoice.openInstallments[0].remaining"
-                      />
-                      <InstallmentStornoDialog v-if="invoice.paidAmount === 0" :invoice-id="invoice.id" />
-                      <CreditNoteDialog
-                        v-if="invoice.paidAmount > invoice.credited"
-                        :invoice-id="invoice.id"
-                        :amount="invoice.paidAmount - invoice.credited"
-                      />
+                    <div class="flex items-center justify-end gap-1.5">
+                      <Button v-if="quick(invoice) === 'send'" :as="Link" variant="outline" :href="`/rechnungen/${invoice.id}/versenden`">{{ $t('invoicesOverview.send') }}</Button>
+                      <Button v-else-if="quick(invoice) === 'paid'" variant="outline" type="button" @click="dialog = `paid:${invoice.id}`">{{ $t('payments.markPaid') }}</Button>
+                      <Button v-else-if="quick(invoice) === 'credit'" variant="outline" type="button" @click="dialog = `credit:${invoice.id}`">{{ $t('payments.creditNote') }}</Button>
+                      <DropdownMenu v-if="hasMenu(invoice)">
+                        <DropdownMenuTrigger as-child>
+                          <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')">
+                            <EllipsisVertical />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem v-if="unpaid(invoice) && invoice.sentOn" as-child>
+                            <Link :href="`/rechnungen/${invoice.id}/versenden`">{{ $t('invoiceDetail.sendAgain') }}</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem v-if="quick(invoice) === 'send'" @select="dialog = `paid:${invoice.id}`">{{ $t('payments.markPaid') }}</DropdownMenuItem>
+                          <DropdownMenuItem v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" @select="dialog = `storno:${invoice.id}`">{{ $t('payments.storno') }}</DropdownMenuItem>
+                          <DropdownMenuItem v-if="creditable(invoice) && quick(invoice) !== 'credit'" @select="dialog = `credit:${invoice.id}`">{{ $t('payments.creditNote') }}</DropdownMenuItem>
+                          <DropdownMenuItem v-if="invoice.hasDocument" as-child>
+                            <a :href="`/rechnungen/${invoice.id}/pdf`" target="_blank">{{ $t('invoiceDetail.download') }}</a>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
+                    <!-- ponytail: pays the earliest open rate; an invoice with two books them one after the other. -->
+                    <InstallmentPaidDialog
+                      v-if="unpaid(invoice)"
+                      bare
+                      v-bind="bind('paid', invoice.id)"
+                      :installment-id="invoice.openInstallments[0].id"
+                      :remaining="invoice.openInstallments[0].remaining"
+                    />
+                    <InstallmentStornoDialog v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" bare v-bind="bind('storno', invoice.id)" :invoice-id="invoice.id" />
+                    <CreditNoteDialog
+                      v-if="creditable(invoice)"
+                      bare
+                      v-bind="bind('credit', invoice.id)"
+                      :invoice-id="invoice.id"
+                      :amount="invoice.paidAmount - invoice.credited"
+                    />
                   </TableCell>
                 </TableRow>
               </template>
