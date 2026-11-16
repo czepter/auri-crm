@@ -91,6 +91,8 @@ class InvoiceController extends Controller
                 'recipient' => $draft->contact?->name ?? $draft->payload['contact']['name'] ?? null,
                 'projectName' => $draft->case?->name,
                 'updatedOn' => $draft->updated_at->toDateString(),
+                'dueOn' => $draft->payload['due_on'] ?? null,
+                'amount' => $this->draft($draft->payload)->amount(),
             ]);
 
         return Inertia::render('Invoices/Index', [

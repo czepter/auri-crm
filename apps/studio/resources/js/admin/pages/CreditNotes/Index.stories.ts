@@ -19,7 +19,7 @@ const meta = {
   component: Index,
   parameters: { layout: 'fullscreen', url: '/gutschriften', page },
   args: {
-    drafts: [{ invoiceId: 'in-9', invoiceNumber: 'RE-2026-009', recipient: 'Jonas Gast', projectName: 'Gast, Jonas', updatedOn: '2026-11-15' }],
+    drafts: [{ invoiceId: 'in-9', invoiceNumber: 'RE-2026-009', recipient: 'Jonas Gast', projectName: 'Gast, Jonas', updatedOn: '2026-11-15', amount: 35_700 }],
     creditNotes: [
       {
         id: 'gs-2',

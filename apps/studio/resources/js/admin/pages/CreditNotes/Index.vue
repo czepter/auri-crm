@@ -10,9 +10,10 @@ import { Input } from '@/ui/input'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
+import Chip from '@/ui/page/Chip.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
-type Draft = { invoiceId: string; invoiceNumber: string; recipient: string | null; projectName: string | null; updatedOn: string }
+type Draft = { invoiceId: string; invoiceNumber: string; recipient: string | null; projectName: string | null; updatedOn: string; amount: number }
 
 const props = defineProps<{ creditNotes: App.Payments.Data.CreditNoteRowData[]; drafts: Draft[] }>()
 useLiveProps(['creditNotes', 'drafts'])
@@ -29,6 +30,12 @@ const shown = computed(() => {
       .includes(needle))
 })
 
+const shownDrafts = computed(() => {
+  const needle = query.value.trim().toLocaleLowerCase('de')
+
+  return props.drafts.filter((draft) => !needle || `${draft.invoiceNumber} ${draft.projectName ?? ''} ${draft.recipient ?? ''}`.toLocaleLowerCase('de').includes(needle))
+})
+
 const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount, 0))
 </script>
 
@@ -38,31 +45,7 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('creditNotesOverview.title')" />
 
-        <Table v-if="drafts.length" class="max-[640px]:block max-[640px]:overflow-x-auto">
-          <thead>
-            <tr>
-              <TableHead>{{ $t('creditNotesOverview.drafts') }}</TableHead>
-              <TableHead>{{ $t('creditNotesOverview.invoice') }}</TableHead>
-              <TableHead class="max-[640px]:hidden">{{ $t('invoicesOverview.updatedOn') }}</TableHead>
-              <TableHead />
-            </tr>
-          </thead>
-          <tbody>
-            <TableRow v-for="draft in drafts" :key="draft.invoiceId">
-              <TableCell tone="name">
-                <Link :href="`/rechnungen/${draft.invoiceId}/gutschrift/neu`">{{ draft.recipient ?? draft.projectName ?? $t('creditNotesOverview.draft') }}</Link>
-                <span v-if="draft.recipient && draft.projectName" class="block text-small text-ink-2">{{ draft.projectName }}</span>
-              </TableCell>
-              <TableCell class="whitespace-nowrap">{{ draft.invoiceNumber }}</TableCell>
-              <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(draft.updatedOn) }}</TableCell>
-              <TableCell align="right">
-                <Button variant="outline" type="button" @click="router.delete(`/rechnungen/${draft.invoiceId}/gutschrift/entwurf`, { preserveScroll: true })">{{ $t('common.delete') }}</Button>
-              </TableCell>
-            </TableRow>
-          </tbody>
-        </Table>
-
-        <div v-if="creditNotes.length" class="max-w-[1280px]">
+        <div v-if="creditNotes.length || drafts.length" class="max-w-[1280px]">
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
             <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('creditNotesOverview.title') }} <b class="font-semibold tabular-nums text-foreground">{{ shown.length }}</b></span>
             <span class="inline-flex items-center gap-1.5 rounded-full bg-sunk px-3 py-1 text-small text-ink-2">{{ $t('creditNotesOverview.amount') }} <b class="font-semibold tabular-nums text-foreground">−{{ formatEuros(total) }}</b></span>
@@ -78,9 +61,29 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
                 <TableHead>{{ $t('creditNotesOverview.invoice') }}</TableHead>
                 <TableHead>{{ $t('creditNotesOverview.reason') }}</TableHead>
                 <TableHead align="right">{{ $t('creditNotesOverview.amount') }}</TableHead>
+                <TableHead>{{ $t('invoicesOverview.status') }}</TableHead>
+                <TableHead />
               </tr>
             </thead>
             <tbody>
+              <TableRow v-for="draft in shownDrafts" :key="draft.invoiceId">
+                <TableCell tone="name" class="whitespace-nowrap">—</TableCell>
+                <TableCell>
+                  <Link :href="`/rechnungen/${draft.invoiceId}/gutschrift/neu`">{{ draft.recipient ?? draft.projectName }}</Link>
+                  <span v-if="draft.recipient && draft.projectName" class="block text-small text-ink-2">{{ draft.projectName }}</span>
+                </TableCell>
+                <TableCell class="whitespace-nowrap">{{ dayWithWeekday(draft.updatedOn) }}</TableCell>
+                <TableCell class="whitespace-nowrap">{{ draft.invoiceNumber }}</TableCell>
+                <TableCell />
+                <TableCell align="right" class="whitespace-nowrap">−{{ formatEuros(draft.amount) }}</TableCell>
+                <TableCell class="whitespace-nowrap"><Chip>{{ $t('creditNotesOverview.draft') }}</Chip></TableCell>
+                <TableCell align="right">
+                  <div class="flex flex-wrap justify-end gap-1.5">
+                    <Button :as="Link" variant="outline" :href="`/rechnungen/${draft.invoiceId}/gutschrift/neu`">{{ $t('common.edit') }}</Button>
+                    <Button variant="outline" type="button" @click="router.delete(`/rechnungen/${draft.invoiceId}/gutschrift/entwurf`, { preserveScroll: true })">{{ $t('common.delete') }}</Button>
+                  </div>
+                </TableCell>
+              </TableRow>
               <TableRow v-for="note in shown" :key="note.id">
                 <TableCell tone="name" class="whitespace-nowrap">
                   <a v-if="note.hasDocument" :href="`/rechnungen/${note.invoiceId}/gutschrift/${note.id}`" target="_blank">{{ note.number }}</a>
@@ -98,6 +101,8 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
                 </TableCell>
                 <TableCell tone="muted">{{ note.reason }}</TableCell>
                 <TableCell align="right" class="whitespace-nowrap">−{{ formatEuros(note.amount) }}</TableCell>
+                <TableCell />
+                <TableCell />
               </TableRow>
             </tbody>
           </Table>

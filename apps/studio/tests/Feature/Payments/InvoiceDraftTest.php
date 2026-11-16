@@ -34,6 +34,9 @@ it('keeps a half-filled form as a draft without drawing a number, and drops it o
     $admin->put("/rechnungen/entwuerfe/{$draft->public_id}", ['contact' => ['name' => 'Jonas Gast'], 'items' => [['title' => 'Abzüge', 'unit_price' => 2_000]]])->assertRedirect();
     expect($draft->fresh()->payload['items'][0]['title'])->toBe('Abzüge');
 
+    $row = $admin->get('/rechnungen')->viewData('page')['props']['drafts'][0];
+    expect($row['id'])->toBe($draft->public_id)->and($row['amount'])->toBe(2_380)->and($row['recipient'])->toBe('Jonas Gast');
+
     $props = $admin->get("/rechnungen/entwuerfe/{$draft->public_id}")->assertOk()->viewData('page')['props'];
     expect($props['draft']['id'])->toBe($draft->public_id);
 

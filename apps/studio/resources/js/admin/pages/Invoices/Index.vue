@@ -21,7 +21,7 @@ import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
-type Draft = { id: string; recipient: string | null; projectName: string | null; updatedOn: string }
+type Draft = { id: string; recipient: string | null; projectName: string | null; updatedOn: string; dueOn: string | null; amount: number }
 
 const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], exportYears: number[] }>()
 useLiveProps(['invoices', 'drafts', 'exportYears'])
@@ -34,7 +34,7 @@ const OPEN = ['open', 'partial', 'overdue']
 const matches = (value: string, status: string) => value === 'all' || (value === 'open' ? OPEN.includes(status) : status === value)
 const filter = ref('all')
 
-const filters = computed(() => ['all', 'open', 'paid', 'cancelled'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
+const filters = computed(() => ['all', 'drafts', 'open', 'paid', 'cancelled'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
 
 const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue: 'danger', paid: 'success', cancelled: 'neutral' }
 
@@ -44,13 +44,19 @@ const lateRows = computed(() => props.invoices.filter((invoice) => invoice.statu
 const paidRows = computed(() => props.invoices.filter((invoice) => invoice.status === 'paid' && invoice.issuedOn.startsWith(String(new Date().getFullYear()))))
 const paidTotal = computed(() => formatEuros(paidRows.value.reduce((sum, row) => sum + row.paidAmount, 0)))
 
-const shown = computed(() => {
-  const needle = query.value.trim().toLocaleLowerCase('de')
+const needle = computed(() => query.value.trim().toLocaleLowerCase('de'))
 
-  return props.invoices.filter((invoice) =>
-    matches(filter.value, invoice.status)
-    && (!needle || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''}`.toLocaleLowerCase('de').includes(needle)))
-})
+const shownDrafts = computed(() =>
+  ['all', 'drafts'].includes(filter.value)
+    ? props.drafts.filter((draft) => !needle.value || `${draft.projectName ?? ''} ${draft.recipient ?? ''}`.toLocaleLowerCase('de').includes(needle.value))
+    : [])
+
+const shown = computed(() =>
+  filter.value === 'drafts'
+    ? []
+    : props.invoices.filter((invoice) =>
+      matches(filter.value, invoice.status)
+      && (!needle.value || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''}`.toLocaleLowerCase('de').includes(needle.value))))
 </script>
 
 <template>
@@ -73,29 +79,7 @@ const shown = computed(() => {
           </div>
         </PageHead>
 
-        <Table v-if="drafts.length" class="max-[640px]:block max-[640px]:overflow-x-auto">
-          <thead>
-            <tr>
-              <TableHead>{{ $t('invoicesOverview.drafts') }}</TableHead>
-              <TableHead class="max-[640px]:hidden">{{ $t('invoicesOverview.updatedOn') }}</TableHead>
-              <TableHead />
-            </tr>
-          </thead>
-          <tbody>
-            <TableRow v-for="draft in drafts" :key="draft.id">
-              <TableCell tone="name">
-                <Link :href="`/rechnungen/entwuerfe/${draft.id}`">{{ draft.recipient ?? draft.projectName ?? $t('invoicesOverview.draft') }}</Link>
-                <span v-if="draft.recipient && draft.projectName" class="block text-small text-ink-2">{{ draft.projectName }}</span>
-              </TableCell>
-              <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(draft.updatedOn) }}</TableCell>
-              <TableCell align="right">
-                <Button variant="outline" type="button" @click="router.delete(`/rechnungen/entwuerfe/${draft.id}`, { preserveScroll: true })">{{ $t('common.delete') }}</Button>
-              </TableCell>
-            </TableRow>
-          </tbody>
-        </Table>
-
-        <template v-if="invoices.length">
+        <template v-if="invoices.length || drafts.length">
           <dl class="m-0 mx-6 mt-4.5 grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-border max-[640px]:grid-cols-1">
             <div class="bg-muted p-4">
               <dt class="text-small text-ink-2">{{ $t('invoicesOverview.kpiOpen') }}</dt>
@@ -131,6 +115,23 @@ const shown = computed(() => {
               </tr>
             </thead>
             <tbody>
+              <TableRow v-for="draft in shownDrafts" :key="draft.id">
+                <TableCell tone="name" class="whitespace-nowrap">—</TableCell>
+                <TableCell>
+                  <Link :href="`/rechnungen/entwuerfe/${draft.id}`">{{ draft.recipient ?? draft.projectName }}</Link>
+                  <span v-if="draft.recipient && draft.projectName" class="block text-small text-ink-2">{{ draft.projectName }}</span>
+                </TableCell>
+                <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(draft.updatedOn) }}</TableCell>
+                <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ draft.dueOn ? dayWithWeekday(draft.dueOn) : '' }}</TableCell>
+                <TableCell align="right" class="whitespace-nowrap">{{ formatEuros(draft.amount) }}</TableCell>
+                <TableCell class="whitespace-nowrap"><Chip>{{ $t('invoicesOverview.draft') }}</Chip></TableCell>
+                <TableCell align="right">
+                  <div class="flex flex-wrap justify-end gap-1.5">
+                    <Button :as="Link" variant="outline" :href="`/rechnungen/entwuerfe/${draft.id}`">{{ $t('common.edit') }}</Button>
+                    <Button variant="outline" type="button" @click="router.delete(`/rechnungen/entwuerfe/${draft.id}`, { preserveScroll: true })">{{ $t('common.delete') }}</Button>
+                  </div>
+                </TableCell>
+              </TableRow>
               <template v-for="invoice in shown" :key="invoice.id">
                 <TableRow>
                   <TableCell tone="name" class="whitespace-nowrap">

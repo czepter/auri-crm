@@ -20,8 +20,8 @@ const meta = {
   args: {
     exportYears: [2026, 2025],
     drafts: [
-      { id: 'dr-1', recipient: 'Marie Fuhrmann', projectName: 'Hochzeit Marie & Adrian', updatedOn: '2026-11-14' },
-      { id: 'dr-2', recipient: null, projectName: null, updatedOn: '2026-11-12' },
+      { id: 'dr-1', recipient: 'Marie Fuhrmann', projectName: 'Hochzeit Marie & Adrian', updatedOn: '2026-11-14', dueOn: '2026-11-28', amount: 120_000 },
+      { id: 'dr-2', recipient: 'Jonas Gast', projectName: null, updatedOn: '2026-11-12', dueOn: null, amount: 2_000 },
     ],
     invoices: [
       {

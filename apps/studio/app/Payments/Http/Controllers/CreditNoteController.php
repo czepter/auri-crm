@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Payments\Data\CreditNoteRowData;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\CreditNoteDraft;
+use App\Payments\Models\InvoiceItem;
+use App\Payments\Support\InvoiceFigures;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,7 +41,7 @@ class CreditNoteController extends Controller
             ->whereHas('invoice', fn ($invoice) => $invoice
                 ->where(fn ($query) => $query->whereNull('case_id')
                     ->orWhereHas('case', fn ($project) => $project->visibleTo($viewer))))
-            ->with(['invoice.case', 'invoice.contact'])
+            ->with(['invoice.case', 'invoice.contact', 'invoice.items.installment'])
             ->latest('updated_at')
             ->get()
             ->map(fn (CreditNoteDraft $draft) => [
@@ -48,6 +50,9 @@ class CreditNoteController extends Controller
                 'recipient' => $draft->invoice->contact?->name,
                 'projectName' => $draft->invoice->case?->name,
                 'updatedOn' => $draft->updated_at->toDateString(),
+                'amount' => $draft->invoice->items->map(fn (InvoiceItem $item, int $index) => ($draft->payload['taken'][$index] ?? true)
+                    ? ($item->installment !== null ? (int) $item->installment->amount : InvoiceFigures::forPositions(collect([$item]), null, null)->gross)
+                    : 0)->sum(),
             ]);
 
         return Inertia::render('CreditNotes/Index', [
