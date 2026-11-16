@@ -243,6 +243,7 @@ export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quot
     validUntil: draft.validUntil || null,
     number: null,
     sentAt: null,
+    acceptedAt: null,
     sentChannel: null,
     total: hidden ? total : itemsSubtotal,
     discountType: hidden ? null : quoteDiscount.type || null,

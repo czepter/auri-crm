@@ -9,6 +9,7 @@ const row = (overrides: Partial<App.Quotes.Data.QuoteRowData> & Pick<App.Quotes.
   statusLabel: 'Entwurf',
   total: 0,
   sentAt: null,
+  acceptedAt: null,
   createdAt: '2026-11-14',
   validUntil: null,
   ...overrides,
