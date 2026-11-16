@@ -7,7 +7,7 @@ import Quote from '@editorjs/quote'
 import Delimiter from '@editorjs/delimiter'
 import Table from '@editorjs/table'
 import { buildTools } from '@/admin/documents/blocks/tools'
-import { createMergeFieldTool } from '@/admin/documents/blocks/mergeFieldTool'
+import { createMergeFieldBlock, createMergeFieldTool } from '@/admin/documents/blocks/mergeFieldTool'
 import { CalloutTool, ColumnsTool, ImageTool, RawHtmlTool, SpacerTool } from '@/admin/documents/blocks/customTools'
 import {
   ChecklistTool,
@@ -76,6 +76,7 @@ function create(data: EditorDocument): EditorJS {
       // pre-editor template imports into, and without a tool Editor.js drops it.
       rawHtml: RawHtmlTool,
       mergeField: { class: createMergeFieldTool(props.mergeFields) },
+      mergeFieldBlock: createMergeFieldBlock(props.mergeFields),
     },
     // Editor.js fires onChange on every keystroke; save() is cheap (it walks
     // the block list) and the preview pane is what debounces the round trip.
