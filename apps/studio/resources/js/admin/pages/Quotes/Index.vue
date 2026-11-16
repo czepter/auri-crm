@@ -17,11 +17,13 @@ import { dayWithWeekday } from '@/admin/lib/dates'
 import { quoteTone } from '@/admin/lib/quoteDisplay'
 import Chip from '@/ui/page/Chip.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import DraftDeleteDialog from '@/admin/components/DraftDeleteDialog.vue'
 
 type Row = App.Quotes.Data.QuoteRowData
 
 const props = defineProps<{ quotes: Row[] }>()
 useLiveProps(['quotes'])
+const deleteUrl = ref<string | null>(null)
 
 const { t } = useI18n()
 
@@ -127,9 +129,9 @@ const post = (url: string, data: Record<string, string> = {}) => router.post(url
                         <DropdownMenuItem v-if="quote.status === 'accepted'" @select="post(`/auftraege/${quote.projectId}/angebote`, { addendum_to: quote.id })">{{ $t('quotes.addendum') }}</DropdownMenuItem>
                         <DropdownMenuItem @select="post(`/angebote/${quote.id}/duplizieren`)">{{ $t('quotes.duplicate') }}</DropdownMenuItem>
                         <DropdownMenuItem as-child>
-                          <a :href="`/angebote/${quote.id}/pdf`" target="_blank">{{ $t('quotes.download') }}</a>
+                          <a :href="`/angebote/${quote.id}/pdf`" target="_blank">{{ $t('invoiceDetail.download') }}</a>
                         </DropdownMenuItem>
-                        <DropdownMenuItem v-if="quote.status === 'draft'" class="text-destructive" @select="router.delete(`/angebote/${quote.id}?back=list`, { preserveScroll: true })">{{ $t('common.delete') }}</DropdownMenuItem>
+                        <DropdownMenuItem v-if="quote.status === 'draft'" class="text-destructive" @select="deleteUrl = `/angebote/${quote.id}?back=list`">{{ $t('common.delete') }}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -144,5 +146,6 @@ const post = (url: string, data: Record<string, string> = {}) => router.post(url
         </Empty>
       </div>
     </Page>
+    <DraftDeleteDialog v-model:url="deleteUrl" />
   </AdminLayout>
 </template>

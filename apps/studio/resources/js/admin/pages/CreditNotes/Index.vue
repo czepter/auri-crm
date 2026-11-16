@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3'
 import { EllipsisVertical } from 'lucide-vue-next'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -14,11 +14,13 @@ import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import Chip from '@/ui/page/Chip.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import DraftDeleteDialog from '@/admin/components/DraftDeleteDialog.vue'
 
 type Draft = { invoiceId: string; invoiceNumber: string; recipient: string | null; projectName: string | null; updatedOn: string; amount: number }
 
 const props = defineProps<{ creditNotes: App.Payments.Data.CreditNoteRowData[]; drafts: Draft[] }>()
 useLiveProps(['creditNotes', 'drafts'])
+const deleteUrl = ref<string | null>(null)
 
 const query = ref('')
 
@@ -89,7 +91,7 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem class="text-destructive" @select="router.delete(`/rechnungen/${draft.invoiceId}/gutschrift/entwurf`, { preserveScroll: true })">{{ $t('common.delete') }}</DropdownMenuItem>
+                        <DropdownMenuItem class="text-destructive" @select="deleteUrl = `/rechnungen/${draft.invoiceId}/gutschrift/entwurf`">{{ $t('common.delete') }}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -124,5 +126,6 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
         </Empty>
       </div>
     </Page>
+    <DraftDeleteDialog v-model:url="deleteUrl" />
   </AdminLayout>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3'
 import { EllipsisVertical } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
@@ -16,6 +16,7 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
+import DraftDeleteDialog from '@/admin/components/DraftDeleteDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
@@ -25,6 +26,7 @@ type Draft = { id: string; recipient: string | null; projectName: string | null;
 
 const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], exportYears: number[] }>()
 useLiveProps(['invoices', 'drafts', 'exportYears'])
+const deleteUrl = ref<string | null>(null)
 
 const { t } = useI18n()
 
@@ -143,7 +145,7 @@ const shown = computed(() =>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem class="text-destructive" @select="router.delete(`/rechnungen/entwuerfe/${draft.id}`, { preserveScroll: true })">{{ $t('common.delete') }}</DropdownMenuItem>
+                        <DropdownMenuItem class="text-destructive" @select="deleteUrl = `/rechnungen/entwuerfe/${draft.id}`">{{ $t('common.delete') }}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -230,5 +232,6 @@ const shown = computed(() =>
         </Empty>
       </div>
     </Page>
+    <DraftDeleteDialog v-model:url="deleteUrl" />
   </AdminLayout>
 </template>
