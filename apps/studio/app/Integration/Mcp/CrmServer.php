@@ -5,6 +5,7 @@ namespace App\Integration\Mcp;
 use App\Integration\Mcp\Tools\BookingTaskTools;
 use App\Integration\Mcp\Tools\CrmEditTools;
 use App\Integration\Mcp\Tools\GalleryTools;
+use App\Integration\Mcp\Tools\InvoiceTools;
 use App\Integration\Mcp\Tools\MessageTools;
 use App\Integration\Mcp\Tools\MoneyTools;
 use App\Integration\Mcp\Tools\QuoteActionTools;
@@ -56,6 +57,7 @@ class CrmServer extends Server
             ...CrmEditTools::definitions(),
             ...QuoteActionTools::definitions(),
             ...MoneyTools::definitions(),
+            ...InvoiceTools::definitions(),
             ...BookingTaskTools::definitions(),
             ...MessageTools::definitions(),
             ...GalleryTools::definitions(),
