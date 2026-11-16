@@ -13,6 +13,7 @@ return [
     'alreadyInvoiced' => 'Rate bereits gestellt',
     'invoiceOnePlan' => 'Raten eines Zahlungsplans wählen',
     'finalTakesNoPositions' => 'Endrechnung ohne weitere Positionen',
+    'issuedBeforeLatest' => 'Frühestens :date',
     'previewNumber' => 'Entwurf',
     'previewRecipient' => 'Empfänger',
     'invoiceStatus' => [

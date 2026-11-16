@@ -46,6 +46,7 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -209,6 +210,7 @@ class InvoiceController extends Controller
 
         $validated = $request->validate([
             ...$this->rules(),
+            'issued_on' => [...$this->rules()['issued_on'], $this->notBeforeLatestInvoice(...)],
             'contact.name' => ['required_without_all:contact_id,case_id', 'nullable', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.title' => ['required', 'string', 'max:255'],
@@ -227,6 +229,7 @@ class InvoiceController extends Controller
             $this->positions($validated, strict: true),
             $validated['due_on'] ?? null,
             [
+                'issued_on' => $validated['issued_on'] ?? null,
                 'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
                 'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
                 'discount_type' => $validated['discount_type'] ?? null,
@@ -236,6 +239,16 @@ class InvoiceController extends Controller
         );
 
         return redirect("/rechnungen/{$invoice->public_id}/versenden");
+    }
+
+    /** Invoice numbers run on in sequence, so their dates must not run backwards. */
+    private function notBeforeLatestInvoice(string $attribute, mixed $value, \Closure $fail): void
+    {
+        $latest = Invoice::query()->orderByDesc('issued_at')->first()?->issued_at;
+
+        if ($latest !== null && $value !== null && Carbon::parse($value)->startOfDay()->lt($latest->startOfDay())) {
+            $fail(__('payments.issuedBeforeLatest', ['date' => $latest->format('d.m.Y')]));
+        }
     }
 
     /**
@@ -277,6 +290,7 @@ class InvoiceController extends Controller
             'contact.postcode' => ['nullable', 'string', 'max:20'],
             'contact.city' => ['nullable', 'string', 'max:255'],
             'case_id' => ['nullable', 'string'],
+            'issued_on' => ['nullable', 'date', 'before_or_equal:today'],
             'due_on' => ['nullable', 'date'],
             'intro' => ['nullable', 'string', 'max:20000'],
             'outro' => ['nullable', 'string', 'max:20000'],
@@ -363,7 +377,7 @@ class InvoiceController extends Controller
 
         $invoice = new Invoice([
             'number' => __('payments.previewNumber'),
-            'issued_at' => now(),
+            'issued_at' => isset($validated['issued_on']) ? now()->setDateFrom($validated['issued_on']) : now(),
             'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
             'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
             'discount_type' => $validated['discount_type'] ?? null,

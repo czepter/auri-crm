@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
@@ -44,17 +44,26 @@ const gateOpen = ref(props.missingInvoiceData.length > 0)
 const project = ref(props.project)
 const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
 const newContact = ref<{ name: string; email: string; street: string; postcode: string; city: string } | null>(null)
-const inDays = (days: number) => {
-  const date = new Date()
+const isoDate = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+const issuedOn = ref(isoDate(new Date()))
+const inDays = (days: number, from = issuedOn.value) => {
+  const date = new Date(`${from || isoDate(new Date())}T00:00`)
   date.setDate(date.getDate() + days)
 
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  return isoDate(date)
 }
 const dueOn = ref(inDays(props.studioSettings.paymentTermDays))
 const TERMS = [7, 14, 30]
 const term = computed({
   get: () => String(TERMS.find((days) => inDays(days) === dueOn.value) ?? ''),
   set: (days: string) => { dueOn.value = inDays(Number(days)) },
+})
+
+watch(issuedOn, (value, previous) => {
+  if (!value || !previous || !dueOn.value) return
+
+  const days = Math.round((Date.parse(dueOn.value) - Date.parse(previous)) / 86_400_000)
+  dueOn.value = inDays(days, value)
 })
 const texts = ref({ intro: props.intro, outro: '' })
 const previewing = ref(false)
@@ -133,6 +142,7 @@ const payload = computed(() => {
     contact_id: contact.value?.id,
     contact: newContact.value ?? undefined,
     case_id: project.value?.id,
+    issued_on: issuedOn.value || null,
     due_on: dueOn.value || null,
     discount_type: quote.discount_type,
     discount_value: quote.discount_value,
@@ -168,7 +178,7 @@ function submit() {
 
       <InvoicePreviewPane v-if="previewing" class="mx-auto max-w-[900px]" :payload="payload" />
 
-      <DocumentPaper v-show="!previewing" :studio="studioSettings.displayName ?? ''" :kind="$t('invoicesCreate.paperKind')" :date="dayWithWeekday(inDays(0))">
+      <DocumentPaper v-show="!previewing" :studio="studioSettings.displayName ?? ''" :kind="$t('invoicesCreate.paperKind')" :date="dayWithWeekday(issuedOn || null)">
         <form id="invoice" class="grid content-start gap-5" @submit.prevent="submit">
           <div class="grid grid-cols-[minmax(0,1fr)_260px] items-start gap-8 max-[640px]:grid-cols-1 max-[640px]:gap-5">
             <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
@@ -192,11 +202,16 @@ function submit() {
               />
             </Field>
 
-            <div v-if="hasFreeRows || !draft.rows.length" class="grid gap-2">
-              <Field v-slot="{ id }" :label="$t('payments.dueOn')" :error="errors.due_on">
-                <DatePicker :id="id" v-model="dueOn" required />
+            <div class="grid gap-2">
+              <Field v-slot="{ id }" :label="$t('payments.invoiceDate')" :error="errors.issued_on">
+                <DatePicker :id="id" v-model="issuedOn" required />
               </Field>
-              <ChoiceGroup v-model="term" :options="TERMS.map((days) => ({ value: String(days), label: $t('invoicesCreate.termDays', { days }) }))" />
+              <template v-if="hasFreeRows || !draft.rows.length">
+                <Field v-slot="{ id }" :label="$t('payments.dueOn')" :error="errors.due_on">
+                  <DatePicker :id="id" v-model="dueOn" required />
+                </Field>
+                <ChoiceGroup v-model="term" :options="TERMS.map((days) => ({ value: String(days), label: $t('invoicesCreate.termDays', { days }) }))" />
+              </template>
             </div>
           </div>
 
