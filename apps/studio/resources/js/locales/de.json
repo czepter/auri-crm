@@ -559,6 +559,8 @@
     "title": "Neue Gutschrift",
     "kind": "Gutschrift",
     "gross": "Betrag",
+    "date": "Gutschriftdatum",
+    "reference": "Zu Rechnung {number} vom {date}",
     "reason": "Grund",
     "submit": "Gutschrift stellen",
     "send": "Per E-Mail senden",
