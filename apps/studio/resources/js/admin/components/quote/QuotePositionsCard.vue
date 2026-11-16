@@ -252,7 +252,7 @@ const vat = computed(() => vatRows.value.reduce((sum, line) => sum + line.vat, 0
       </div>
     </div>
 
-    <!-- Was neben der Summe steht, gibt der Aufrufer: die Rechnung ihre Texte. -->
+    <!-- Was neben der Summe steht, gibt der Aufrufer: die Rechnung ihren Schluss. -->
     <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-5">
       <div v-if="$slots.default" class="min-w-0 flex-1 max-[640px]:w-full"><slot /></div>
       <div class="ml-auto flex w-[220px] flex-none flex-col gap-1.5 pt-2">

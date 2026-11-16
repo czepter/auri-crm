@@ -4,6 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import InvoiceTargetTypeahead from '@/admin/components/payments/InvoiceTargetTypeahead.vue'
+import InvoicePreviewPane from '@/admin/components/payments/InvoicePreviewPane.vue'
 import DocumentPaper from '@/admin/components/document/DocumentPaper.vue'
 import LetterField from '@/admin/components/quote/LetterField.vue'
 import QuotePositionsCard from '@/admin/components/quote/QuotePositionsCard.vue'
@@ -56,6 +57,7 @@ const term = computed({
   set: (days: string) => { dueOn.value = inDays(Number(days)) },
 })
 const texts = ref({ intro: props.intro, outro: '' })
+const previewing = ref(false)
 
 // The quote's own draft shape, so the quote's builder writes the positions;
 // what only a quote has stays at its empty value.
@@ -153,12 +155,20 @@ function submit() {
   <AdminLayout active="rechnungen">
     <FormShell :title="$t('invoicesCreate.title')" wide>
       <template #head>
-        <Button class="ml-auto" type="submit" form="invoice" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
+        <ChoiceGroup
+          class="ml-auto"
+          :model-value="previewing ? 'preview' : 'edit'"
+          :options="[{ value: 'edit', label: $t('common.edit') }, { value: 'preview', label: $t('common.preview') }]"
+          @update:model-value="(value) => (previewing = value === 'preview')"
+        />
+        <Button type="submit" form="invoice" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
           {{ $t('invoicesCreate.submit') }}
         </Button>
       </template>
 
-      <DocumentPaper :studio="studioSettings.displayName ?? ''" :kind="$t('invoicesCreate.paperKind')" :date="dayWithWeekday(inDays(0))">
+      <InvoicePreviewPane v-if="previewing" class="mx-auto max-w-[900px]" :payload="payload" />
+
+      <DocumentPaper v-show="!previewing" :studio="studioSettings.displayName ?? ''" :kind="$t('invoicesCreate.paperKind')" :date="dayWithWeekday(inDays(0))">
         <form id="invoice" class="grid content-start gap-5" @submit.prevent="submit">
           <div class="grid grid-cols-[minmax(0,1fr)_260px] items-start gap-8 max-[640px]:grid-cols-1 max-[640px]:gap-5">
             <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
@@ -202,6 +212,10 @@ function submit() {
             {{ $t('invoicesCreate.fromQuote', openLines.length) }}
           </Button>
 
+          <Field :label="$t('quotes.intro')">
+            <LetterField v-model="texts.intro" bare />
+          </Field>
+
           <Field :label="$t('quotes.items')" :error="errors.items">
             <QuotePositionsCard
               v-model="draft"
@@ -212,14 +226,9 @@ function submit() {
               :catalog-items="catalogItems"
               :vat-settings="vatSettings"
             >
-              <div class="grid gap-5">
-                <Field :label="$t('quotes.intro')">
-                  <LetterField v-model="texts.intro" bare />
-                </Field>
-                <Field :label="$t('quotes.outro')">
-                  <LetterField v-model="texts.outro" />
-                </Field>
-              </div>
+              <Field :label="$t('quotes.outro')">
+                <LetterField v-model="texts.outro" />
+              </Field>
             </QuotePositionsCard>
           </Field>
 
