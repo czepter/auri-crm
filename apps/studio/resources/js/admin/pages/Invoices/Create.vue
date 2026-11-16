@@ -151,31 +151,44 @@ function submit() {
 
 <template>
   <AdminLayout active="rechnungen">
-    <FormShell
-      :title="$t('invoicesCreate.title')" wide
-    >
+    <FormShell :title="$t('invoicesCreate.title')" wide>
+      <template #head>
+        <Button class="ml-auto" type="submit" form="invoice" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
+          {{ $t('invoicesCreate.submit') }}
+        </Button>
+      </template>
+
       <DocumentPaper :studio="studioSettings.displayName ?? ''" :kind="$t('invoicesCreate.paperKind')" :date="dayWithWeekday(inDays(0))">
-        <form class="grid content-start gap-5" @submit.prevent="submit">
-          <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
-            <div v-if="newContact" class="grid grid-cols-2 gap-3">
-              <Input :aria-label="$t('invoicesCreate.name')" v-model="newContact.name" :placeholder="$t('invoicesCreate.name')" required />
-              <Input :aria-label="$t('invoicesCreate.email')" v-model="newContact.email" type="email" :placeholder="$t('invoicesCreate.email')" />
-              <Input :aria-label="$t('invoicesCreate.street')" v-model="newContact.street" class="col-span-2" :placeholder="$t('invoicesCreate.street')" />
-              <Input :aria-label="$t('invoicesCreate.postcode')" v-model="newContact.postcode" :placeholder="$t('invoicesCreate.postcode')" />
-              <Input :aria-label="$t('invoicesCreate.city')" v-model="newContact.city" :placeholder="$t('invoicesCreate.city')" />
-              <Button class="col-span-2 justify-self-start" type="button" variant="secondary" @click="newContact = null">
-                {{ $t('common.edit') }}
-              </Button>
+        <form id="invoice" class="grid content-start gap-5" @submit.prevent="submit">
+          <div class="grid grid-cols-[minmax(0,1fr)_260px] items-start gap-8 max-[640px]:grid-cols-1 max-[640px]:gap-5">
+            <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
+              <div v-if="newContact" class="grid grid-cols-2 gap-3">
+                <Input :aria-label="$t('invoicesCreate.name')" v-model="newContact.name" :placeholder="$t('invoicesCreate.name')" required />
+                <Input :aria-label="$t('invoicesCreate.email')" v-model="newContact.email" type="email" :placeholder="$t('invoicesCreate.email')" />
+                <Input :aria-label="$t('invoicesCreate.street')" v-model="newContact.street" class="col-span-2" :placeholder="$t('invoicesCreate.street')" />
+                <Input :aria-label="$t('invoicesCreate.postcode')" v-model="newContact.postcode" :placeholder="$t('invoicesCreate.postcode')" />
+                <Input :aria-label="$t('invoicesCreate.city')" v-model="newContact.city" :placeholder="$t('invoicesCreate.city')" />
+                <Button class="col-span-2 justify-self-start" type="button" variant="secondary" @click="newContact = null">
+                  {{ $t('common.edit') }}
+                </Button>
+              </div>
+              <InvoiceTargetTypeahead
+                v-else
+                v-model:project="project"
+                v-model:contact="contact"
+                :rates="rates"
+                :billable="billable"
+                @create-new="(term) => (newContact = { name: term, email: '', street: '', postcode: '', city: '' })"
+              />
+            </Field>
+
+            <div v-if="hasFreeRows || !draft.rows.length" class="grid gap-2">
+              <Field v-slot="{ id }" :label="$t('payments.dueOn')" :error="errors.due_on">
+                <DatePicker :id="id" v-model="dueOn" required />
+              </Field>
+              <ChoiceGroup v-model="term" :options="TERMS.map((days) => ({ value: String(days), label: $t('invoicesCreate.termDays', { days }) }))" />
             </div>
-            <InvoiceTargetTypeahead
-              v-else
-              v-model:project="project"
-              v-model:contact="contact"
-              :rates="rates"
-              :billable="billable"
-              @create-new="(term) => (newContact = { name: term, email: '', street: '', postcode: '', city: '' })"
-            />
-          </Field>
+          </div>
 
           <Field v-if="openRates.length" :label="$t('invoicesCreate.rates')">
             <div class="flex flex-wrap gap-1.5">
@@ -185,7 +198,7 @@ function submit() {
             </div>
           </Field>
 
-          <Button v-if="openLines.length" class="self-start" variant="outline" type="button" @click="takeLines">
+          <Button v-if="openLines.length" class="justify-self-start" variant="outline" type="button" @click="takeLines">
             {{ $t('invoicesCreate.fromQuote', openLines.length) }}
           </Button>
 
@@ -198,28 +211,19 @@ function submit() {
               :packages="packages"
               :catalog-items="catalogItems"
               :vat-settings="vatSettings"
-            />
-          </Field>
-
-          <Field v-if="hasFreeRows" v-slot="{ id }" class="max-w-[220px]" :label="$t('payments.dueOn')" :error="errors.due_on">
-            <DatePicker :id="id" v-model="dueOn" required />
-          </Field>
-          <ChoiceGroup v-if="hasFreeRows" v-model="term" :options="TERMS.map((days) => ({ value: String(days), label: $t('invoicesCreate.termDays', { days }) }))" />
-
-          <Field :label="$t('quotes.intro')">
-            <LetterField v-model="texts.intro" bare />
-          </Field>
-          <Field :label="$t('quotes.outro')">
-            <LetterField v-model="texts.outro" />
+            >
+              <div class="grid gap-5">
+                <Field :label="$t('quotes.intro')">
+                  <LetterField v-model="texts.intro" bare />
+                </Field>
+                <Field :label="$t('quotes.outro')">
+                  <LetterField v-model="texts.outro" />
+                </Field>
+              </div>
+            </QuotePositionsCard>
           </Field>
 
           <p v-if="errors.invoice" class="text-small text-destructive">{{ errors.invoice }}</p>
-
-          <div>
-            <Button class="ml-auto" type="submit" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
-              {{ $t('invoicesCreate.submit') }}
-            </Button>
-          </div>
         </form>
       </DocumentPaper>
     </FormShell>

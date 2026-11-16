@@ -252,39 +252,43 @@ const vat = computed(() => vatRows.value.reduce((sum, line) => sum + line.vat, 0
       </div>
     </div>
 
-    <div class="ml-auto flex w-[220px] flex-col gap-1.5 pt-2">
-      <div class="flex justify-between text-small text-ink-2">
-        <span>{{ $t('quotes.subtotal') }}</span>
-        <span class="tabular-nums">{{ formatEuros(quoteSubtotal) }}</span>
-      </div>
-      <div class="flex items-center justify-between gap-2 text-small text-ink-2">
-        <span>{{ $t('quotes.discount') }}</span>
-        <DiscountInput v-model="draft.discount" class="w-32" @change="emit('change')" />
-      </div>
-      <div v-if="draft.discount || draft.rows.some((row) => row.discount)" class="flex items-center justify-between gap-2">
-        <Label for="discount-hidden" variant="inline" class="text-small text-ink-2">{{ $t('quotes.discountHidden') }}</Label>
-        <Switch
-          id="discount-hidden"
-          :model-value="draft.discountHidden"
-          @update:model-value="((draft.discountHidden = $event), emit('change'))"
-        />
-      </div>
-      <div class="flex justify-between border-t border-rule pt-1.5 text-body font-semibold">
-        <span>{{ $t(vatSettings.mode === 'standard' ? 'quotes.net' : 'quotes.total') }}</span>
-        <span class="tabular-nums">{{ formatEuros(total) }}</span>
-      </div>
-
-      <template v-if="vatSettings.mode === 'standard'">
-        <div v-for="line in vatRows" :key="line.rate" class="flex justify-between text-small text-ink-2">
-          <span>{{ $t('quotes.vat', { rate: formatPercent(line.rate) }) }}</span>
-          <span class="tabular-nums">{{ formatEuros(line.vat) }}</span>
+    <!-- Was neben der Summe steht, gibt der Aufrufer: die Rechnung ihre Texte. -->
+    <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-5">
+      <div v-if="$slots.default" class="min-w-0 flex-1 max-[640px]:w-full"><slot /></div>
+      <div class="ml-auto flex w-[220px] flex-none flex-col gap-1.5 pt-2">
+        <div class="flex justify-between text-small text-ink-2">
+          <span>{{ $t('quotes.subtotal') }}</span>
+          <span class="tabular-nums">{{ formatEuros(quoteSubtotal) }}</span>
+        </div>
+        <div class="flex items-center justify-between gap-2 text-small text-ink-2">
+          <span>{{ $t('quotes.discount') }}</span>
+          <DiscountInput v-model="draft.discount" class="w-32" @change="emit('change')" />
+        </div>
+        <div v-if="draft.discount || draft.rows.some((row) => row.discount)" class="flex items-center justify-between gap-2">
+          <Label for="discount-hidden" variant="inline" class="text-small text-ink-2">{{ $t('quotes.discountHidden') }}</Label>
+          <Switch
+            id="discount-hidden"
+            :model-value="draft.discountHidden"
+            @update:model-value="((draft.discountHidden = $event), emit('change'))"
+          />
         </div>
         <div class="flex justify-between border-t border-rule pt-1.5 text-body font-semibold">
-          <span>{{ $t('quotes.total') }}</span>
-          <span class="tabular-nums">{{ formatEuros(total + vat) }}</span>
+          <span>{{ $t(vatSettings.mode === 'standard' ? 'quotes.net' : 'quotes.total') }}</span>
+          <span class="tabular-nums">{{ formatEuros(total) }}</span>
         </div>
-      </template>
-      <p v-else-if="vatSettings.note" class="text-small leading-[1.45] text-ink-2">{{ vatSettings.note }}</p>
+  
+        <template v-if="vatSettings.mode === 'standard'">
+          <div v-for="line in vatRows" :key="line.rate" class="flex justify-between text-small text-ink-2">
+            <span>{{ $t('quotes.vat', { rate: formatPercent(line.rate) }) }}</span>
+            <span class="tabular-nums">{{ formatEuros(line.vat) }}</span>
+          </div>
+          <div class="flex justify-between border-t border-rule pt-1.5 text-body font-semibold">
+            <span>{{ $t('quotes.total') }}</span>
+            <span class="tabular-nums">{{ formatEuros(total + vat) }}</span>
+          </div>
+        </template>
+        <p v-else-if="vatSettings.note" class="text-small leading-[1.45] text-ink-2">{{ vatSettings.note }}</p>
+      </div>
     </div>
 
     <div v-if="mode === 'choice'" class="grid grid-cols-3 gap-3 pt-2">
