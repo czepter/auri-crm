@@ -10,6 +10,7 @@ use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
 use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
+use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
@@ -311,4 +312,55 @@ it('sends the Gutschrift in the studio’s own wording where the builder asks fo
 
         return str_starts_with($message->subject, 'Gutschrift GS-') && str_contains(implode(' ', $message->introLines), 'gehen zurück');
     });
+});
+
+it('takes a Gutschrift date no earlier than the latest Gutschrift and not in the future', function () {
+    $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->andReturn('%PDF-1.4 fake');
+
+    $paid = creditableInstallment();
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+    $url = "/rechnungen/{$paid->invoice->public_id}/gutschrift";
+    $body = fn (string $issuedOn) => ['amount' => 5_000, 'reason' => 'Nachlass', 'issued_on' => $issuedOn];
+
+    $this->travelTo('2026-11-10 09:00:00');
+    $admin->post($url, $body('2026-11-10'))->assertRedirect();
+
+    $this->travelTo('2026-11-16 12:00:00');
+    $admin->post($url, $body('2026-11-09'))->assertSessionHasErrors('issued_on');
+    $admin->post($url, $body('2026-11-17'))->assertSessionHasErrors('issued_on');
+    expect(CreditNote::count())->toBe(1);
+
+    $admin->post($url, $body('2026-11-12'))->assertSessionHasNoErrors();
+
+    expect(CreditNote::orderByDesc('id')->first()->issued_at->format('Y-m-d H:i'))->toBe('2026-11-12 12:00');
+});
+
+it('stores the Gutschrift texts sanitized and prints them', function () {
+    $paid = creditableInstallment();
+
+    $note = app(IssueCreditNote::class)(
+        $paid->invoice,
+        5_000,
+        'Nachlass',
+        intro: '<p>Einleitung <script>x</script></p>',
+        outro: '<p>Schluss</p>',
+    );
+    $note = $note->fresh();
+
+    $html = app(RenderInvoicePdf::class)->forCreditNote($note->load('invoice'));
+
+    expect($html)->toContain('Einleitung')->toContain('Schluss')->not->toContain('<script>');
+});
+
+it('previews a Gutschrift without drawing a number or writing a row', function () {
+    $paid = creditableInstallment();
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+    $url = "/rechnungen/{$paid->invoice->public_id}/gutschrift/vorschau";
+    $body = ['amount' => 5_000, 'reason' => 'Nachlass', 'intro' => '<p>Vorab</p>'];
+
+    $admin->post($url, $body)->assertOk()->assertSee('Entwurf')->assertSee('Vorab', false);
+    $admin->post($url, [...$body, 'format' => 'mail'])->assertOk();
+
+    expect(CreditNote::count())->toBe(0)
+        ->and(NumberCounter::where('document_type', DocumentType::CreditNote->value)->count())->toBe(0);
 });

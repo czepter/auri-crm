@@ -25,7 +25,7 @@ class CreditNote extends Model
 
     protected $fillable = [
         'invoice_id', 'number', 'issued_at', 'amount',
-        'reason', 'pdf_path', 'template_id', 'stripe_refund_id',
+        'reason', 'intro', 'outro', 'pdf_path', 'template_id', 'stripe_refund_id',
     ];
 
     protected function casts(): array

@@ -984,6 +984,7 @@ Route::middleware('audience:staff')->group(function () {
         // already received gets instead.
         Route::post('/rechnungen/{invoice}/storno', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
         Route::post('/rechnungen/{invoice}/gutschrift', [InvoiceController::class, 'creditNote'])->name('invoices.credit-note');
+        Route::post('/rechnungen/{invoice}/gutschrift/vorschau', [InvoiceController::class, 'creditNotePreview'])->name('invoices.credit-note.preview');
 
         // Die Gutschriften des ganzen Buchs. Eine Gutschrift haengt an ihrer
         // Rechnung, die Frage nach allen stellt aber der Jahresabschluss.

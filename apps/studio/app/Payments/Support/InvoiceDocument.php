@@ -154,6 +154,8 @@ final class InvoiceDocument
             reference: $invoiceNumber === ''
                 ? null
                 : "Zu Rechnung {$invoiceNumber}".($invoiceDate === '' ? '' : " vom {$invoiceDate}"),
+            intro: MergeFieldResolver::resolve(InlineHtmlSanitizer::letter($creditNote->intro) ?? '', $mergeData, escape: true),
+            outro: MergeFieldResolver::resolve(InlineHtmlSanitizer::letter($creditNote->outro) ?? '', $mergeData, escape: true),
         );
     }
 

@@ -603,12 +603,22 @@ class InvoiceController extends Controller
         self::authorizeProject($invoice->case);
 
         $validated = $request->validate([
+            ...$this->creditNoteRules(),
+            'issued_on' => [...$this->creditNoteRules()['issued_on'], $this->notBeforeLatestCreditNote(...)],
             'amount' => ['required', 'integer', 'min:1'],
             'reason' => ['required', 'string', 'max:1000'],
             'send' => ['sometimes', 'boolean'],
         ]);
 
-        $note = $issue($invoice, $validated['amount'], $validated['reason'], auth('staff')->user());
+        $note = $issue(
+            $invoice,
+            $validated['amount'],
+            $validated['reason'],
+            auth('staff')->user(),
+            $validated['issued_on'] ?? null,
+            InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+            InlineHtmlSanitizer::letter($validated['outro'] ?? null),
+        );
 
         if ($request->boolean('send')) {
             foreach ($this->recipients($invoice) as $contact) {
@@ -617,6 +627,59 @@ class InvoiceController extends Controller
         }
 
         return back();
+    }
+
+    /** Gutschriften laufen in eigener Reihe, ihre Daten also auch. */
+    private function notBeforeLatestCreditNote(string $attribute, mixed $value, \Closure $fail): void
+    {
+        $latest = CreditNote::query()->orderByDesc('issued_at')->first()?->issued_at;
+
+        if ($latest !== null && $value !== null && Carbon::parse($value)->startOfDay()->lt($latest->startOfDay())) {
+            $fail(__('payments.issuedBeforeLatest', ['date' => $latest->format('d.m.Y')]));
+        }
+    }
+
+    /** @return array<string, list<mixed>> */
+    private function creditNoteRules(): array
+    {
+        return [
+            'issued_on' => ['nullable', 'date', 'before_or_equal:today'],
+            'intro' => ['nullable', 'string', 'max:20000'],
+            'outro' => ['nullable', 'string', 'max:20000'],
+        ];
+    }
+
+    /** Die Vorschau der Gutschrift aus einem ungespeicherten Entwurf: keine Nummer gezogen, nichts geschrieben. */
+    public function creditNotePreview(
+        Request $request,
+        Invoice $invoice,
+        RenderInvoicePdf $render,
+    ): HttpResponse {
+        self::authorizeProject($invoice->case);
+
+        $validated = $request->validate([
+            ...$this->creditNoteRules(),
+            'amount' => ['nullable', 'integer', 'min:0'],
+            'reason' => ['nullable', 'string', 'max:1000'],
+            'format' => ['nullable', 'in:pdf,mail'],
+        ]);
+
+        $invoice->load(['case', 'contact', 'installments.plan.case', 'items']);
+
+        $note = (new CreditNote([
+            'number' => __('payments.previewNumber'),
+            'issued_at' => isset($validated['issued_on']) ? now()->setDateFrom($validated['issued_on']) : now(),
+            'amount' => $validated['amount'] ?? 0,
+            'reason' => $validated['reason'] ?? '',
+            'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+            'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
+        ]))->setRelation('invoice', $invoice)->setRelation('template', null);
+
+        $html = ($validated['format'] ?? 'pdf') === 'mail'
+            ? MailPreview::html(new CreditNoteSent($note), $invoice->contact ?? (object) [])
+            : $render->forCreditNote($note);
+
+        return response($html, 200, ['Content-Type' => 'text/html']);
     }
 
     public function downloadCreditNote(Invoice $invoice, CreditNote $creditNote): StreamedResponse
