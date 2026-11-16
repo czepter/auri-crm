@@ -16,7 +16,6 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
-import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
@@ -188,7 +187,7 @@ const shown = computed(() =>
                     <div class="flex items-center justify-end gap-1.5">
                       <Button v-if="quick(invoice) === 'send'" :as="Link" variant="outline" :href="`/rechnungen/${invoice.id}/versenden`">{{ $t('invoicesOverview.send') }}</Button>
                       <Button v-else-if="quick(invoice) === 'paid'" variant="outline" type="button" @click="dialog = `paid:${invoice.id}`">{{ $t('payments.markPaid') }}</Button>
-                      <Button v-else-if="quick(invoice) === 'credit'" variant="outline" type="button" @click="dialog = `credit:${invoice.id}`">{{ $t('payments.creditNote') }}</Button>
+                      <Button v-else-if="quick(invoice) === 'credit'" :as="Link" variant="outline" :href="`/rechnungen/${invoice.id}/gutschrift/neu`">{{ $t('payments.creditNote') }}</Button>
                       <DropdownMenu v-if="hasMenu(invoice)">
                         <DropdownMenuTrigger as-child>
                           <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')">
@@ -201,7 +200,9 @@ const shown = computed(() =>
                           </DropdownMenuItem>
                           <DropdownMenuItem v-if="quick(invoice) === 'send'" @select="dialog = `paid:${invoice.id}`">{{ $t('payments.markPaid') }}</DropdownMenuItem>
                           <DropdownMenuItem v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" @select="dialog = `storno:${invoice.id}`">{{ $t('payments.storno') }}</DropdownMenuItem>
-                          <DropdownMenuItem v-if="creditable(invoice) && quick(invoice) !== 'credit'" @select="dialog = `credit:${invoice.id}`">{{ $t('payments.creditNote') }}</DropdownMenuItem>
+                          <DropdownMenuItem v-if="creditable(invoice) && quick(invoice) !== 'credit'" as-child>
+                            <Link :href="`/rechnungen/${invoice.id}/gutschrift/neu`">{{ $t('payments.creditNote') }}</Link>
+                          </DropdownMenuItem>
                           <DropdownMenuItem v-if="invoice.hasDocument" as-child>
                             <a :href="`/rechnungen/${invoice.id}/pdf`" target="_blank">{{ $t('invoiceDetail.download') }}</a>
                           </DropdownMenuItem>
@@ -217,13 +218,6 @@ const shown = computed(() =>
                       :remaining="invoice.openInstallments[0].remaining"
                     />
                     <InstallmentStornoDialog v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" bare v-bind="bind('storno', invoice.id)" :invoice-id="invoice.id" />
-                    <CreditNoteDialog
-                      v-if="creditable(invoice)"
-                      bare
-                      v-bind="bind('credit', invoice.id)"
-                      :invoice-id="invoice.id"
-                      :amount="invoice.paidAmount - invoice.credited"
-                    />
                   </TableCell>
                 </TableRow>
               </template>
