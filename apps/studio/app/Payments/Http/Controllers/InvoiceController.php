@@ -331,7 +331,7 @@ class InvoiceController extends Controller
     }
 
     /** Invoice numbers run on in sequence, so their dates must not run backwards. */
-    private function notBeforeLatestInvoice(string $attribute, mixed $value, \Closure $fail): void
+    public static function notBeforeLatestInvoice(string $attribute, mixed $value, \Closure $fail): void
     {
         $latest = Invoice::query()->orderByDesc('issued_at')->first()?->issued_at;
 
@@ -369,7 +369,7 @@ class InvoiceController extends Controller
     }
 
     /** @return array<string, list<mixed>> */
-    private function rules(): array
+    public static function rules(): array
     {
         return [
             'contact_id' => ['nullable', 'string'],
@@ -418,7 +418,7 @@ class InvoiceController extends Controller
      * @param  array<string, mixed>  $validated
      * @return list<array<string, mixed>>
      */
-    private function positions(array $validated, bool $strict): array
+    public static function positions(array $validated, bool $strict): array
     {
         $ids = collect($validated['items'] ?? [])->pluck('installment_id')->filter();
         $rows = PaymentInstallment::query()->whereIn('public_id', $ids)->with('plan.case')->get()->keyBy('public_id');
@@ -673,7 +673,7 @@ class InvoiceController extends Controller
     }
 
     /** Gutschriften laufen in eigener Reihe, ihre Daten also auch; keine liegt vor der Rechnung. */
-    private function notBeforeLatestCreditNote(Invoice $invoice, string $attribute, mixed $value, \Closure $fail): void
+    public static function notBeforeLatestCreditNote(Invoice $invoice, string $attribute, mixed $value, \Closure $fail): void
     {
         $latest = collect([CreditNote::query()->orderByDesc('issued_at')->first()?->issued_at, $invoice->issued_at])->filter()->max();
 
@@ -683,7 +683,7 @@ class InvoiceController extends Controller
     }
 
     /** @return array<string, list<mixed>> */
-    private function creditNoteRules(): array
+    public static function creditNoteRules(): array
     {
         return [
             'issued_on' => ['nullable', 'date', 'before_or_equal:today'],

@@ -22,11 +22,14 @@ use App\Integration\Http\Controllers\CaseContactController;
 use App\Integration\Http\Controllers\CaseController;
 use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\CrewController;
+use App\Integration\Http\Controllers\CreditNoteController;
 use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\FormInstanceController;
 use App\Integration\Http\Controllers\GalleryController;
 use App\Integration\Http\Controllers\InboxController;
 use App\Integration\Http\Controllers\InternalNoteController;
+use App\Integration\Http\Controllers\InvoiceController;
+use App\Integration\Http\Controllers\InvoiceDraftController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\LegalTextController;
 use App\Integration\Http\Controllers\MessageController;
@@ -481,6 +484,28 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageContracts->value, 
         ->name('api.payment-installments.paid');
     Route::post('/payment-installments/{installment:public_id}/invoice', [PaymentController::class, 'issueInvoice'])
         ->name('api.payment-installments.invoice');
+});
+
+// The invoice as a document of its own, its drafts and its Gutschriften —
+// App\Payments\Http\Controllers\InvoiceController is the admin twin.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageContracts->value])->group(function () {
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('api.invoices.index');
+    Route::get('/invoices/{invoice:public_id}', [InvoiceController::class, 'show'])->name('api.invoices.show');
+    Route::get('/invoice-drafts', [InvoiceDraftController::class, 'index'])->name('api.invoice-drafts.index');
+    Route::get('/invoice-drafts/{draft:public_id}', [InvoiceDraftController::class, 'show'])->name('api.invoice-drafts.show');
+    Route::get('/credit-notes', [CreditNoteController::class, 'index'])->name('api.credit-notes.index');
+    Route::get('/invoices/{invoice:public_id}/credit-note-draft', [CreditNoteController::class, 'showDraft'])->name('api.invoices.credit-note-draft.show');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageContracts->value, 'idempotent'])->group(function () {
+    Route::post('/invoices', [InvoiceController::class, 'store'])->name('api.invoices.store');
+    Route::post('/invoice-drafts', [InvoiceDraftController::class, 'store'])->name('api.invoice-drafts.store');
+    Route::put('/invoice-drafts/{draft:public_id}', [InvoiceDraftController::class, 'update'])->name('api.invoice-drafts.update');
+    Route::delete('/invoice-drafts/{draft:public_id}', [InvoiceDraftController::class, 'destroy'])->name('api.invoice-drafts.destroy');
+    Route::post('/invoice-drafts/{draft:public_id}/issue', [InvoiceController::class, 'issueDraft'])->name('api.invoice-drafts.issue');
+    Route::post('/invoices/{invoice:public_id}/credit-notes', [CreditNoteController::class, 'store'])->name('api.invoices.credit-notes.store');
+    Route::put('/invoices/{invoice:public_id}/credit-note-draft', [CreditNoteController::class, 'saveDraft'])->name('api.invoices.credit-note-draft.save');
+    Route::delete('/invoices/{invoice:public_id}/credit-note-draft', [CreditNoteController::class, 'destroyDraft'])->name('api.invoices.credit-note-draft.destroy');
 });
 
 // #405: the token surface over what GalleryIndexController, GalleryRecord
