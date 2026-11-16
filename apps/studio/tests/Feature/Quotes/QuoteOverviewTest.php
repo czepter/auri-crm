@@ -18,12 +18,14 @@ it('lists quotes from every project, newest first', function () {
     $projectB = ClientCase::factory()->create();
 
     $older = Quote::factory()->for($projectA, 'case')->create(['status' => QuoteStatus::Draft, 'created_at' => now()->subDay()]);
-    $newer = Quote::factory()->for($projectB, 'case')->create(['status' => QuoteStatus::Sent]);
+    $newer = Quote::factory()->for($projectB, 'case')->create(['status' => QuoteStatus::Sent, 'valid_until' => '2026-12-24']);
 
     $rows = test()->actingAs($user, 'staff')->get('/angebote')->assertOk()->viewData('page')['props']['quotes'];
 
     expect(collect($rows)->pluck('id')->all())->toBe([$newer->public_id, $older->public_id])
         ->and($rows[0]['statusLabel'])->toBe('Versendet')
+        ->and($rows[0]['validUntil'])->toBe('2026-12-24')
+        ->and($rows[0]['projectId'])->toBe($projectB->public_id)
         ->and($rows[1]['statusLabel'])->toBe('Entwurf');
 });
 

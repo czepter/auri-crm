@@ -1133,6 +1133,7 @@ hasImage: boolean,
 };
 export type QuoteRowData = {
 id: string,
+projectId: string,
 projectName: string,
 contact: string | null,
 number: string | null,
@@ -1141,6 +1142,7 @@ statusLabel: string,
 total: number,
 sentAt: string | null,
 createdAt: string | null,
+validUntil: string | null,
 };
 }
 namespace Enums {

@@ -516,14 +516,25 @@
   },
   "quotesOverview": {
     "title": "Angebote",
-    "project": "Projekt",
     "number": "Nummer",
     "amount": "Betrag",
     "status": "Status",
+    "recipient": "Empfänger",
     "createdAt": "Datum",
+    "validUntil": "Gültig bis",
     "searchPlaceholder": "Suchen",
     "empty": "Keine Angebote.",
-    "create": "Neues Angebot"
+    "create": "Neues Angebot",
+    "all": "Alle",
+    "drafts": "Entwürfe",
+    "sent": "Versendet",
+    "accepted": "Angenommen",
+    "closed": "Abgeschlossen",
+    "followUp": "Nachfassen",
+    "kpiSent": "Versendet",
+    "kpiAccepted": "Angenommen {year}",
+    "kpiDrafts": "Entwürfe",
+    "kpiCount": "1 Angebot | {count} Angebote"
   },
   "invoicesOverview": {
     "title": "Rechnungen",
