@@ -101,7 +101,7 @@ const shown = computed(() => {
                 <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(dateOf(contract)) }}</TableCell>
                 <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ contract.signedOn ? dayWithWeekday(contract.signedOn) : '' }}</TableCell>
                 <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ contract.deadlineOn ? dayWithWeekday(contract.deadlineOn) : '' }}</TableCell>
-                <TableCell class="whitespace-nowrap"><Chip :tone="CHIP[statusOf(contract)]">{{ $t(`contractsOverview.${statusOf(contract)}`) }}</Chip></TableCell>
+                <TableCell class="whitespace-nowrap"><Chip :tone="CHIP[statusOf(contract)]">{{ statusOf(contract) === 'drafts' ? $t('invoicesOverview.draft') : $t(`contractsOverview.${statusOf(contract)}`) }}</Chip></TableCell>
                 <TableCell align="right">
                   <div class="flex items-center justify-end gap-1.5">
                     <Button :as="Link" variant="outline" :href="`/auftraege/${contract.projectId}/vertrag`">{{ $t(contract.state === 'draft' ? 'common.edit' : 'project.view') }}</Button>
