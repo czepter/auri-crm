@@ -182,7 +182,7 @@ function saveDraft() {
 
 <template>
   <AdminLayout active="rechnungen">
-    <FormShell :title="$t('invoicesCreate.title')" wide>
+    <FormShell :title="$t(props.draft ? 'invoicesCreate.draftTitle' : 'invoicesCreate.title')" wide>
       <template #head>
         <ChoiceGroup
           class="ml-auto"

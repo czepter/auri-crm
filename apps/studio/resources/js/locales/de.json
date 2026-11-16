@@ -567,6 +567,7 @@
   },
   "creditNoteBuilder": {
     "title": "Neue Gutschrift",
+    "draftTitle": "Gutschrift-Entwurf",
     "kind": "Gutschrift",
     "gross": "Betrag",
     "date": "Gutschriftdatum",
@@ -657,6 +658,7 @@
     "paperKind": "Rechnung",
     "fromQuote": "1 Position aus dem Angebot | {count} Positionen aus dem Angebot",
     "title": "Neue Rechnung",
+    "draftTitle": "Rechnungsentwurf",
     "recipient": "Empfänger",
     "forPlaceholder": "Projekt, Anfrage oder Kontakt",
     "groupBillable": "Offene Raten",
