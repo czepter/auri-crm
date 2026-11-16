@@ -19,6 +19,7 @@ const meta = {
   component: Index,
   parameters: { layout: 'fullscreen', url: '/gutschriften', page },
   args: {
+    drafts: [{ invoiceId: 'in-9', invoiceNumber: 'RE-2026-009', recipient: 'Jonas Gast', projectName: 'Gast, Jonas', updatedOn: '2026-11-15' }],
     creditNotes: [
       {
         id: 'gs-2',
@@ -58,5 +59,5 @@ export const Liste: Story = {}
 
 /** Der Normalfall im ersten Jahr: es gab noch nichts zurückzugeben. */
 export const Leer: Story = {
-  args: { creditNotes: [] },
+  args: { creditNotes: [], drafts: [] },
 }

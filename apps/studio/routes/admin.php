@@ -984,6 +984,8 @@ Route::middleware('audience:staff')->group(function () {
         // already received gets instead.
         Route::post('/rechnungen/{invoice}/storno', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
         Route::post('/rechnungen/{invoice}/gutschrift', [InvoiceController::class, 'creditNote'])->name('invoices.credit-note');
+        Route::put('/rechnungen/{invoice}/gutschrift/entwurf', [InvoiceController::class, 'saveCreditNoteDraft'])->name('invoices.credit-note-draft.save');
+        Route::delete('/rechnungen/{invoice}/gutschrift/entwurf', [InvoiceController::class, 'destroyCreditNoteDraft'])->name('invoices.credit-note-draft.destroy');
         Route::post('/rechnungen/{invoice}/gutschrift/vorschau', [InvoiceController::class, 'creditNotePreview'])->name('invoices.credit-note.preview');
 
         // Die Gutschriften des ganzen Buchs. Eine Gutschrift haengt an ihrer

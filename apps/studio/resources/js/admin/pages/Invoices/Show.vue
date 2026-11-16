@@ -13,7 +13,7 @@ import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
-const props = defineProps<{ invoice: App.Payments.Data.InvoiceDetailData }>()
+const props = defineProps<{ invoice: App.Payments.Data.InvoiceDetailData; hasCreditNoteDraft: boolean }>()
 useLiveProps(['invoice'])
 
 const { t } = useI18n()
@@ -119,7 +119,7 @@ const sendFirst = computed(() => live.value && unpaid.value && !row.value.sentOn
 
             <section v-if="live && (row.paidAmount === 0 || row.paidAmount > row.credited)" class="flex flex-wrap gap-2">
               <InstallmentStornoDialog v-if="row.paidAmount === 0" :invoice-id="row.id" />
-              <Button v-if="row.paidAmount > row.credited" :as="Link" variant="outline" :href="`/rechnungen/${row.id}/gutschrift/neu`">{{ $t('payments.creditNote') }}</Button>
+              <Button v-if="row.paidAmount > row.credited" :as="Link" variant="outline" :href="`/rechnungen/${row.id}/gutschrift/neu`">{{ $t(hasCreditNoteDraft ? 'payments.creditNoteDraft' : 'payments.creditNote') }}</Button>
             </section>
           </aside>
         </div>

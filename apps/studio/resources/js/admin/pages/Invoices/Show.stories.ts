@@ -6,6 +6,7 @@ const meta = {
   component: Show,
   parameters: { layout: 'fullscreen', url: '/rechnungen/in-5' },
   args: {
+    hasCreditNoteDraft: false,
     invoice: {
       row: {
         id: 'in-5',
@@ -45,3 +46,10 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Offen: Story = {}
+
+export const GutschriftEntwurf: Story = {
+  args: {
+    hasCreditNoteDraft: true,
+    invoice: { ...meta.args.invoice, row: { ...meta.args.invoice.row, status: 'paid', statusLabel: 'Bezahlt', paidAmount: 29_500, openInstallments: [] } },
+  },
+}

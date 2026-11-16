@@ -15,20 +15,32 @@ import { Textarea } from '@/ui/textarea'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
 
-const props = defineProps<{ invoice: App.Payments.Data.InvoiceDetailData; creditable: number; studioName: string | null }>()
+type Draft = { taken?: boolean[]; issued_on?: string | null; reason?: string | null; intro?: string | null; outro?: string | null; send?: boolean }
+
+const props = defineProps<{ invoice: App.Payments.Data.InvoiceDetailData; creditable: number; draft: Draft | null; studioName: string | null }>()
 
 const row = computed(() => props.invoice.row)
-const taken = ref(props.invoice.items.map(() => true))
+const taken = ref(props.invoice.items.map((_, index) => props.draft?.taken?.[index] ?? true))
 const amount = computed(() => props.invoice.items.reduce((sum, item, index) => sum + (taken.value[index] ? item.gross : 0), 0))
 const over = computed(() => amount.value > props.creditable)
 const previewing = ref(false)
-const form = useForm({ issued_on: isoDate(new Date()), reason: '', intro: '', outro: '', send: true })
+const form = useForm({
+  issued_on: props.draft?.issued_on ?? isoDate(new Date()),
+  reason: props.draft?.reason ?? '',
+  intro: props.draft?.intro ?? '',
+  outro: props.draft?.outro ?? '',
+  send: props.draft?.send ?? true,
+})
 const payload = computed(() => ({ amount: amount.value, issued_on: form.issued_on || null, reason: form.reason, intro: form.intro, outro: form.outro }))
 
 const errors = computed(() => form.errors as Record<string, string | undefined>)
 
 function submit() {
   form.transform((data) => ({ ...data, ...payload.value })).post(`/rechnungen/${row.value.id}/gutschrift`)
+}
+
+function saveDraft() {
+  form.transform((data) => ({ ...data, issued_on: data.issued_on || null, taken: taken.value })).put(`/rechnungen/${row.value.id}/gutschrift/entwurf`)
 }
 </script>
 
@@ -42,6 +54,7 @@ function submit() {
           :options="[{ value: 'edit', label: $t('common.edit') }, { value: 'preview', label: $t('common.preview') }]"
           @update:model-value="(value) => (previewing = value === 'preview')"
         />
+        <Button type="button" variant="outline" :disabled="form.processing" @click="saveDraft">{{ $t('invoicesCreate.saveDraft') }}</Button>
         <Button type="submit" form="credit-note" :disabled="!amount || over || !form.reason || form.processing">{{ $t('creditNoteBuilder.submit') }}</Button>
       </template>
 

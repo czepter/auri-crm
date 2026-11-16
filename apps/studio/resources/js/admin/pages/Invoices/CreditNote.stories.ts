@@ -55,6 +55,7 @@ const meta = {
       events: [{ kind: 'created', on: '2026-11-02', amount: null }],
     },
     creditable: 68_500,
+    draft: null,
     studioName: '50mm freunde',
   },
 } satisfies Meta<typeof CreditNote>
@@ -66,3 +67,9 @@ export const Leer: Story = {}
 
 /** Schon teilweise gutgeschrieben: mehr als der Rest lässt sich nicht stellen. */
 export const UeberRest: Story = { args: { creditable: 39_000 } }
+
+export const MitEntwurf: Story = {
+  args: {
+    draft: { taken: [false, true], issued_on: '2026-11-10', reason: 'Album nicht geliefert', intro: '', outro: '', send: false },
+  },
+}

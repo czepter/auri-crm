@@ -5,6 +5,7 @@ namespace App\Payments\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Payments\Data\CreditNoteRowData;
 use App\Payments\Models\CreditNote;
+use App\Payments\Models\CreditNoteDraft;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,7 +35,23 @@ class CreditNoteController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $drafts = CreditNoteDraft::query()
+            ->whereHas('invoice', fn ($invoice) => $invoice
+                ->where(fn ($query) => $query->whereNull('case_id')
+                    ->orWhereHas('case', fn ($project) => $project->visibleTo($viewer))))
+            ->with(['invoice.case', 'invoice.contact'])
+            ->latest('updated_at')
+            ->get()
+            ->map(fn (CreditNoteDraft $draft) => [
+                'invoiceId' => $draft->invoice->public_id,
+                'invoiceNumber' => $draft->invoice->number,
+                'recipient' => $draft->invoice->contact?->name,
+                'projectName' => $draft->invoice->case?->name,
+                'updatedOn' => $draft->updated_at->toDateString(),
+            ]);
+
         return Inertia::render('CreditNotes/Index', [
+            'drafts' => $drafts,
             'creditNotes' => CreditNoteRowData::collect($notes->map(CreditNoteRowData::fromModel(...))),
         ]);
     }

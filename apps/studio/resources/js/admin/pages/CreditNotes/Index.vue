@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -12,8 +12,10 @@ import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
-const props = defineProps<{ creditNotes: App.Payments.Data.CreditNoteRowData[] }>()
-useLiveProps(['creditNotes'])
+type Draft = { invoiceId: string; invoiceNumber: string; recipient: string | null; projectName: string | null; updatedOn: string }
+
+const props = defineProps<{ creditNotes: App.Payments.Data.CreditNoteRowData[]; drafts: Draft[] }>()
+useLiveProps(['creditNotes', 'drafts'])
 
 const query = ref('')
 
@@ -35,6 +37,30 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('creditNotesOverview.title')" />
+
+        <Table v-if="drafts.length" class="max-[640px]:block max-[640px]:overflow-x-auto">
+          <thead>
+            <tr>
+              <TableHead>{{ $t('creditNotesOverview.drafts') }}</TableHead>
+              <TableHead>{{ $t('creditNotesOverview.invoice') }}</TableHead>
+              <TableHead class="max-[640px]:hidden">{{ $t('invoicesOverview.updatedOn') }}</TableHead>
+              <TableHead />
+            </tr>
+          </thead>
+          <tbody>
+            <TableRow v-for="draft in drafts" :key="draft.invoiceId">
+              <TableCell tone="name">
+                <Link :href="`/rechnungen/${draft.invoiceId}/gutschrift/neu`">{{ draft.recipient ?? draft.projectName ?? $t('creditNotesOverview.draft') }}</Link>
+                <span v-if="draft.recipient && draft.projectName" class="block text-small text-ink-2">{{ draft.projectName }}</span>
+              </TableCell>
+              <TableCell class="whitespace-nowrap">{{ draft.invoiceNumber }}</TableCell>
+              <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(draft.updatedOn) }}</TableCell>
+              <TableCell align="right">
+                <Button variant="outline" type="button" @click="router.delete(`/rechnungen/${draft.invoiceId}/gutschrift/entwurf`, { preserveScroll: true })">{{ $t('common.delete') }}</Button>
+              </TableCell>
+            </TableRow>
+          </tbody>
+        </Table>
 
         <div v-if="creditNotes.length" class="max-w-[1280px]">
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
@@ -77,7 +103,7 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
           </Table>
         </div>
 
-        <Empty v-else :text="$t('creditNotesOverview.empty')">
+        <Empty v-else-if="!drafts.length" :text="$t('creditNotesOverview.empty')">
           <Button :as="Link" variant="default" href="/rechnungen">{{ $t('creditNotesOverview.toInvoices') }}</Button>
         </Empty>
       </div>

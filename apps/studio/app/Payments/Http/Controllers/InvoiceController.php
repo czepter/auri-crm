@@ -34,6 +34,7 @@ use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\Invoice;
+use App\Payments\Models\CreditNoteDraft;
 use App\Payments\Models\InvoiceDraft;
 use App\Payments\Models\InvoiceItem;
 use App\Payments\Models\PaymentInstallment;
@@ -106,7 +107,10 @@ class InvoiceController extends Controller
     {
         self::authorizeProject($invoice->case);
 
-        return Inertia::render('Invoices/Show', ['invoice' => InvoiceDetailData::fromModel($invoice)]);
+        return Inertia::render('Invoices/Show', [
+            'invoice' => InvoiceDetailData::fromModel($invoice),
+            'hasCreditNoteDraft' => $invoice->creditNoteDraft()->exists(),
+        ]);
     }
 
     public function create(
@@ -596,8 +600,38 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/CreditNote', [
             'invoice' => InvoiceDetailData::fromModel($invoice),
             'creditable' => $creditable,
+            'draft' => $invoice->creditNoteDraft?->payload,
             'studioName' => StudioSettings::current()->display_name,
         ]);
+    }
+
+    public function saveCreditNoteDraft(Request $request, Invoice $invoice): RedirectResponse
+    {
+        self::authorizeProject($invoice->case);
+
+        $validated = $request->validate([
+            ...$this->creditNoteRules(),
+            'taken' => ['array'],
+            'taken.*' => ['boolean'],
+            'reason' => ['nullable', 'string', 'max:1000'],
+            'send' => ['boolean'],
+        ]);
+
+        CreditNoteDraft::updateOrCreate(
+            ['invoice_id' => $invoice->id],
+            ['payload' => $validated, 'created_by' => $request->user('staff')->id],
+        );
+
+        return back();
+    }
+
+    public function destroyCreditNoteDraft(Invoice $invoice): RedirectResponse
+    {
+        self::authorizeProject($invoice->case);
+
+        $invoice->creditNoteDraft()->delete();
+
+        return back();
     }
 
     public function creditNote(Request $request, Invoice $invoice, IssueCreditNote $issue): RedirectResponse
@@ -621,6 +655,8 @@ class InvoiceController extends Controller
             InlineHtmlSanitizer::letter($validated['intro'] ?? null),
             InlineHtmlSanitizer::letter($validated['outro'] ?? null),
         );
+
+        $invoice->creditNoteDraft()->delete();
 
         if ($request->boolean('send')) {
             foreach ($this->recipients($invoice) as $contact) {

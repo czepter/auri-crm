@@ -3,6 +3,7 @@
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\MergeFieldVocabulary;
+use App\Enums\Capability;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
@@ -14,10 +15,12 @@ use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
+use App\Payments\Models\CreditNoteDraft;
 use App\Payments\Notifications\CreditNoteSent;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -363,4 +366,33 @@ it('previews a Gutschrift without drawing a number or writing a row', function (
 
     expect(CreditNote::count())->toBe(0)
         ->and(NumberCounter::where('document_type', DocumentType::CreditNote->value)->count())->toBe(0);
+});
+
+it('keeps one credit-note draft per invoice without a number, restores it, and drops it once issued', function () {
+    Bus::fake();
+    $invoice = creditableInstallment()->invoice;
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+    $url = "/rechnungen/{$invoice->public_id}/gutschrift";
+
+    $admin->put("{$url}/entwurf", ['taken' => [false], 'reason' => 'Halb'])->assertRedirect();
+    $admin->put("{$url}/entwurf", ['taken' => [true], 'reason' => 'Grund'])->assertRedirect();
+
+    expect(CreditNoteDraft::count())->toBe(1)->and(CreditNote::count())->toBe(0);
+
+    $props = $admin->get("{$url}/neu")->viewData('page')['props'];
+    expect($props['draft']['reason'])->toBe('Grund');
+
+    $admin->post($url, ['amount' => $invoice->paidAmount(), 'reason' => 'Grund', 'send' => false])->assertRedirect();
+
+    expect(CreditNote::count())->toBe(1)->and(CreditNoteDraft::count())->toBe(0);
+});
+
+it('keeps a staff member out of a credit-note draft whose project they cannot see', function () {
+    $invoice = creditableInstallment()->invoice;
+    $crew = staffMember(StaffRole::Contributor);
+    $crew->givePermissionTo(Capability::ManageContracts->value);
+
+    $this->actingAs($crew, 'staff')
+        ->put("/rechnungen/{$invoice->public_id}/gutschrift/entwurf", ['reason' => 'x'])
+        ->assertForbidden();
 });
