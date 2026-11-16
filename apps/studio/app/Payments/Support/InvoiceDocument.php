@@ -75,6 +75,7 @@ final class InvoiceDocument
         /** #480: the invoice's own letter text — sanitised HTML, merge fields resolved. */
         public readonly string $intro = '',
         public readonly string $outro = '',
+        public readonly string $reason = '',
     ) {}
 
     /** @param array<string, mixed> $mergeData */
@@ -156,6 +157,7 @@ final class InvoiceDocument
                 : "Zu Rechnung {$invoiceNumber}".($invoiceDate === '' ? '' : " vom {$invoiceDate}"),
             intro: MergeFieldResolver::resolve(InlineHtmlSanitizer::letter($creditNote->intro) ?? '', $mergeData, escape: true),
             outro: MergeFieldResolver::resolve(InlineHtmlSanitizer::letter($creditNote->outro) ?? '', $mergeData, escape: true),
+            reason: trim((string) ($note['reason'] ?? '')),
         );
     }
 

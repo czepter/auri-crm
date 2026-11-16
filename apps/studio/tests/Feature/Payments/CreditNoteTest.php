@@ -195,6 +195,7 @@ it('renders the Gutschrift against the pinned template, with the reference line 
             expect($html)->toContain('Gutschrift GS-')
                 ->and($html)->toContain('Zu Rechnung '.$installment->invoice->number)
                 ->and($html)->toContain('Nachlass')
+                ->and($html)->toContain('<p>Grund: Nachlass</p>')
                 ->and($html)->not->toContain('{{');
 
             return '%PDF-1.4 fake';
