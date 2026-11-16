@@ -29,6 +29,7 @@ class MergeContacts
         'gallery_views.contact_id',
         'form_instance_files.contact_id',
         'invoices.contact_id',
+        'invoice_drafts.contact_id',
         'contract_signatures.contact_id',
         'dsgvo_requests.contact_id',
     ];
