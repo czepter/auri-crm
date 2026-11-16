@@ -192,6 +192,8 @@ class InvoiceController extends Controller
         SeedStarterTemplates $seed,
         StudioReadiness $readiness,
     ): Response {
+        self::authorizeProject($draft->case);
+
         return $this->create($request, $render, $seed, $readiness, $draft);
     }
 
@@ -206,7 +208,7 @@ class InvoiceController extends Controller
 
     public function updateDraft(Request $request, InvoiceDraft $draft): RedirectResponse
     {
-        self::authorizeProject(null);
+        self::authorizeProject($draft->case);
 
         $draft->update($this->draftAttributes($request));
 
@@ -215,7 +217,7 @@ class InvoiceController extends Controller
 
     public function destroyDraft(InvoiceDraft $draft): RedirectResponse
     {
-        self::authorizeProject(null);
+        self::authorizeProject($draft->case);
 
         $draft->delete();
 

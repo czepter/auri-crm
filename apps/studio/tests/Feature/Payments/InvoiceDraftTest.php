@@ -1,5 +1,7 @@
 <?php
 
+use App\Crm\Models\ClientCase;
+use App\Enums\Capability;
 use App\Enums\StaffRole;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
@@ -43,4 +45,18 @@ it('keeps a half-filled form as a draft without drawing a number, and drops it o
     ])->assertRedirect();
 
     expect(Invoice::count())->toBe(1)->and(InvoiceDraft::count())->toBe(0);
+});
+
+it('keeps a staff member out of a draft whose project they cannot see', function () {
+    $project = ClientCase::factory()->create();
+    $draft = InvoiceDraft::create(['case_id' => $project->id, 'payload' => []]);
+    $crew = staffMember(StaffRole::Contributor);
+    $crew->givePermissionTo(Capability::ManageContracts->value);
+    $staff = $this->actingAs($crew, 'staff');
+
+    $staff->get("/rechnungen/entwuerfe/{$draft->public_id}")->assertForbidden();
+    $staff->put("/rechnungen/entwuerfe/{$draft->public_id}", [])->assertForbidden();
+    $staff->delete("/rechnungen/entwuerfe/{$draft->public_id}")->assertForbidden();
+
+    expect(InvoiceDraft::count())->toBe(1);
 });
