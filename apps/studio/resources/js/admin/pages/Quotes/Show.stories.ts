@@ -34,3 +34,8 @@ export const Versendet: Story = {}
 export const Angenommen: Story = {
   args: { quotes: [quote], projectIsBooked: true },
 }
+
+/** Entwurf: gleicher Kopf wie auf der Anlegeseite. */
+export const Entwurf: Story = {
+  args: { quotes: [{ ...leadQuote, status: 'draft', statusLabel: 'Entwurf' }] },
+}
