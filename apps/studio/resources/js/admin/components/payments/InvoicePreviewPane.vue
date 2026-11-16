@@ -8,7 +8,7 @@ import { ChoiceGroup } from '@/ui/choice-group'
 
 // #480: the three things a client gets from one invoice — the PDF, the portal
 // page and the mail — each rendered by the server from the same draft.
-const props = defineProps<{ payload: Record<string, unknown> }>()
+const props = withDefaults(defineProps<{ payload: Record<string, unknown>; url?: string; portal?: boolean }>(), { url: '/rechnungen/vorschau', portal: true })
 
 type Mode = 'pdf' | 'portal' | 'mail'
 
@@ -26,7 +26,7 @@ const refresh = useDebounceFn(async () => {
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
 
   try {
-    const response = await fetch('/rechnungen/vorschau', {
+    const response = await fetch(props.url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, Accept: mode.value === 'portal' ? 'application/json' : 'text/html' },
       body: JSON.stringify({ ...props.payload, format: mode.value }),
@@ -70,24 +70,20 @@ watch(
         :model-value="mode"
         :options="[
           { value: 'pdf', label: $t('quotes.previewPdf') },
-          { value: 'portal', label: $t('quotes.previewPortal') },
+          ...(portal ? [{ value: 'portal', label: $t('quotes.previewPortal') }] : []),
           { value: 'mail', label: $t('invoicesCreate.previewMail') },
         ]"
-        variant="segmented"
         class="ml-2.5"
         @update:model-value="(value) => (mode = value as Mode)"
       />
 
-      <div v-if="mode === 'pdf'" class="ml-auto flex items-center gap-1.5">
-        <button
-          v-for="option in [{ key: 'fit', on: true, label: 'quotes.zoomFit' }, { key: 'full', on: false, label: 'quotes.zoomFull' }]"
-          :key="option.key"
-          class="cursor-pointer rounded-lg border-0 px-2.5 py-[5px] text-small leading-[1.3]"
-          :class="fit === option.on ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
-          type="button"
-          @click="fit = option.on"
-        >{{ $t(option.label) }}</button>
-      </div>
+      <ChoiceGroup
+        v-if="mode === 'pdf'"
+        :model-value="fit ? 'fit' : 'full'"
+        :options="[{ value: 'fit', label: $t('quotes.zoomFit') }, { value: 'full', label: $t('quotes.zoomFull') }]"
+        class="ml-auto"
+        @update:model-value="(value) => (fit = value === 'fit')"
+      />
       <span class="text-small leading-none" :class="[stale ? 'text-due' : 'text-faint', mode === 'pdf' ? 'ml-2.5' : 'ml-auto']">{{
         stale ? $t('quotes.previewStale') : $t('quotes.previewFresh')
       }}</span>

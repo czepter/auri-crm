@@ -17,6 +17,7 @@ use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceFigures;
 use App\Support\AuditLogger;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -94,7 +95,7 @@ class IssueInvoice
      * positions (#411), so it takes no free positions beside it.
      *
      * @param  list<array{title: string, description?: ?string, quantity?: int, unit_price?: ?int, discount_type?: ?string, discount_value?: ?int, vat_rate?: ?int, installment?: ?PaymentInstallment}>  $positions
-     * @param  array{intro?: ?string, outro?: ?string, discount_type?: ?string, discount_value?: ?int}  $attributes
+     * @param  array{issued_on?: ?string, intro?: ?string, outro?: ?string, discount_type?: ?string, discount_value?: ?int}  $attributes
      */
     public function positions(?Contact $contact, ?ClientCase $project, array $positions, ?string $dueOn, array $attributes = [], ?User $actor = null): Invoice
     {
@@ -179,6 +180,7 @@ class IssueInvoice
         // Ahead of the transaction: a number drawn for a document that cannot
         // be issued would leave a gap in the tenant's invoice sequence.
         $studio = StudioSettings::current()->profile();
+        $issuedOn = Arr::pull($attributes, 'issued_on');
 
         if (blank($studio['tax_number']) && blank($studio['vat_id'])) {
             throw ValidationException::withMessages(['invoice' => __('payments.taxIdentifierMissing')]);
@@ -190,11 +192,11 @@ class IssueInvoice
             ->orderBy('id')
             ->first();
 
-        $invoice = DB::transaction(function () use ($attributes, $attach, $template, $actor) {
+        $invoice = DB::transaction(function () use ($attributes, $issuedOn, $attach, $template, $actor) {
             $invoice = Invoice::create([
                 ...$attributes,
                 'number' => ($this->allocate)(documentType: DocumentType::Invoice)['number'],
-                'issued_at' => now(),
+                'issued_at' => $issuedOn === null ? now() : now()->setDateFrom($issuedOn),
                 'template_id' => $template?->id,
             ]);
 

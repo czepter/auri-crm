@@ -46,7 +46,7 @@ function submit() {
       <div class="min-w-0 flex-1">
         <PageHead kicker-href="/vorlagen?typ=dokumente" :kicker="`${$t('documentTemplates.title')} · ${template.typeLabel}`" :title="template.name">
           <Button as="a" class="ml-auto" href="/vorlagen?typ=dokumente" variant="ghost">{{ $t('common.cancel') }}</Button>
-          <Button variant="pill" type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
+          <Button variant="default" type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
         </PageHead>
 
         <div class="px-6 pt-7 pb-8">

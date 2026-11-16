@@ -1,24 +1,35 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import InvoiceTargetTypeahead from '@/admin/components/payments/InvoiceTargetTypeahead.vue'
+import InvoicePreviewPane from '@/admin/components/payments/InvoicePreviewPane.vue'
 import DocumentPaper from '@/admin/components/document/DocumentPaper.vue'
 import LetterField from '@/admin/components/quote/LetterField.vue'
 import QuotePositionsCard from '@/admin/components/quote/QuotePositionsCard.vue'
-import { buildQuotePayload, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
+import { buildQuotePayload, rowsFromInvoiceItems, type InvoiceItemPayload, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import InvoiceDataGate from '@/admin/pages/Settings/panes/InvoiceDataGate.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
-import { centsToEuros, formatEuros } from '@/lib/money'
+import { centsToEuros, formatDiscount, formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Rate = { id: string; label: string; amount: number; dueOn: string }
+type DraftPayload = {
+  contact?: { name: string; email: string; street: string; postcode: string; city: string }
+  issued_on?: string | null
+  due_on?: string | null
+  discount_type?: string | null
+  discount_value?: number | null
+  items?: InvoiceItemPayload[]
+  intro?: string | null
+  outro?: string | null
+}
 type QuoteLine = { id: string; title: string; description: string | null; quantity: number; unitPrice: number; vatRate: number | null }
 
 const props = defineProps<{
@@ -33,6 +44,7 @@ const props = defineProps<{
   studioSettings: App.Settings.Data.StudioSettingsData
   missingInvoiceData: string[]
   firstInvoice: boolean
+  draft: { id: string; payload: DraftPayload; contact: App.Crm.Data.ContactSuggestionData | null } | null
 }>()
 useLiveProps([])
 
@@ -41,32 +53,43 @@ useLiveProps([])
 const gateOpen = ref(props.missingInvoiceData.length > 0)
 
 const project = ref(props.project)
-const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
-const newContact = ref<{ name: string; email: string; street: string; postcode: string; city: string } | null>(null)
-const inDays = (days: number) => {
-  const date = new Date()
+const saved = props.draft?.payload
+const contact = ref(props.draft?.contact ?? null)
+const newContact = ref(saved?.contact ?? null)
+const isoDate = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+const issuedOn = ref(saved?.issued_on ?? isoDate(new Date()))
+const inDays = (days: number, from = issuedOn.value) => {
+  const date = new Date(`${from || isoDate(new Date())}T00:00`)
   date.setDate(date.getDate() + days)
 
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  return isoDate(date)
 }
-const dueOn = ref(inDays(props.studioSettings.paymentTermDays))
+const dueOn = ref(saved ? saved.due_on ?? '' : inDays(props.studioSettings.paymentTermDays))
 const TERMS = [7, 14, 30]
 const term = computed({
   get: () => String(TERMS.find((days) => inDays(days) === dueOn.value) ?? ''),
   set: (days: string) => { dueOn.value = inDays(Number(days)) },
 })
-const texts = ref({ intro: props.intro, outro: '' })
+
+watch(issuedOn, (value, previous) => {
+  if (!value || !previous || !dueOn.value) return
+
+  const days = Math.round((Date.parse(dueOn.value) - Date.parse(previous)) / 86_400_000)
+  dueOn.value = inDays(days, value)
+})
+const texts = ref({ intro: saved ? saved.intro ?? '' : props.intro, outro: saved?.outro ?? '' })
+const previewing = ref(false)
 
 // The quote's own draft shape, so the quote's builder writes the positions;
 // what only a quote has stays at its empty value.
 const draft = ref<QuoteDraft>({
   pricingMode: 'classic',
   validUntil: '',
-  discount: '',
+  discount: formatDiscount(saved?.discount_type ?? null, saved?.discount_value ?? null),
   discountHidden: false,
   intro: '',
   outro: '',
-  rows: [],
+  rows: rowsFromInvoiceItems(saved?.items ?? []),
   slider: { hourlyRate: '', minHours: null, maxHours: null, imagesPerHour: null, hours: null, stages: [] },
   recipientContact: null,
   recipientStreet: null,
@@ -131,6 +154,7 @@ const payload = computed(() => {
     contact_id: contact.value?.id,
     contact: newContact.value ?? undefined,
     case_id: project.value?.id,
+    issued_on: issuedOn.value || null,
     due_on: dueOn.value || null,
     discount_type: quote.discount_type,
     discount_value: quote.discount_value,
@@ -144,38 +168,74 @@ const errors = computed(() => form.errors as Record<string, string | undefined>)
 const hasFreeRows = computed(() => draft.value.rows.some((row) => !row.installmentId))
 
 function submit() {
-  form.transform(() => payload.value).post('/rechnungen')
+  form.transform(() => ({ ...payload.value, draft_id: props.draft?.id })).post('/rechnungen')
+}
+
+function saveDraft() {
+  const request = form.transform(() => payload.value)
+
+  if (props.draft) request.put(`/rechnungen/entwuerfe/${props.draft.id}`)
+  else request.post('/rechnungen/entwuerfe')
 }
 
 </script>
 
 <template>
   <AdminLayout active="rechnungen">
-    <FormShell
-      :title="$t('invoicesCreate.title')" wide
-    >
-      <DocumentPaper :studio="studioSettings.displayName ?? ''" :kind="$t('invoicesCreate.paperKind')" :date="dayWithWeekday(inDays(0))">
-        <form class="grid content-start gap-5" @submit.prevent="submit">
-          <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
-            <div v-if="newContact" class="grid grid-cols-2 gap-3">
-              <Input :aria-label="$t('invoicesCreate.name')" v-model="newContact.name" :placeholder="$t('invoicesCreate.name')" required />
-              <Input :aria-label="$t('invoicesCreate.email')" v-model="newContact.email" type="email" :placeholder="$t('invoicesCreate.email')" />
-              <Input :aria-label="$t('invoicesCreate.street')" v-model="newContact.street" class="col-span-2" :placeholder="$t('invoicesCreate.street')" />
-              <Input :aria-label="$t('invoicesCreate.postcode')" v-model="newContact.postcode" :placeholder="$t('invoicesCreate.postcode')" />
-              <Input :aria-label="$t('invoicesCreate.city')" v-model="newContact.city" :placeholder="$t('invoicesCreate.city')" />
-              <Button class="col-span-2 justify-self-start" type="button" variant="pill-muted" @click="newContact = null">
-                {{ $t('common.edit') }}
-              </Button>
+    <FormShell :title="$t(props.draft ? 'invoicesCreate.draftTitle' : 'invoicesCreate.title')" wide>
+      <template #head>
+        <ChoiceGroup
+          class="ml-auto"
+          :model-value="previewing ? 'preview' : 'edit'"
+          :options="[{ value: 'edit', label: $t('common.edit') }, { value: 'preview', label: $t('common.preview') }]"
+          @update:model-value="(value) => (previewing = value === 'preview')"
+        />
+        <Button type="button" variant="outline" :disabled="form.processing" @click="saveDraft">
+          {{ $t('invoicesCreate.saveDraft') }}
+        </Button>
+        <Button type="submit" form="invoice" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
+          {{ $t('invoicesCreate.submit') }}
+        </Button>
+      </template>
+
+      <InvoicePreviewPane v-if="previewing" class="mx-auto max-w-[900px]" :payload="payload" />
+
+      <DocumentPaper v-show="!previewing" :studio="studioSettings.displayName ?? ''" :kind="$t('invoicesCreate.paperKind')" :date="dayWithWeekday(issuedOn || null)">
+        <form id="invoice" class="grid content-start gap-5" @submit.prevent="submit">
+          <div class="grid grid-cols-[minmax(0,1fr)_260px] items-start gap-8 max-[640px]:grid-cols-1 max-[640px]:gap-5">
+            <Field :label="$t('invoicesCreate.recipient')" :error="errors['contact.name'] ?? errors.contact_id">
+              <div v-if="newContact" class="grid grid-cols-2 gap-3">
+                <Input :aria-label="$t('invoicesCreate.name')" v-model="newContact.name" :placeholder="$t('invoicesCreate.name')" required />
+                <Input :aria-label="$t('invoicesCreate.email')" v-model="newContact.email" type="email" :placeholder="$t('invoicesCreate.email')" />
+                <Input :aria-label="$t('invoicesCreate.street')" v-model="newContact.street" class="col-span-2" :placeholder="$t('invoicesCreate.street')" />
+                <Input :aria-label="$t('invoicesCreate.postcode')" v-model="newContact.postcode" :placeholder="$t('invoicesCreate.postcode')" />
+                <Input :aria-label="$t('invoicesCreate.city')" v-model="newContact.city" :placeholder="$t('invoicesCreate.city')" />
+                <Button class="col-span-2 justify-self-start" type="button" variant="secondary" @click="newContact = null">
+                  {{ $t('common.edit') }}
+                </Button>
+              </div>
+              <InvoiceTargetTypeahead
+                v-else
+                v-model:project="project"
+                v-model:contact="contact"
+                :rates="rates"
+                :billable="billable"
+                @create-new="(term) => (newContact = { name: term, email: '', street: '', postcode: '', city: '' })"
+              />
+            </Field>
+
+            <div class="grid gap-2">
+              <Field v-slot="{ id }" :label="$t('payments.invoiceDate')" :error="errors.issued_on">
+                <DatePicker :id="id" v-model="issuedOn" required />
+              </Field>
+              <template v-if="hasFreeRows || !draft.rows.length">
+                <Field v-slot="{ id }" :label="$t('payments.dueOn')" :error="errors.due_on">
+                  <DatePicker :id="id" v-model="dueOn" required />
+                </Field>
+                <ChoiceGroup v-model="term" :options="TERMS.map((days) => ({ value: String(days), label: $t('invoicesCreate.termDays', { days }) }))" />
+              </template>
             </div>
-            <InvoiceTargetTypeahead
-              v-else
-              v-model:project="project"
-              v-model:contact="contact"
-              :rates="rates"
-              :billable="billable"
-              @create-new="(term) => (newContact = { name: term, email: '', street: '', postcode: '', city: '' })"
-            />
-          </Field>
+          </div>
 
           <Field v-if="openRates.length" :label="$t('invoicesCreate.rates')">
             <div class="flex flex-wrap gap-1.5">
@@ -185,9 +245,13 @@ function submit() {
             </div>
           </Field>
 
-          <Button v-if="openLines.length" class="self-start" variant="outline" type="button" @click="takeLines">
+          <Button v-if="openLines.length" class="justify-self-start" variant="outline" type="button" @click="takeLines">
             {{ $t('invoicesCreate.fromQuote', openLines.length) }}
           </Button>
+
+          <Field :label="$t('quotes.intro')">
+            <LetterField v-model="texts.intro" bare />
+          </Field>
 
           <Field :label="$t('quotes.items')" :error="errors.items">
             <QuotePositionsCard
@@ -198,28 +262,14 @@ function submit() {
               :packages="packages"
               :catalog-items="catalogItems"
               :vat-settings="vatSettings"
-            />
-          </Field>
-
-          <Field v-if="hasFreeRows" v-slot="{ id }" class="max-w-[220px]" :label="$t('payments.dueOn')" :error="errors.due_on">
-            <DatePicker :id="id" v-model="dueOn" required />
-          </Field>
-          <ChoiceGroup v-if="hasFreeRows" v-model="term" :options="TERMS.map((days) => ({ value: String(days), label: $t('invoicesCreate.termDays', { days }) }))" />
-
-          <Field :label="$t('quotes.intro')">
-            <LetterField v-model="texts.intro" bare />
-          </Field>
-          <Field :label="$t('quotes.outro')">
-            <LetterField v-model="texts.outro" />
+            >
+              <Field :label="$t('quotes.outro')">
+                <LetterField v-model="texts.outro" />
+              </Field>
+            </QuotePositionsCard>
           </Field>
 
           <p v-if="errors.invoice" class="text-small text-destructive">{{ errors.invoice }}</p>
-
-          <div>
-            <Button type="submit" :disabled="!draft.rows.length || (!contact && !newContact && !project) || form.processing">
-              {{ $t('invoicesCreate.submit') }}
-            </Button>
-          </div>
         </form>
       </DocumentPaper>
     </FormShell>

@@ -6,11 +6,13 @@ use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 /**
- * A row matched by public id and type is updated in place, so the answers and
- * files hanging off it survive a save. Anything else is a new question, and an
- * existing field no row matched is removed with its answers and file bytes.
+ * A row matched by public id is updated in place, so the answers and files
+ * hanging off it survive a save; its type may change only while it is
+ * unanswered. A row without a match is a new question, and an existing field
+ * no row matched is removed with its answers and file bytes.
  */
 class SyncFormInstanceFields
 {
@@ -36,7 +38,11 @@ class SyncFormInstanceFields
 
                 $field = $existing->get($row['id'] ?? '');
 
-                if ($field instanceof FormInstanceField && $field->type->value === $row['type']) {
+                if ($field instanceof FormInstanceField) {
+                    if ($field->type->value !== $row['type'] && ($field->answers()->exists() || $field->files()->exists())) {
+                        throw ValidationException::withMessages(["fields.{$index}.type" => __('validation.form_field_type_locked')]);
+                    }
+
                     $field->update($attributes);
                     $kept[] = $field->id;
                 } else {

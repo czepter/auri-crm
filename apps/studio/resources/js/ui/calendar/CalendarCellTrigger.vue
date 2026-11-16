@@ -20,7 +20,7 @@ const forwardedProps = useForwardProps(delegatedProps)
     data-slot="calendar-cell-trigger"
     :class="cn(
       buttonVariants({ variant: 'ghost' }),
-      'size-8 justify-center rounded-md p-0 text-ui font-normal text-foreground hover:bg-muted hover:text-foreground',
+      'size-8 justify-center rounded-[var(--r-sm)] p-0 text-ui font-normal text-foreground hover:bg-muted hover:text-foreground',
       // today is named, not filled: a fill here reads as a selection
       '[&[data-today]:not([data-selected])]:font-semibold [&[data-today]:not([data-selected])]:text-ring',
       // Selected

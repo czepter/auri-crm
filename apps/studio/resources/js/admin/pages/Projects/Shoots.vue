@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
-import { ChevronDown } from 'lucide-vue-next'
+import { ChevronDown, Ellipsis } from 'lucide-vue-next'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import ShootAdvance from '@/admin/components/crm/ShootAdvance.vue'
@@ -10,6 +10,7 @@ import { chipClass, filterShoots, shootDays, type ShootFilter } from '@/admin/li
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
+import { ChoiceGroup } from '@/ui/choice-group'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
@@ -216,7 +217,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
               </DialogBody>
 
               <DialogFooter>
-                <Button type="submit" form="shoot-create-form" :disabled="form.processing">
+                <Button class="ml-auto" type="submit" form="shoot-create-form" :disabled="form.processing">
                   {{ $t('common.save') }}
                 </Button>
                 <DialogClose as-child>
@@ -227,18 +228,11 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
           </Dialog>
         </template>
 
-        <div class="mb-3 inline-flex gap-0.5 rounded-lg bg-sunk p-[3px]">
-          <button
-            v-for="tab in filters"
-            :key="tab.key"
-            type="button"
-            class="min-h-10 rounded-[var(--r-sm)] px-3 text-small leading-none text-ink-2"
-            :class="filter === tab.key && 'bg-paper font-semibold text-foreground'"
-            @click="filter = tab.key"
-          >
-            {{ $t(tab.label) }} {{ tab.count }}
-          </button>
-        </div>
+        <ChoiceGroup
+          v-model="filter"
+          class="mb-3 w-fit"
+          :options="filters.map((tab) => ({ value: tab.key, label: `${$t(tab.label)} ${tab.count}` }))"
+        />
 
         <div class="flex flex-col gap-3">
           <section v-for="day in days" :key="day.key" class="rounded-[var(--r)] bg-paper shadow-card">
@@ -279,13 +273,10 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
                   <ShootAdvance :shoot="shoot" />
 
                   <DropdownMenu>
-                    <DropdownMenuTrigger
-                      class="flex size-10 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
-                      :aria-label="$t('project.more')"
-                    >
-                      <svg class="size-4 fill-current" viewBox="0 0 24 24">
-                        <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
-                      </svg>
+                    <DropdownMenuTrigger as-child>
+                      <Button variant="secondary" size="icon" type="button" class="max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
+                        <Ellipsis class="size-4" />
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-[208px]">
                       <DropdownMenuItem v-if="!shoot.isPrimary" @select="designatePrimary(shoot)">
@@ -377,7 +368,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
             <DialogFooter>
               <!-- the reason is not optional: it is what the row and the client's
                    portal show in place of the shoot afterwards -->
-              <Button type="submit" form="shoot-cancel-form" tone="destructive" :disabled="!cancelReason.trim()">
+              <Button class="ml-auto" type="submit" form="shoot-cancel-form" tone="destructive" :disabled="!cancelReason.trim()">
                 {{ $t('project.cancel') }}
               </Button>
               <DialogClose as-child>
@@ -429,7 +420,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
 
             <DialogFooter>
               <DialogClose as-child>
-                <Button type="button">{{ $t('common.close') }}</Button>
+                <Button class="ml-auto" type="button">{{ $t('common.close') }}</Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>

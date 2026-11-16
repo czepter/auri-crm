@@ -7,6 +7,7 @@ import { usePageCommands } from '@/admin/lib/paletteCommands'
 import { useI18n } from 'vue-i18n'
 import StageTrack from '@/admin/components/crm/StageTrack.vue'
 import SettlePlanDialog from '@/admin/components/payments/SettlePlanDialog.vue'
+import { Ellipsis } from 'lucide-vue-next'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -122,10 +123,10 @@ usePageCommands(() => {
             <slot name="stage" />
 
             <template v-if="!$slots.stage && header.nextAction">
-              <Button v-if="header.nextAction.href" variant="pill" as-child class="max-[640px]:min-h-11">
+              <Button v-if="header.nextAction.href" variant="default" as-child class="max-[640px]:min-h-11">
                 <Link :href="header.nextAction.href">{{ $t(header.nextAction.label) }}</Link>
               </Button>
-              <Button v-else variant="pill" type="button" class="max-[640px]:min-h-11" @click="router.post(header.nextAction.post!, {}, { preserveScroll: true })">
+              <Button v-else variant="default" type="button" class="max-[640px]:min-h-11" @click="router.post(header.nextAction.post!, {}, { preserveScroll: true })">
                 {{ $t(header.nextAction.label) }}
               </Button>
             </template>
@@ -133,7 +134,7 @@ usePageCommands(() => {
             <!-- A page with a stage menu books through it. -->
             <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.stage" v-model:open="booking">
               <AlertDialogTrigger as-child>
-                <Button :variant="$slots.actions || header.nextAction || active !== 'overview' ? 'outline' : 'pill'" type="button">{{ $t('project.book') }}</Button>
+                <Button :variant="$slots.actions || header.nextAction || active !== 'overview' ? 'outline' : 'default'" type="button">{{ $t('project.book') }}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -152,13 +153,10 @@ usePageCommands(() => {
             </div>
 
             <DropdownMenu v-if="$slots.menu || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
-              <DropdownMenuTrigger
-                class="flex size-10 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2 max-[640px]:size-11"
-                :aria-label="$t('project.more')"
-              >
-                <svg class="size-4 fill-current" viewBox="0 0 24 24">
-                  <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
-                </svg>
+              <DropdownMenuTrigger as-child>
+                <Button variant="secondary" size="icon" type="button" class="max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
+                  <Ellipsis class="size-4" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-[208px]">
                 <slot name="menu" />
@@ -187,20 +185,20 @@ usePageCommands(() => {
         <!-- The track scrolls once the tabs outgrow the column; a local
              background paints its whole scroll width, not only what shows. -->
         <div class="mt-4 max-[640px]:sticky max-[640px]:top-0 max-[640px]:z-[5] max-[640px]:-mx-4 max-[640px]:mt-2 max-[640px]:bg-background max-[640px]:px-4 max-[640px]:py-2">
-        <nav ref="tabNav" class="relative inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg p-[3px] text-small font-medium [background:linear-gradient(var(--sunk),var(--sunk))_local] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
+        <nav ref="tabNav" class="relative flex max-w-full overflow-x-auto text-small font-medium shadow-[inset_0_-1px_0_var(--rule)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
           <SlidingIndicator
             :rect="tabRect"
             :animate="tabAnimate"
-            class="rounded-[var(--r-sm)] bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_-2px_0_var(--ink)]"
+            class="[background:linear-gradient(var(--ink),var(--ink))_bottom/100%_2px_no-repeat]"
           />
           <Link
             v-for="tab in header.tabs"
             :key="tab.key"
             :href="tab.href"
-            class="relative inline-flex min-h-10 flex-none items-center rounded-[var(--r-sm)] px-3 whitespace-nowrap no-underline"
+            class="relative inline-flex min-h-10 flex-none items-center px-3 whitespace-nowrap no-underline"
             :class="
               tab.key === active
-                ? ['font-semibold text-foreground', !tabRect && 'bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_-2px_0_var(--ink)]']
+                ? ['font-semibold text-foreground', !tabRect && '[background:linear-gradient(var(--ink),var(--ink))_bottom/100%_2px_no-repeat]']
                 : 'text-ink-2 hover:text-foreground'
             "
             :aria-current="tab.key === active ? 'page' : undefined"
@@ -212,17 +210,17 @@ usePageCommands(() => {
 
         <nav
           v-if="subTabs.length"
-          class="flex gap-[18px] pt-3 text-small"
+          class="mt-1 flex text-small font-medium shadow-[inset_0_-1px_0_var(--rule)]"
         >
           <Link
             v-for="entry in subTabs"
             :key="entry.key"
             :href="entry.href"
-            class="whitespace-nowrap no-underline"
-            :class="entry.key === child ? 'font-semibold text-foreground underline underline-offset-4' : 'text-ink-2 hover:text-foreground'"
+            class="inline-flex min-h-10 items-center px-3 whitespace-nowrap no-underline"
+            :class="entry.key === child ? 'font-semibold text-foreground [background:linear-gradient(var(--ink),var(--ink))_bottom/100%_2px_no-repeat]' : 'text-ink-2 hover:text-foreground'"
             :aria-current="entry.key === child ? 'page' : undefined"
           >
-            {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 text-small">{{ entry.count }}</span>
+            {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 font-medium text-faint">{{ entry.count }}</span>
           </Link>
         </nav>
       </div>

@@ -50,7 +50,7 @@ export const Stillstand: Story = {
           </AlertDescription>
         </div>
         <div class="ml-auto flex flex-none items-center gap-2">
-          <Button variant="pill" type="button">Shooting gelaufen</Button>
+          <Button variant="default" type="button">Shooting gelaufen</Button>
         </div>
       </Alert>
     `,

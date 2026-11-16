@@ -72,7 +72,7 @@ function cancel() {
                             href="#"
                             @click.stop.prevent="cancel"
                         >{{ $t('common.cancel') }}</a>
-                        <Button variant="pill" type="button" @click.stop="emit('save')">
+                        <Button variant="default" type="button" @click.stop="emit('save')">
                             {{ $t('common.save') }}
                         </Button>
                     </template>

@@ -65,10 +65,10 @@ function add() {
             <DatePicker :id="`ends-${closure.id}`" v-model="rowForms[closure.id].ends_on" size="sm" class="w-36" />
 
             <div class="flex w-[150px] items-center justify-end gap-2">
-              <Button v-if="rowForms[closure.id].isDirty" variant="pill" type="submit" :disabled="rowForms[closure.id].processing">
+              <Button v-if="rowForms[closure.id].isDirty" variant="default" type="submit" :disabled="rowForms[closure.id].processing">
                 {{ $t('settings.numberingSave') }}
               </Button>
-              <Button variant="pill-muted" type="button" @click="destroy(closure.id)">
+              <Button variant="secondary" type="button" @click="destroy(closure.id)">
                 {{ $t('settings.closureDelete') }}
               </Button>
             </div>
@@ -116,7 +116,7 @@ function add() {
             <p v-if="newForm.errors.message" class="text-small leading-[1.45] text-destructive">{{ newForm.errors.message }}</p>
           </div>
           <div>
-            <Button type="submit" :disabled="newForm.processing">{{ $t('settings.closureAdd') }}</Button>
+            <Button class="ml-auto" type="submit" :disabled="newForm.processing">{{ $t('settings.closureAdd') }}</Button>
           </div>
         </form>
       </div>

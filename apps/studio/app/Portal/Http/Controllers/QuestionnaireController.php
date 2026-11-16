@@ -37,6 +37,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * otherwise, in both cases, same rule as everywhere on this surface: a
  * studio's internal checklist lives on the same table and is nobody else's
  * business.
+ *
+ * A closed questionnaire (form_instances.closed_at) stays readable but takes
+ * no further answers or files from the client; staff can still correct it.
  */
 class QuestionnaireController extends Controller
 {
@@ -53,6 +56,7 @@ class QuestionnaireController extends Controller
             'questionnaire' => [
                 'id' => $instance->public_id,
                 'name' => $instance->name,
+                'closed' => $instance->isClosed(),
                 'fields' => $instance->fields->map(FormInstanceFieldData::fromModel(...))->all(),
             ],
         ]);
@@ -68,6 +72,7 @@ class QuestionnaireController extends Controller
     {
         $contact = auth('portal')->user();
         $instance = $this->find($case, $questionnaire);
+        abort_if($instance->isClosed(), 403);
 
         $answers = $request->validate([
             'answers' => ['array'],
@@ -134,6 +139,7 @@ class QuestionnaireController extends Controller
     {
         $contact = auth('portal')->user();
         $instance = $this->find($case, $questionnaire);
+        abort_if($instance->isClosed(), 403);
 
         $field = $instance->fields
             ->firstWhere('public_id', $request->input('field'));
@@ -161,6 +167,7 @@ class QuestionnaireController extends Controller
     {
         $contact = auth('portal')->user();
         $instance = $this->find($case, $questionnaire);
+        abort_if($instance->isClosed(), 403);
 
         $row = FormInstanceFile::query()
             ->where('public_id', $file)

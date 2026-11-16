@@ -456,3 +456,28 @@ it('bills lines of the accepted quote and offers only those no invoice carries y
         'items' => [['title' => 'Fremd', 'quantity' => 1, 'unit_price' => 100, 'vat_rate' => 1900, 'quote_item_id' => $stranger->public_id]],
     ])->assertNotFound();
 });
+
+it('takes an invoice date no earlier than the latest invoice and not in the future', function () {
+    Storage::fake('local');
+    Bus::fake();
+
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+    $body = fn (string $issuedOn) => [
+        'contact' => ['name' => 'Jonas Gast'],
+        'due_on' => '2026-12-01',
+        'issued_on' => $issuedOn,
+        'items' => [['title' => 'Abzüge', 'quantity' => 1, 'unit_price' => 2_000]],
+    ];
+
+    $this->travelTo('2026-11-10 09:00:00');
+    $admin->post('/rechnungen', $body('2026-11-10'))->assertRedirect();
+
+    $this->travelTo('2026-11-16 12:00:00');
+    $admin->post('/rechnungen', $body('2026-11-09'))->assertSessionHasErrors('issued_on');
+    $admin->post('/rechnungen', $body('2026-11-17'))->assertSessionHasErrors('issued_on');
+    expect(Invoice::count())->toBe(1);
+
+    $admin->post('/rechnungen', $body('2026-11-12'))->assertSessionHasNoErrors();
+
+    expect(Invoice::orderByDesc('id')->first()->issued_at->format('Y-m-d H:i'))->toBe('2026-11-12 12:00');
+});

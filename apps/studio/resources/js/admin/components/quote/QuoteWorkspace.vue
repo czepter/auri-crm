@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
 import QuotePreviewPane from '@/admin/components/quote/QuotePreviewPane.vue'
 import Card from '@/ui/page/Card.vue'
 import { PreviewOverlay } from '@/ui/preview-overlay'
-import { debounced } from '@/admin/lib/autosave'
+import { debounced, type SaveState } from '@/admin/lib/autosave'
 import { buildQuotePayload, type QuoteContact, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import { centsToEuros, eurosToCents, formatDiscount, formatEuros, formatPercent } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
@@ -44,6 +44,8 @@ const props = withDefaults(
 )
 
 const { t } = useI18n()
+
+const previewing = defineModel<boolean>('previewing', { default: false })
 
 function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
   return {
@@ -113,7 +115,11 @@ watch(
 // Neuladen weg.
 const saveErrors = reactive<Record<string, string | null>>({})
 
-const save = debounced((quoteId: string) => {
+const state = ref<SaveState>('saved')
+const pending = new Set<string>()
+
+function flush(quoteId: string) {
+  pending.delete(quoteId)
   const payload = buildQuotePayload(drafts[quoteId], { canManageCatalog: props.canManageCatalog })
 
   router.patch(`/angebote/${quoteId}`, payload, {
@@ -122,10 +128,32 @@ const save = debounced((quoteId: string) => {
     preserveScroll: true,
     preserveState: true,
     only: props.only,
-    onSuccess: () => (saveErrors[quoteId] = null),
-    onError: (errors) => (saveErrors[quoteId] = Object.values(errors)[0] ?? null),
+    onStart: () => (state.value = 'saving'),
+    onSuccess: () => {
+      saveErrors[quoteId] = null
+      state.value = 'saved'
+    },
+    onError: (errors) => {
+      saveErrors[quoteId] = Object.values(errors)[0] ?? null
+      state.value = 'error'
+    },
   })
-}, 600)
+}
+
+const autosave = debounced(flush, 600)
+
+function save(quoteId: string) {
+  pending.add(quoteId)
+  state.value = 'dirty'
+  autosave(quoteId)
+}
+
+function saveNow() {
+  autosave.cancel()
+  pending.forEach(flush)
+}
+
+defineExpose({ state, saveNow })
 
 function create() {
   router.post(`/auftraege/${props.projectId}/angebote`, {}, { preserveScroll: true })
@@ -212,8 +240,11 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         :catalog-items="catalogItems"
         :contacts="contacts"
         :vat-settings="vatSettings"
+        :previewing="previewing"
         @change="save(quote.id)"
-      />
+      >
+        <template v-if="quote.id === quotes[0].id" #top><slot name="top" /></template>
+      </QuoteEditor>
 
       <p v-if="saveErrors[quote.id]" class="mt-2 text-small text-destructive">{{ saveErrors[quote.id] }}</p>
     </section>

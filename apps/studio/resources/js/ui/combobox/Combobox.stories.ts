@@ -75,6 +75,28 @@ export const MitGruppen: Story = {
   }),
 }
 
+/** Ein getippter Wert, den es noch nicht gibt, steht als letzte Zeile zum Anlegen bereit. */
+export const MitAnlegen: Story = {
+  args: { defaultOpen: true },
+  render: (args) => ({
+    components: parts,
+    setup: () => ({ args }),
+    template: `
+      <div style="width: 280px;">
+        <Combobox v-bind="args" ignore-filter>
+          <ComboboxAnchor>
+            <ComboboxInput model-value="Hoch" />
+          </ComboboxAnchor>
+          <ComboboxContent>
+            <ComboboxItem value="Hochzeit">Hochzeit</ComboboxItem>
+            <ComboboxItem value="Hoch" create>„Hoch“ anlegen</ComboboxItem>
+          </ComboboxContent>
+        </Combobox>
+      </div>
+    `,
+  }),
+}
+
 export const AlleZustaende: Story = {
   parameters: { layout: 'padded' },
   render: () => ({

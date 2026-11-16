@@ -749,6 +749,8 @@ Route::middleware('audience:staff')->group(function () {
         // own doc comment.
         Route::get('/auftraege/{case}/frageboegen', [CaseController::class, 'forms'])
             ->name('projects.forms');
+        Route::get('/auftraege/{case}/rechnungen', [CaseController::class, 'invoices'])
+            ->name('projects.invoices');
         Route::post('/auftraege/{case}/frageboegen', [FormInstanceController::class, 'store'])
             ->name('form-instances.store');
         Route::patch('/frageboegen/{formInstance}', [FormInstanceController::class, 'update'])
@@ -761,6 +763,8 @@ Route::middleware('audience:staff')->group(function () {
         // checklist on the same table should.
         Route::post('/frageboegen/{formInstance}/freigeben', [FormInstanceController::class, 'share'])
             ->name('form-instances.share');
+        Route::post('/frageboegen/{formInstance}/abschliessen', [FormInstanceController::class, 'close'])
+            ->name('form-instances.close');
 
         Route::patch('/frageboegen-felder/{formInstanceField}/antwort', [FormInstanceController::class, 'answer'])
             ->name('form-instance-fields.answer');
@@ -964,6 +968,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/rechnungen/neu', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/rechnungen', [InvoiceController::class, 'store'])->name('invoices.store');
         Route::post('/rechnungen/vorschau', [InvoiceController::class, 'preview'])->name('invoices.preview');
+        Route::post('/rechnungen/entwuerfe', [InvoiceController::class, 'storeDraft'])->name('invoice-drafts.store');
+        Route::get('/rechnungen/entwuerfe/{draft}', [InvoiceController::class, 'showDraft'])->name('invoice-drafts.show');
+        Route::put('/rechnungen/entwuerfe/{draft}', [InvoiceController::class, 'updateDraft'])->name('invoice-drafts.update');
+        Route::delete('/rechnungen/entwuerfe/{draft}', [InvoiceController::class, 'destroyDraft'])->name('invoice-drafts.destroy');
         Route::get('/rechnungen/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('/rechnungen/{invoice}/pdf', [InvoiceController::class, 'download'])->name('invoices.download');
 
@@ -976,6 +984,9 @@ Route::middleware('audience:staff')->group(function () {
         // already received gets instead.
         Route::post('/rechnungen/{invoice}/storno', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
         Route::post('/rechnungen/{invoice}/gutschrift', [InvoiceController::class, 'creditNote'])->name('invoices.credit-note');
+        Route::put('/rechnungen/{invoice}/gutschrift/entwurf', [InvoiceController::class, 'saveCreditNoteDraft'])->name('invoices.credit-note-draft.save');
+        Route::delete('/rechnungen/{invoice}/gutschrift/entwurf', [InvoiceController::class, 'destroyCreditNoteDraft'])->name('invoices.credit-note-draft.destroy');
+        Route::post('/rechnungen/{invoice}/gutschrift/vorschau', [InvoiceController::class, 'creditNotePreview'])->name('invoices.credit-note.preview');
 
         // Die Gutschriften des ganzen Buchs. Eine Gutschrift haengt an ihrer
         // Rechnung, die Frage nach allen stellt aber der Jahresabschluss.

@@ -171,7 +171,7 @@ class CrmReadController extends Controller
     /**
      * @param  class-string<Data>  $dataClass  Must expose a static fromModel().
      */
-    private function page(Builder $query, Request $request, string $dataClass): JsonResponse
+    public static function page(Builder $query, Request $request, string $dataClass): JsonResponse
     {
         $filters = $request->validate([
             'since' => ['sometimes', 'date'],

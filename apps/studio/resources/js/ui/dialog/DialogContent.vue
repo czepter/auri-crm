@@ -45,8 +45,8 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       <DialogClose
         v-if="!hideClose"
         :class="cn(
-          buttonVariants({ variant: 'ghost' }),
-          'absolute right-[var(--s4)] top-[var(--s4)] p-0 [&_svg]:size-[15px] [&_svg]:opacity-100',
+          buttonVariants({ variant: 'ghost', size: 'icon' }),
+          'absolute right-[var(--s4)] top-[var(--s4)] [&_svg]:size-[15px] [&_svg]:opacity-100',
         )"
       >
         <X />

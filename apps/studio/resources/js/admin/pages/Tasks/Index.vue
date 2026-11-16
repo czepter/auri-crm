@@ -14,6 +14,8 @@ import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import StudioTaskCreateDialog from '@/admin/components/crm/StudioTaskCreateDialog.vue'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { ChoiceGroup } from '@/ui/choice-group'
 import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -111,19 +113,11 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
         </PageHead>
 
         <div class="px-6 pt-4 pb-8">
-          <div class="mb-4 inline-flex gap-0.5 rounded-lg bg-sunk p-[3px] text-small font-medium">
-            <button
-              v-for="key in TABS"
-              :key="key"
-              class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent px-2.5 py-1 leading-[1.4]"
-              :class="tab === key ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_0_0_1px_var(--faint)]' : 'text-ink-2 hover:text-foreground'"
-              type="button"
-              @click="tab = key"
-            >
-              {{ $t(`tasks.tab.${key}`) }}
-              <span class="tabular-nums text-ink-2">{{ count(key) }}</span>
-            </button>
-          </div>
+          <ChoiceGroup
+            v-model="tab"
+            class="mb-4 w-fit"
+            :options="TABS.map((key) => ({ value: key, label: `${$t(`tasks.tab.${key}`)} ${count(key)}` }))"
+          />
 
           <Empty v-if="shown.length === 0" :text="$t('tasks.empty')" />
 
@@ -133,12 +127,10 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
               :key="task.id"
               class="flex items-center gap-4 border-b border-rule px-5 py-3.5 last:border-b-0"
             >
-              <button
-                class="size-[15px] flex-none rounded-[5px]"
-                :class="task.isDone ? 'bg-ok-bg' : 'bg-sunk-2'"
-                type="button"
+              <Checkbox
+                :model-value="task.isDone"
                 :aria-label="$t('project.taskComplete')"
-                @click="complete(task)"
+                @update:model-value="complete(task)"
               />
 
               <span class="min-w-0 flex-1">
@@ -246,7 +238,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
         </DialogBody>
 
         <DialogFooter>
-          <Button type="submit" form="task-edit-form" :disabled="!form.isDirty || !form.title || form.processing">
+          <Button class="ml-auto" type="submit" form="task-edit-form" :disabled="!form.isDirty || !form.title || form.processing">
             {{ $t('common.save') }}
           </Button>
           <Button variant="outline" type="button" :disabled="selected.isBlocked && !selected.isDone" @click="complete(selected)">

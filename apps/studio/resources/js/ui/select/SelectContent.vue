@@ -24,10 +24,10 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       data-slot="select-content"
       v-bind="forwarded"
       :class="cn(
-        'relative z-50 max-h-(--reka-select-content-available-height) min-w-32 overflow-hidden',
+        'relative z-50 max-h-(--reka-select-content-available-height) overflow-hidden',
         'rounded-[6px] border border-line-hover bg-background p-1 font-sans text-foreground',
         'shadow-[0_8px_24px_rgb(20_16_14_/_0.10)]',
-        position === 'popper' && 'w-full min-w-(--reka-select-trigger-width)',
+        position === 'popper' ? 'w-full min-w-(--reka-select-trigger-width)' : 'min-w-32',
         props.class,
       )"
     >

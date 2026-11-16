@@ -28,7 +28,7 @@ class TimelineCalendar
             'PRODID:-//Studio//Studio//DE',
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
-            'X-WR-CALNAME:'.$this->escape($this->title($shoot)),
+            'X-WR-CALNAME:'.$this->escape($shoot->title()),
         ];
 
         $entries = $shoot->timeline;
@@ -44,11 +44,6 @@ class TimelineCalendar
         // CRLF, per the spec. Clients are forgiving about it and the one that
         // is not would be very hard to diagnose from here.
         return implode("\r\n", array_map($this->fold(...), $lines))."\r\n";
-    }
-
-    private function title(Shoot $shoot): string
-    {
-        return trim(($shoot->label ?? $shoot->kind).' · '.$shoot->case->name);
     }
 
     /** @return list<string> */

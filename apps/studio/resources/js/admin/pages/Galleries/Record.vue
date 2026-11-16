@@ -406,7 +406,7 @@ function saveFocal(focal: { x: number; y: number }) {
                trapping focus or hiding the page behind it either way. -->
           <DropdownMenu :modal="false">
             <DropdownMenuTrigger as-child>
-              <Button type="button" variant="pill-muted">{{ $t('galleryRecord.more') }}</Button>
+              <Button type="button" variant="secondary">{{ $t('galleryRecord.more') }}</Button>
             </DropdownMenuTrigger>
             <!-- force-mount + data-[state=closed]:hidden rather than the
                  default open-only mount: Record.test.ts SSR-renders this
@@ -440,11 +440,11 @@ function saveFocal(focal: { x: number; y: number }) {
             class="inline-flex max-[640px]:hidden"
           >
             <input type="hidden" name="_token" :value="csrf">
-            <Button type="submit" variant="pill-muted">{{ $t('galleryRecord.preview') }}</Button>
+            <Button type="submit" variant="secondary">{{ $t('galleryRecord.preview') }}</Button>
           </form>
           <DropdownMenu v-if="isFirstPublish" :modal="false">
             <DropdownMenuTrigger as-child>
-              <Button type="button" :state="publishing ? 'loading' : 'idle'">{{ $t(publishLabel) }}</Button>
+              <Button class="ml-auto" type="button" :state="publishing ? 'loading' : 'idle'">{{ $t(publishLabel) }}</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" force-mount class="data-[state=closed]:hidden">
               <DropdownMenuItem v-if="gallery.canMail" @select="openSend('mail')">{{ $t('galleryRecord.publishAndSend') }}</DropdownMenuItem>
@@ -452,8 +452,8 @@ function saveFocal(focal: { x: number; y: number }) {
               <DropdownMenuItem @select="openSend('link')">{{ $t('galleryRecord.copyLinkAndPassword') }}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button v-else-if="showPublish" type="button" :state="publishing ? 'loading' : 'idle'" @click="publish">{{ $t(publishLabel) }}</Button>
-          <Button v-else-if="showWithdraw" type="button" @click="openSend('link')">{{ $t('galleryRecord.share') }}</Button>
+          <Button class="ml-auto" v-else-if="showPublish" type="button" :state="publishing ? 'loading' : 'idle'" @click="publish">{{ $t(publishLabel) }}</Button>
+          <Button class="ml-auto" v-else-if="showWithdraw" type="button" @click="openSend('link')">{{ $t('galleryRecord.share') }}</Button>
         </span>
       </PageHead>
 
@@ -515,7 +515,7 @@ function saveFocal(focal: { x: number; y: number }) {
           </DialogBody>
 
           <DialogFooter>
-            <Button type="button" @click="startPrerelease">{{ $t('galleryRecord.prereleaseStart') }}</Button>
+            <Button class="ml-auto" type="button" @click="startPrerelease">{{ $t('galleryRecord.prereleaseStart') }}</Button>
             <DialogClose as-child>
               <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
             </DialogClose>
@@ -538,7 +538,7 @@ function saveFocal(focal: { x: number; y: number }) {
           </DialogBody>
 
           <DialogFooter>
-            <Button type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
+            <Button class="ml-auto" type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
               {{ $t('common.save') }}
             </Button>
             <DialogClose as-child>
@@ -570,7 +570,7 @@ function saveFocal(focal: { x: number; y: number }) {
           </DialogBody>
 
           <DialogFooter>
-            <Button type="submit" form="gallery-preset-apply-form" :disabled="applyForm.processing || applyForm.gallery_preset_id === ''">
+            <Button class="ml-auto" type="submit" form="gallery-preset-apply-form" :disabled="applyForm.processing || applyForm.gallery_preset_id === ''">
               {{ $t('galleryRecord.applyPreset') }}
             </Button>
             <DialogClose as-child>

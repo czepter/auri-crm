@@ -147,7 +147,7 @@ function submit() {
           <div class="flex flex-wrap items-center gap-3">
             <Switch id="retention-on" v-model="enabled" />
             <Label for="retention-on">{{ $t('settings.retentionOn') }}</Label>
-            <ChoiceGroup v-model="months" variant="segmented" :options="monthOptions" :class="enabled ? '' : 'pointer-events-none'" />
+            <ChoiceGroup v-model="months" :options="monthOptions" :class="enabled ? '' : 'pointer-events-none'" />
             <span class="text-small text-ink-2">{{ $t('settings.retentionMonths') }}</span>
           </div>
 
@@ -170,7 +170,6 @@ function submit() {
           <div>
             <div>
               <ChoiceGroup
-                variant="segmented"
                 :label="$t('settings.retentionTemplate')"
                 :model-value="template"
                 :options="TEMPLATES.map((t) => ({ value: t.id, label: $t(`settings.retentionTpl${t.id}`) }))"
@@ -193,7 +192,6 @@ function submit() {
                 </div>
                 <span class="w-8 text-right text-ui tabular-nums">{{ counts[part] }}</span>
                 <ChoiceGroup
-                  variant="segmented"
                   :model-value="effective[part] ? 'off' : 'keep'"
                   :options="[
                     { value: 'keep', label: $t('settings.retentionKeep') },
@@ -245,7 +243,7 @@ function submit() {
         </FormSection>
 
         <div class="mt-6">
-          <Button type="submit" :disabled="save.processing">
+          <Button class="ml-auto" type="submit" :disabled="save.processing">
             {{ enabled && due.length > 0 ? $t('settings.retentionRun') : $t('settings.numberingSave') }}
           </Button>
         </div>

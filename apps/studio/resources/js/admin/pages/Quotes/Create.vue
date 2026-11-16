@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
 import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
-import CreateSummary from '@/admin/components/CreateSummary.vue'
+import DocumentPaper from '@/admin/components/document/DocumentPaper.vue'
+import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
+import Chip from '@/ui/page/Chip.vue'
+import { ChoiceGroup } from '@/ui/choice-group'
+import { quoteTone } from '@/admin/lib/quoteDisplay'
 import ProjectTypeahead from '@/admin/components/crm/ProjectTypeahead.vue'
 import QuoteWorkspace from '@/admin/components/quote/QuoteWorkspace.vue'
 import BusinessDataGate from '@/admin/pages/Settings/panes/BusinessDataGate.vue'
@@ -46,6 +50,9 @@ watch(project, (chosen) => {
 })
 
 const drafts = computed(() => props.quotes.filter((quote) => quote.status === 'draft'))
+const workspace = ref<InstanceType<typeof QuoteWorkspace>>()
+const previewing = ref(false)
+const brand = computed(() => (usePage().props.brand as string | null) ?? '')
 
 // Der Entwurf entsteht am gewählten Projekt; ab da ist es derselbe Editor
 // wie im Angebotsreiter, nicht ein zweiter.
@@ -67,42 +74,58 @@ onMounted(() => {
 <template>
   <AdminLayout active="angebote">
     <FormShell
-      :kicker="$t('create.kickerQuotes')" :title="$t('quotes.create')" :wide="!!(project && drafts.length)"
+      :kicker="$t('create.kickerQuotes')" :title="$t('quotes.create')" :state="drafts.length ? workspace?.state ?? 'saved' : undefined" wide
     >
-      <div>
-        <Field v-slot="{ id }" class="max-w-[720px]" :label="$t('create.pick')">
+      <template v-if="drafts.length" #status>
+        <Chip :tone="quoteTone(drafts[0].status)">{{ drafts[0].statusLabel }}</Chip>
+      </template>
+
+      <template v-if="drafts.length" #head>
+        <ChoiceGroup
+          :model-value="previewing ? 'preview' : 'edit'"
+          :options="[{ value: 'edit', label: $t('common.edit') }, { value: 'preview', label: $t('common.preview') }]"
+          @update:model-value="(value) => (previewing = value === 'preview')"
+        />
+        <Button type="button" variant="outline" @click="workspace?.saveNow()">
+          {{ $t('invoicesCreate.saveDraft') }}
+        </Button>
+        <div v-if="project && drafts.length === 1" class="flex">
+          <QuoteActions :project-id="project.id" :quote="drafts[0]" :can-manage-quotes="true" />
+        </div>
+      </template>
+
+      <QuoteWorkspace
+        v-if="project && drafts.length"
+        ref="workspace"
+        v-model:previewing="previewing"
+        :show-header="drafts.length > 1"
+        :project-id="project.id"
+        :can-manage-quotes="true"
+        :can-manage-payment-plan="false"
+        :quotes="drafts"
+        :packages="packages"
+        :catalog-items="catalogItems"
+        :contacts="contacts"
+        :can-manage-catalog="canManageCatalog"
+        :payment-plan="null"
+        :vat-settings="vatSettings"
+      >
+        <template #top>
+          <Field v-slot="{ id }" :label="$t('create.pick')">
+            <ProjectTypeahead :id="id" v-model="project" />
+          </Field>
+        </template>
+      </QuoteWorkspace>
+
+      <DocumentPaper v-else :studio="brand" :kind="$t('quotes.paperKind')">
+        <Field v-slot="{ id }" :label="$t('create.pick')">
           <ProjectTypeahead :id="id" v-model="project" />
         </Field>
 
-        <Button v-if="project && !drafts.length" class="mt-4 ml-0" type="button" @click="create">
+        <Button v-if="project" class="self-start" type="button" @click="create">
           {{ $t('quotes.create') }}
         </Button>
-
-        <div v-if="project && drafts.length" class="mt-5">
-          <QuoteWorkspace
-            :project-id="project.id"
-            :can-manage-quotes="true"
-            :can-manage-payment-plan="false"
-            :quotes="drafts"
-            :packages="packages"
-            :catalog-items="catalogItems"
-            :contacts="contacts"
-            :can-manage-catalog="canManageCatalog"
-            :payment-plan="null"
-            :vat-settings="vatSettings"
-          />
-        </div>
-      </div>
-
-      <template v-if="!(project && drafts.length)" #aside>
-        <CreateSummary
-          :title="$t('common.summary')"
-          :rows="[
-            { label: $t('create.pick'), value: project?.name },
-            { label: $t('leads.contact'), value: project?.contactName },
-          ]"
-        />
-      </template>
+      </DocumentPaper>
     </FormShell>
 
     <BusinessDataGate

@@ -221,7 +221,6 @@ function submit() {
             class="mt-4"
             :label="$t('leads.type')"
             :options="types"
-            variant="segmented"
             @update:model-value="proposeProjectName"
           />
 
@@ -309,7 +308,6 @@ function submit() {
             class="mt-4"
             :label="$t('leads.source')"
             :options="sources"
-            variant="segmented"
           />
 
           <Field
@@ -331,7 +329,6 @@ function submit() {
             class="mt-4"
             :label="$t('leads.capturedVia')"
             :options="channels"
-            variant="segmented"
           />
 
           <Field
@@ -352,10 +349,10 @@ function submit() {
             class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
             href="/anfragen"
           >{{ $t('common.cancel') }}</a>
-          <Button variant="pill-muted" type="submit" :disabled="form.processing" @click="again = true">
+          <Button variant="secondary" type="submit" :disabled="form.processing" @click="again = true">
             {{ $t('leads.submitAndNext') }}
           </Button>
-          <Button variant="pill" type="submit" :disabled="form.processing" @click="again = false">
+          <Button variant="default" type="submit" :disabled="form.processing" @click="again = false">
             {{ $t('leads.submit') }}
           </Button>
         </div>

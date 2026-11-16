@@ -342,12 +342,13 @@ function eraseDsgvoData() {
         />
 
         <!-- Dieselbe Reiterspur wie im Auftrag (ProjectShell). -->
-        <div class="mx-6 mt-4 inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg bg-sunk p-[3px] text-small font-medium">
+        <div class="mx-6 mt-4 flex max-w-full overflow-x-auto text-small font-medium shadow-[inset_0_-1px_0_var(--rule)] [scrollbar-width:none]">
           <button
             v-for="key in TABS"
             :key="key"
-            class="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent px-2.5 py-1 leading-[1.4] whitespace-nowrap"
-            :class="tab === key ? 'bg-paper text-foreground shadow-[0_1px_2px_rgba(24,24,27,.08)]' : 'text-ink-2 hover:text-foreground'"
+            class="min-h-10 flex-none cursor-pointer border-0 bg-transparent px-3 whitespace-nowrap"
+            :class="tab === key ? 'font-semibold text-foreground [background:linear-gradient(var(--ink),var(--ink))_bottom/100%_2px_no-repeat]' : 'text-ink-2 hover:text-foreground'"
+            :aria-current="tab === key ? 'page' : undefined"
             type="button"
             @click="tab = key"
           >
@@ -467,14 +468,14 @@ function eraseDsgvoData() {
                 <Button
                   as="a"
                   :href="`/kontakte/${contact.id}/dsgvo/export`"
-                  variant="pill-muted"
+                  variant="secondary"
                 >
                   {{ $t('contacts.dsgvoExport') }}
                 </Button>
 
                 <AlertDialog>
                   <AlertDialogTrigger as-child>
-                    <Button class="ml-2" type="button" variant="pill-muted">
+                    <Button class="ml-2" type="button" variant="secondary">
                       {{ $t('contacts.dsgvoErase') }}
                     </Button>
                   </AlertDialogTrigger>
@@ -493,7 +494,7 @@ function eraseDsgvoData() {
                   </AlertDialogContent>
                 </AlertDialog>
 
-                <Button class="ml-2" type="button" variant="pill-muted" @click="merging = true">
+                <Button class="ml-2" type="button" variant="secondary" @click="merging = true">
                   {{ $t('contacts.merge') }}
                 </Button>
               </template>
@@ -630,8 +631,8 @@ function eraseDsgvoData() {
                         </span>
                       </p>
                       <span class="flex flex-none gap-2">
-                        <Button type="button" variant="pill-muted" @click="editSuggestion(row.suggestion)">{{ $t('common.edit') }}</Button>
-                        <Button type="button" variant="pill-muted" @click="removeSuggestion(row.suggestion.id)">{{ $t('contacts.suggestionRemove') }}</Button>
+                        <Button type="button" variant="secondary" @click="editSuggestion(row.suggestion)">{{ $t('common.edit') }}</Button>
+                        <Button type="button" variant="secondary" @click="removeSuggestion(row.suggestion.id)">{{ $t('contacts.suggestionRemove') }}</Button>
                       </span>
                     </div>
                   </template>
@@ -652,7 +653,7 @@ function eraseDsgvoData() {
                       <Textarea id="s-note" v-model="suggestion.note" rows="3" />
                     </Field>
                     <div>
-                      <Button type="submit" variant="pill" :disabled="!suggestion.package || suggestion.processing">
+                      <Button type="submit" variant="default" :disabled="!suggestion.package || suggestion.processing">
                         {{ $t('contacts.suggest') }}
                       </Button>
                     </div>
@@ -694,13 +695,13 @@ function eraseDsgvoData() {
                     target="_blank"
                   >
                     <input type="hidden" name="_token" :value="csrf">
-                    <Button type="submit" variant="pill-muted">{{ $t('contacts.portalPreview') }}</Button>
+                    <Button type="submit" variant="secondary">{{ $t('contacts.portalPreview') }}</Button>
                   </form>
 
                   <Button
                     v-if="canSendPortalAccess && !portalAccessRevokedAt"
                     type="button"
-                    variant="pill-muted"
+                    variant="secondary"
                     @click="router.visit(`/kontakte/${contact.id}/portal-zugang/senden`)"
                   >
                     {{ $t('contacts.sendPortalAccess') }}
@@ -708,7 +709,7 @@ function eraseDsgvoData() {
 
                   <AlertDialog v-if="canRevokePortalAccess && !portalAccessRevokedAt">
                     <AlertDialogTrigger as-child>
-                      <Button type="button" variant="pill-muted">{{ $t('contacts.revokePortalAccess') }}</Button>
+                      <Button type="button" variant="secondary">{{ $t('contacts.revokePortalAccess') }}</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>

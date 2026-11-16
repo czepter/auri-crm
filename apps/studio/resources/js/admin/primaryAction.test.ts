@@ -16,7 +16,7 @@ vi.mock('@editorjs/delimiter', () => ({ default: class {} }))
 vi.mock('@editorjs/table', () => ({ default: class {} }))
 
 /*
- * Primary is the filled accent Button: data-variant "default" or "pill"
+ * Primary is the filled accent Button: data-variant "default"
  * (ui/button/index.ts). data-slot is no use here, as-child triggers overwrite
  * it. Only the mounted screen is counted; dialog and sheet content is not in
  * the DOM until opened, so each of those is its own surface and is not checked.
@@ -25,7 +25,7 @@ vi.mock('@editorjs/table', () => ({ default: class {} }))
  * stories: those import @storybook/vue3, which needs a window before the
  * first line of the test runs.
  */
-const PRIMARY = ':is([data-variant="default"], [data-variant="pill"]):not(label)'
+const PRIMARY = '[data-variant="default"]:not(label)'
 
 // Screen story → why it may show more than one primary.
 const EXEMPT: Record<string, string> = {

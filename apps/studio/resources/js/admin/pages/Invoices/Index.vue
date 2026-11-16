@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import { EllipsisVertical } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -15,14 +16,17 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
-import CreditNoteDialog from '@/admin/components/payments/CreditNoteDialog.vue'
+import DraftDeleteDialog from '@/admin/components/DraftDeleteDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
-const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], exportYears: number[] }>()
-useLiveProps(['invoices', 'exportYears'])
+type Draft = { id: string; recipient: string | null; projectName: string | null; updatedOn: string; dueOn: string | null; amount: number }
+
+const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], exportYears: number[] }>()
+useLiveProps(['invoices', 'drafts', 'exportYears'])
+const deleteUrl = ref<string | null>(null)
 
 const { t } = useI18n()
 
@@ -32,7 +36,7 @@ const OPEN = ['open', 'partial', 'overdue']
 const matches = (value: string, status: string) => value === 'all' || (value === 'open' ? OPEN.includes(status) : status === value)
 const filter = ref('all')
 
-const filters = computed(() => ['all', 'open', 'paid', 'cancelled'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
+const filters = computed(() => ['all', 'drafts', 'open', 'paid', 'cancelled'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
 
 const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue: 'danger', paid: 'success', cancelled: 'neutral' }
 
@@ -42,13 +46,27 @@ const lateRows = computed(() => props.invoices.filter((invoice) => invoice.statu
 const paidRows = computed(() => props.invoices.filter((invoice) => invoice.status === 'paid' && invoice.issuedOn.startsWith(String(new Date().getFullYear()))))
 const paidTotal = computed(() => formatEuros(paidRows.value.reduce((sum, row) => sum + row.paidAmount, 0)))
 
-const shown = computed(() => {
-  const needle = query.value.trim().toLocaleLowerCase('de')
+const dialog = ref<string | null>(null)
+const bind = (kind: string, id: string) => ({ open: dialog.value === `${kind}:${id}`, 'onUpdate:open': (open: boolean) => (dialog.value = open ? `${kind}:${id}` : null) })
 
-  return props.invoices.filter((invoice) =>
-    matches(filter.value, invoice.status)
-    && (!needle || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''}`.toLocaleLowerCase('de').includes(needle)))
-})
+const unpaid = (invoice: App.Payments.Data.InvoiceRowData) => invoice.status !== 'cancelled' && invoice.openInstallments.length > 0
+const creditable = (invoice: App.Payments.Data.InvoiceRowData) => invoice.status !== 'cancelled' && invoice.paidAmount > invoice.credited
+const quick = (invoice: App.Payments.Data.InvoiceRowData) => unpaid(invoice) ? (invoice.sentOn ? 'paid' : 'send') : creditable(invoice) ? 'credit' : null
+const hasMenu = (invoice: App.Payments.Data.InvoiceRowData) => unpaid(invoice) || (invoice.status !== 'cancelled' && invoice.paidAmount === 0) || creditable(invoice) || invoice.hasDocument
+
+const needle = computed(() => query.value.trim().toLocaleLowerCase('de'))
+
+const shownDrafts = computed(() =>
+  ['all', 'drafts'].includes(filter.value)
+    ? props.drafts.filter((draft) => !needle.value || `${draft.projectName ?? ''} ${draft.recipient ?? ''}`.toLocaleLowerCase('de').includes(needle.value))
+    : [])
+
+const shown = computed(() =>
+  filter.value === 'drafts'
+    ? []
+    : props.invoices.filter((invoice) =>
+      matches(filter.value, invoice.status)
+      && (!needle.value || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''}`.toLocaleLowerCase('de').includes(needle.value))))
 </script>
 
 <template>
@@ -67,11 +85,11 @@ const shown = computed(() => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button v-if="invoices.length" :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
+            <Button v-if="invoices.length || drafts.length" :as="Link" variant="default" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
           </div>
         </PageHead>
 
-        <template v-if="invoices.length">
+        <template v-if="invoices.length || drafts.length">
           <dl class="m-0 mx-6 mt-4.5 grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-border max-[640px]:grid-cols-1">
             <div class="bg-muted p-4">
               <dt class="text-small text-ink-2">{{ $t('invoicesOverview.kpiOpen') }}</dt>
@@ -91,7 +109,7 @@ const shown = computed(() => {
           </dl>
           <div class="flex flex-wrap items-center gap-3 px-6 pt-4.5">
             <Input :aria-label="$t('invoicesOverview.searchPlaceholder')" v-model="query" class="h-8 min-w-60 w-64 shrink-0" type="search" :placeholder="$t('invoicesOverview.searchPlaceholder')" />
-            <ChoiceGroup v-model="filter" variant="segmented" :options="filters" />
+            <ChoiceGroup v-model="filter" :options="filters" />
           </div>
 
           <Table class="max-[640px]:block max-[640px]:overflow-x-auto">
@@ -107,6 +125,32 @@ const shown = computed(() => {
               </tr>
             </thead>
             <tbody>
+              <TableRow v-for="draft in shownDrafts" :key="draft.id">
+                <TableCell tone="name" class="whitespace-nowrap">—</TableCell>
+                <TableCell>
+                  <Link :href="`/rechnungen/entwuerfe/${draft.id}`">{{ draft.recipient ?? draft.projectName }}</Link>
+                  <span v-if="draft.recipient && draft.projectName" class="block text-small text-ink-2">{{ draft.projectName }}</span>
+                </TableCell>
+                <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(draft.updatedOn) }}</TableCell>
+                <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ draft.dueOn ? dayWithWeekday(draft.dueOn) : '' }}</TableCell>
+                <TableCell align="right" class="whitespace-nowrap">{{ formatEuros(draft.amount) }}</TableCell>
+                <TableCell class="whitespace-nowrap"><Chip>{{ $t('invoicesOverview.draft') }}</Chip></TableCell>
+                <TableCell align="right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <Button :as="Link" variant="outline" :href="`/rechnungen/entwuerfe/${draft.id}`">{{ $t('common.edit') }}</Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')">
+                          <EllipsisVertical />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem class="text-destructive" @select="deleteUrl = `/rechnungen/entwuerfe/${draft.id}`">{{ $t('common.delete') }}</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
               <template v-for="invoice in shown" :key="invoice.id">
                 <TableRow>
                   <TableCell tone="name" class="whitespace-nowrap">
@@ -142,26 +186,40 @@ const shown = computed(() => {
                     </span>
                   </TableCell>
                   <TableCell align="right">
-                    <div v-if="invoice.status !== 'cancelled'" class="flex flex-wrap justify-end gap-1.5">
-                      <Button
-                        v-if="OPEN.includes(invoice.status)"
-                        :as="Link"
-                        variant="outline"
-                        :href="`/rechnungen/${invoice.id}/versenden`"
-                      >{{ $t('invoicesOverview.send') }}</Button>
-                      <!-- ponytail: pays the earliest open rate; an invoice with two books them one after the other. -->
-                      <InstallmentPaidDialog
-                        v-if="invoice.openInstallments.length"
-                        :installment-id="invoice.openInstallments[0].id"
-                        :remaining="invoice.openInstallments[0].remaining"
-                      />
-                      <InstallmentStornoDialog v-if="invoice.paidAmount === 0" :invoice-id="invoice.id" />
-                      <CreditNoteDialog
-                        v-if="invoice.paidAmount > invoice.credited"
-                        :invoice-id="invoice.id"
-                        :amount="invoice.paidAmount - invoice.credited"
-                      />
+                    <div class="flex items-center justify-end gap-1.5">
+                      <Button v-if="quick(invoice) === 'send'" :as="Link" variant="outline" :href="`/rechnungen/${invoice.id}/versenden`">{{ $t('invoicesOverview.send') }}</Button>
+                      <Button v-else-if="quick(invoice) === 'paid'" variant="outline" type="button" @click="dialog = `paid:${invoice.id}`">{{ $t('payments.markPaid') }}</Button>
+                      <Button v-else-if="quick(invoice) === 'credit'" :as="Link" variant="outline" :href="`/rechnungen/${invoice.id}/gutschrift/neu`">{{ $t('payments.creditNote') }}</Button>
+                      <DropdownMenu v-if="hasMenu(invoice)">
+                        <DropdownMenuTrigger as-child>
+                          <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')">
+                            <EllipsisVertical />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem v-if="unpaid(invoice) && invoice.sentOn" as-child>
+                            <Link :href="`/rechnungen/${invoice.id}/versenden`">{{ $t('invoiceDetail.sendAgain') }}</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem v-if="quick(invoice) === 'send'" @select="dialog = `paid:${invoice.id}`">{{ $t('payments.markPaid') }}</DropdownMenuItem>
+                          <DropdownMenuItem v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" @select="dialog = `storno:${invoice.id}`">{{ $t('payments.storno') }}</DropdownMenuItem>
+                          <DropdownMenuItem v-if="creditable(invoice) && quick(invoice) !== 'credit'" as-child>
+                            <Link :href="`/rechnungen/${invoice.id}/gutschrift/neu`">{{ $t('payments.creditNote') }}</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem v-if="invoice.hasDocument" as-child>
+                            <a :href="`/rechnungen/${invoice.id}/pdf`" target="_blank">{{ $t('invoiceDetail.download') }}</a>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
+                    <!-- ponytail: pays the earliest open rate; an invoice with two books them one after the other. -->
+                    <InstallmentPaidDialog
+                      v-if="unpaid(invoice)"
+                      bare
+                      v-bind="bind('paid', invoice.id)"
+                      :installment-id="invoice.openInstallments[0].id"
+                      :remaining="invoice.openInstallments[0].remaining"
+                    />
+                    <InstallmentStornoDialog v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" bare v-bind="bind('storno', invoice.id)" :invoice-id="invoice.id" />
                   </TableCell>
                 </TableRow>
               </template>
@@ -169,10 +227,11 @@ const shown = computed(() => {
           </Table>
         </template>
 
-        <Empty v-else :text="$t('invoicesOverview.empty')">
-          <Button :as="Link" variant="pill" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
+        <Empty v-else-if="!drafts.length" :text="$t('invoicesOverview.empty')">
+          <Button :as="Link" variant="default" href="/rechnungen/neu">{{ $t('invoicesOverview.create') }}</Button>
         </Empty>
       </div>
     </Page>
+    <DraftDeleteDialog v-model:url="deleteUrl" />
   </AdminLayout>
 </template>

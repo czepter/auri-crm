@@ -326,7 +326,6 @@ onUnmounted(() => {
       <div class="ml-auto flex items-center gap-3 text-small text-ink-2">
         <template v-if="activeSet !== null">
           <ChoiceGroup
-            variant="segmented"
             :model-value="activeSet.access"
             :options="['internal', 'guests'].map((value) => ({ value, label: $t(`galleryRecord.setAccess.${value}`) }))"
             @update:model-value="setAccess"

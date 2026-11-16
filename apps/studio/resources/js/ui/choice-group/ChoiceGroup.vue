@@ -10,27 +10,20 @@ import { SlidingIndicator, useSlidingIndicator } from "@/ui/sliding-indicator"
  * crm.css .choice — a handful of fixed values as buttons instead of a menu:
  * three occasions are hit faster than a dropdown is opened. The radio itself
  * stays in the markup and keeps the keyboard and the form value; only its box
- * is replaced by the pill beside it.
+ * is replaced by a segment in a rail with a sliding thumb.
  *
  * With a caption it is a fieldset with a legend rather than a div with a
  * label: a label belongs to one control, and there is no single control here
  * — the caption names the whole set, which is what a legend is for.
- *
- * `segmented` is the same control drawn as a rail with a sliding thumb, for
- * the view switchers. A variant rather than its own component because the
- * decision is identical — one of N, spelled out rather than hidden in a menu
- * — and because the radios are what keep it from ever landing on no view at
- * all, which a group of buttons has to be told not to do.
  */
 const props = withDefaults(defineProps<{
   modelValue?: string | null
   options: { value: string; label: string }[]
   label?: string
-  variant?: "default" | "segmented"
   /** Zeichen statt Wort: quadratische Felder, die Beschriftung trägt das Eingabefeld. */
   icon?: boolean
   class?: HTMLAttributes["class"]
-}>(), { variant: "default", icon: false })
+}>(), { icon: false })
 
 const emits = defineEmits<{
   (e: "update:modelValue", payload: string): void
@@ -45,29 +38,21 @@ const model = useVModel(props, "modelValue", emits, { passive: true })
  */
 const name = useId()
 
-const CONTAINER = {
-  default: "flex flex-wrap gap-1.5",
-  segmented: "relative flex max-w-full overflow-x-auto whitespace-nowrap rounded-lg bg-sunk p-[3px]",
-}
+const CONTAINER = "relative flex h-8 max-w-full overflow-x-auto whitespace-nowrap rounded-[var(--r-sm)] bg-sunk p-[3px] [scrollbar-width:none]"
 
-const ITEM = {
-  default:
-    "inline-block cursor-pointer rounded-[var(--r-sm)] bg-sunk px-3 py-1.5 text-small text-foreground peer-checked:bg-paper peer-checked:font-medium peer-checked:shadow-[inset_0_0_0_1px_var(--faint)]",
-  segmented:
-    "inline-block cursor-pointer rounded-[6px] px-3.5 py-1 text-small leading-[1.4] font-normal text-foreground transition-colors duration-[120ms] ease-out peer-checked:font-medium",
-}
+const ITEM = "flex h-full cursor-pointer items-center rounded-[calc(var(--r-sm)-2px)] px-3 text-small font-medium text-ink-2 transition-colors duration-[120ms] ease-out peer-checked:text-foreground"
 
 /* Ein Zeichen füllt keine Textzeile: es steht mittig in einem Feld, das so
    hoch ist wie breit, sonst liegt es in einer flachen Pille. */
-const SEGMENT_THUMB = "peer-checked:bg-paper peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_0_0_1px_var(--faint)]"
+const SEGMENT_THUMB = "peer-checked:bg-paper peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08)]"
 
 const root = useTemplateRef<HTMLElement>("root")
 const rail = useTemplateRef<HTMLElement>("rail")
-const track = computed(() => (props.variant === "segmented" ? (props.label ? rail.value : root.value) : null))
+const track = computed(() => (props.label ? rail.value : root.value))
 const { rect, animate } = useSlidingIndicator(track, () => model.value, { selector: "label:has(:checked)" })
 
 const ICON_ITEM
-  = "flex size-[26px] cursor-pointer items-center justify-center rounded-[6px] text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:shadow-[inset_0_0_0_1px_var(--faint)] [&_svg]:size-[15px] [&_svg]:stroke-[1.75]"
+  = "flex size-[26px] cursor-pointer items-center justify-center rounded-[calc(var(--r-sm)-2px)] text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08)] [&_svg]:size-[15px] [&_svg]:stroke-[1.75]"
 </script>
 
 <template>
@@ -75,7 +60,7 @@ const ICON_ITEM
     :is="label ? 'fieldset' : 'div'"
     ref="root"
     data-slot="choice-group"
-    :class="cn(label ? 'flex min-w-0 flex-col' : CONTAINER[variant], props.class)"
+    :class="cn(label ? 'flex min-w-0 flex-col' : CONTAINER, props.class)"
   >
     <!-- Der Abstand hängt am Rand statt am `gap` des fieldset: ein legend ist
          kein Flex-Item, das gap greift an ihm also nicht, und ein Browser, der
@@ -83,14 +68,13 @@ const ICON_ITEM
     <legend v-if="label" :class="cn('mb-1.5', labelVariants())">{{ label }}</legend>
     <!-- Mit Beschriftung trägt diese Zeile den Container, ohne sie tut es das
          fieldset selbst und die Optionen fallen per `contents` hindurch. Der
-         Rail des `segmented` stand vorher nie, wenn eine Beschriftung dabei
+         Rail stand vorher nie, wenn eine Beschriftung dabei
          war — die Optionen kamen dann als Spalte. -->
-    <div ref="rail" :class="label ? cn(CONTAINER[variant], variant === 'segmented' && 'self-start') : 'contents'">
+    <div ref="rail" :class="label ? cn(CONTAINER, 'self-start') : 'contents'">
       <SlidingIndicator
-        v-if="variant === 'segmented'"
         :rect="rect"
         :animate="animate"
-        class="rounded-[6px] bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08),inset_0_0_0_1px_var(--faint)]"
+        class="rounded-[calc(var(--r-sm)-2px)] bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08)]"
       />
       <label v-for="option in options" :key="option.value" class="relative">
         <input
@@ -104,7 +88,7 @@ const ICON_ITEM
         <!-- Der Slot ist für die Fälle, in denen ein Zeichen kürzer ist als
              sein Wort — die Beschriftung bleibt am Eingabefeld und damit für
              den Screenreader stehen. -->
-        <span :class="[icon ? ICON_ITEM : ITEM[variant], variant === 'segmented' && !icon && !rect && SEGMENT_THUMB, 'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring']"><slot name="option" :option="option">{{ option.label }}</slot></span>
+        <span :class="[icon ? ICON_ITEM : ITEM, !icon && !rect && SEGMENT_THUMB, 'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring']"><slot name="option" :option="option">{{ option.label }}</slot></span>
       </label>
     </div>
   </component>

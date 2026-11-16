@@ -8,6 +8,7 @@ use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Actions\CreateContact;
 use App\Crm\Data\CaseSuggestionData;
+use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Shoot;
@@ -32,7 +33,9 @@ use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\CreditNote;
+use App\Payments\Models\CreditNoteDraft;
 use App\Payments\Models\Invoice;
+use App\Payments\Models\InvoiceDraft;
 use App\Payments\Models\InvoiceItem;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -46,6 +49,7 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -77,8 +81,23 @@ class InvoiceController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $drafts = InvoiceDraft::query()
+            ->where(fn ($query) => $query->whereNull('case_id')->orWhereHas('case', fn ($project) => $project->visibleTo($viewer)))
+            ->with(['case', 'contact'])
+            ->latest('updated_at')
+            ->get()
+            ->map(fn (InvoiceDraft $draft) => [
+                'id' => $draft->public_id,
+                'recipient' => $draft->contact?->name ?? $draft->payload['contact']['name'] ?? null,
+                'projectName' => $draft->case?->name,
+                'updatedOn' => $draft->updated_at->toDateString(),
+                'dueOn' => $draft->payload['due_on'] ?? null,
+                'amount' => $this->draft($draft->payload)->amount(),
+            ]);
+
         return Inertia::render('Invoices/Index', [
             'invoices' => InvoiceRowData::collect($invoices->map(InvoiceRowData::fromModel(...))),
+            'drafts' => $drafts,
             // The export route is gated by ManageSettings, so the years appear only for roles it lets in.
             'exportYears' => $viewer->can(Capability::ManageSettings->value)
                 ? Invoice::query()->pluck('issued_at')->map(fn ($at) => (int) $at->format('Y'))->unique()->sortDesc()->values()
@@ -90,7 +109,10 @@ class InvoiceController extends Controller
     {
         self::authorizeProject($invoice->case);
 
-        return Inertia::render('Invoices/Show', ['invoice' => InvoiceDetailData::fromModel($invoice)]);
+        return Inertia::render('Invoices/Show', [
+            'invoice' => InvoiceDetailData::fromModel($invoice),
+            'hasCreditNoteDraft' => $invoice->creditNoteDraft()->exists(),
+        ]);
     }
 
     public function create(
@@ -98,6 +120,7 @@ class InvoiceController extends Controller
         RenderInvoicePdf $render,
         SeedStarterTemplates $seed,
         StudioReadiness $readiness,
+        ?InvoiceDraft $draft = null,
     ): Response {
         self::authorizeProject(null);
 
@@ -135,9 +158,10 @@ class InvoiceController extends Controller
             ->map(fn (PaymentPlan $plan) => CaseSuggestionData::fromModel($plan->case))
             ->values();
 
-        $project = $request->query('projekt') === null
+        $projectId = $draft === null ? $request->query('projekt') : $draft->case?->public_id;
+        $project = $projectId === null
             ? null
-            : ClientCase::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first();
+            : ClientCase::query()->visibleTo($viewer)->where('public_id', $projectId)->first();
 
         return Inertia::render('Invoices/Create', [
             'rates' => $rates,
@@ -159,7 +183,65 @@ class InvoiceController extends Controller
             // vor dem Formular statt hinter dem Absenden.
             'missingInvoiceData' => $readiness->missingForInvoice(),
             'firstInvoice' => ! Invoice::query()->exists(),
+            'draft' => $draft === null ? null : [
+                'id' => $draft->public_id,
+                'payload' => $draft->payload,
+                'contact' => $draft->contact === null ? null : ContactSuggestionData::fromModel($draft->contact->loadCount('cases')),
+            ],
         ]);
+    }
+
+    public function showDraft(
+        Request $request,
+        InvoiceDraft $draft,
+        RenderInvoicePdf $render,
+        SeedStarterTemplates $seed,
+        StudioReadiness $readiness,
+    ): Response {
+        self::authorizeProject($draft->case);
+
+        return $this->create($request, $render, $seed, $readiness, $draft);
+    }
+
+    public function storeDraft(Request $request): RedirectResponse
+    {
+        self::authorizeProject(null);
+
+        $draft = InvoiceDraft::create([...$this->draftAttributes($request), 'created_by' => $request->user('staff')->id]);
+
+        return redirect("/rechnungen/entwuerfe/{$draft->public_id}");
+    }
+
+    public function updateDraft(Request $request, InvoiceDraft $draft): RedirectResponse
+    {
+        self::authorizeProject($draft->case);
+
+        $draft->update($this->draftAttributes($request));
+
+        return back();
+    }
+
+    public function destroyDraft(InvoiceDraft $draft): RedirectResponse
+    {
+        self::authorizeProject($draft->case);
+
+        $draft->delete();
+
+        return redirect('/rechnungen');
+    }
+
+    /** @return array{payload: array<string, mixed>, case_id: ?int, contact_id: ?int} */
+    private function draftAttributes(Request $request): array
+    {
+        $validated = $request->validate($this->rules());
+
+        return [
+            'payload' => $validated,
+            'case_id' => $this->case($validated)?->id,
+            'contact_id' => isset($validated['contact_id'])
+                ? Contact::query()->where('public_id', $validated['contact_id'])->firstOrFail()->id
+                : null,
+        ];
     }
 
     /**
@@ -209,6 +291,8 @@ class InvoiceController extends Controller
 
         $validated = $request->validate([
             ...$this->rules(),
+            'issued_on' => [...$this->rules()['issued_on'], $this->notBeforeLatestInvoice(...)],
+            'draft_id' => ['nullable', 'string'],
             'contact.name' => ['required_without_all:contact_id,case_id', 'nullable', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.title' => ['required', 'string', 'max:255'],
@@ -221,12 +305,18 @@ class InvoiceController extends Controller
             default => $project?->primaryContact() ?? new Contact(['name' => __('payments.previewRecipient')]),
         };
 
+        $draft = isset($validated['draft_id'])
+            ? InvoiceDraft::query()->where('public_id', $validated['draft_id'])->first()
+            : null;
+        self::authorizeProject($draft?->case);
+
         $invoice = $issue->positions(
             $contact,
             $project,
             $this->positions($validated, strict: true),
             $validated['due_on'] ?? null,
             [
+                'issued_on' => $validated['issued_on'] ?? null,
                 'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
                 'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
                 'discount_type' => $validated['discount_type'] ?? null,
@@ -235,7 +325,19 @@ class InvoiceController extends Controller
             $request->user('staff'),
         );
 
+        $draft?->delete();
+
         return redirect("/rechnungen/{$invoice->public_id}/versenden");
+    }
+
+    /** Invoice numbers run on in sequence, so their dates must not run backwards. */
+    public static function notBeforeLatestInvoice(string $attribute, mixed $value, \Closure $fail): void
+    {
+        $latest = Invoice::query()->orderByDesc('issued_at')->first()?->issued_at;
+
+        if ($latest !== null && $value !== null && Carbon::parse($value)->startOfDay()->lt($latest->startOfDay())) {
+            $fail(__('payments.issuedBeforeLatest', ['date' => $latest->format('d.m.Y')]));
+        }
     }
 
     /**
@@ -267,7 +369,7 @@ class InvoiceController extends Controller
     }
 
     /** @return array<string, list<mixed>> */
-    private function rules(): array
+    public static function rules(): array
     {
         return [
             'contact_id' => ['nullable', 'string'],
@@ -277,6 +379,7 @@ class InvoiceController extends Controller
             'contact.postcode' => ['nullable', 'string', 'max:20'],
             'contact.city' => ['nullable', 'string', 'max:255'],
             'case_id' => ['nullable', 'string'],
+            'issued_on' => ['nullable', 'date', 'before_or_equal:today'],
             'due_on' => ['nullable', 'date'],
             'intro' => ['nullable', 'string', 'max:20000'],
             'outro' => ['nullable', 'string', 'max:20000'],
@@ -315,7 +418,7 @@ class InvoiceController extends Controller
      * @param  array<string, mixed>  $validated
      * @return list<array<string, mixed>>
      */
-    private function positions(array $validated, bool $strict): array
+    public static function positions(array $validated, bool $strict): array
     {
         $ids = collect($validated['items'] ?? [])->pluck('installment_id')->filter();
         $rows = PaymentInstallment::query()->whereIn('public_id', $ids)->with('plan.case')->get()->keyBy('public_id');
@@ -363,7 +466,7 @@ class InvoiceController extends Controller
 
         $invoice = new Invoice([
             'number' => __('payments.previewNumber'),
-            'issued_at' => now(),
+            'issued_at' => isset($validated['issued_on']) ? now()->setDateFrom($validated['issued_on']) : now(),
             'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
             'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
             'discount_type' => $validated['discount_type'] ?? null,
@@ -502,8 +605,38 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/CreditNote', [
             'invoice' => InvoiceDetailData::fromModel($invoice),
             'creditable' => $creditable,
+            'draft' => $invoice->creditNoteDraft?->payload,
             'studioName' => StudioSettings::current()->display_name,
         ]);
+    }
+
+    public function saveCreditNoteDraft(Request $request, Invoice $invoice): RedirectResponse
+    {
+        self::authorizeProject($invoice->case);
+
+        $validated = $request->validate([
+            ...$this->creditNoteRules(),
+            'taken' => ['array'],
+            'taken.*' => ['boolean'],
+            'reason' => ['nullable', 'string', 'max:1000'],
+            'send' => ['boolean'],
+        ]);
+
+        CreditNoteDraft::updateOrCreate(
+            ['invoice_id' => $invoice->id],
+            ['payload' => $validated, 'created_by' => $request->user('staff')->id],
+        );
+
+        return back();
+    }
+
+    public function destroyCreditNoteDraft(Invoice $invoice): RedirectResponse
+    {
+        self::authorizeProject($invoice->case);
+
+        $invoice->creditNoteDraft()->delete();
+
+        return back();
     }
 
     public function creditNote(Request $request, Invoice $invoice, IssueCreditNote $issue): RedirectResponse
@@ -511,12 +644,24 @@ class InvoiceController extends Controller
         self::authorizeProject($invoice->case);
 
         $validated = $request->validate([
+            ...$this->creditNoteRules(),
+            'issued_on' => [...$this->creditNoteRules()['issued_on'], fn (string $attribute, mixed $value, \Closure $fail) => $this->notBeforeLatestCreditNote($invoice, $attribute, $value, $fail)],
             'amount' => ['required', 'integer', 'min:1'],
             'reason' => ['required', 'string', 'max:1000'],
             'send' => ['sometimes', 'boolean'],
         ]);
 
-        $note = $issue($invoice, $validated['amount'], $validated['reason'], auth('staff')->user());
+        $note = $issue(
+            $invoice,
+            $validated['amount'],
+            $validated['reason'],
+            auth('staff')->user(),
+            $validated['issued_on'] ?? null,
+            InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+            InlineHtmlSanitizer::letter($validated['outro'] ?? null),
+        );
+
+        $invoice->creditNoteDraft()->delete();
 
         if ($request->boolean('send')) {
             foreach ($this->recipients($invoice) as $contact) {
@@ -525,6 +670,59 @@ class InvoiceController extends Controller
         }
 
         return back();
+    }
+
+    /** Gutschriften laufen in eigener Reihe, ihre Daten also auch; keine liegt vor der Rechnung. */
+    public static function notBeforeLatestCreditNote(Invoice $invoice, string $attribute, mixed $value, \Closure $fail): void
+    {
+        $latest = collect([CreditNote::query()->orderByDesc('issued_at')->first()?->issued_at, $invoice->issued_at])->filter()->max();
+
+        if ($latest !== null && $value !== null && Carbon::parse($value)->startOfDay()->lt($latest->startOfDay())) {
+            $fail(__('payments.issuedBeforeLatest', ['date' => $latest->format('d.m.Y')]));
+        }
+    }
+
+    /** @return array<string, list<mixed>> */
+    public static function creditNoteRules(): array
+    {
+        return [
+            'issued_on' => ['nullable', 'date', 'before_or_equal:today'],
+            'intro' => ['nullable', 'string', 'max:20000'],
+            'outro' => ['nullable', 'string', 'max:20000'],
+        ];
+    }
+
+    /** Die Vorschau der Gutschrift aus einem ungespeicherten Entwurf: keine Nummer gezogen, nichts geschrieben. */
+    public function creditNotePreview(
+        Request $request,
+        Invoice $invoice,
+        RenderInvoicePdf $render,
+    ): HttpResponse {
+        self::authorizeProject($invoice->case);
+
+        $validated = $request->validate([
+            ...$this->creditNoteRules(),
+            'amount' => ['nullable', 'integer', 'min:0'],
+            'reason' => ['nullable', 'string', 'max:1000'],
+            'format' => ['nullable', 'in:pdf,mail'],
+        ]);
+
+        $invoice->load(['case', 'contact', 'installments.plan.case', 'items']);
+
+        $note = (new CreditNote([
+            'number' => __('payments.previewNumber'),
+            'issued_at' => isset($validated['issued_on']) ? now()->setDateFrom($validated['issued_on']) : now(),
+            'amount' => $validated['amount'] ?? 0,
+            'reason' => $validated['reason'] ?? '',
+            'intro' => InlineHtmlSanitizer::letter($validated['intro'] ?? null),
+            'outro' => InlineHtmlSanitizer::letter($validated['outro'] ?? null),
+        ]))->setRelation('invoice', $invoice)->setRelation('template', null);
+
+        $html = ($validated['format'] ?? 'pdf') === 'mail'
+            ? MailPreview::html(new CreditNoteSent($note), $invoice->contact ?? (object) [])
+            : $render->forCreditNote($note);
+
+        return response($html, 200, ['Content-Type' => 'text/html']);
     }
 
     public function downloadCreditNote(Invoice $invoice, CreditNote $creditNote): StreamedResponse

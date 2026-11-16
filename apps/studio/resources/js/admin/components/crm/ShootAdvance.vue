@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { router } from "@inertiajs/vue3";
-import { ChevronDown, Ellipsis } from "lucide-vue-next";
+import { ChevronDown } from "lucide-vue-next";
 import { Button } from "@/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
 
@@ -16,16 +16,17 @@ function advance(status: string) {
 </script>
 
 <template>
-    <div v-if="onward.length" class="flex flex-none">
-        <Button variant="pill-muted" type="button" class="min-h-10 rounded-r-none max-[640px]:min-h-11" @click="advance(onward[0].value)">
+    <div v-if="onward.length" class="flex flex-none gap-px">
+        <Button variant="secondary" type="button" class="rounded-r-none max-[640px]:min-h-11" @click="advance(onward[0].value)">
             {{ onward[0].label }}
         </Button>
         <DropdownMenu>
             <DropdownMenuTrigger as-child>
                 <Button
-                    variant="pill-muted"
+                    variant="secondary"
+                    size="icon"
                     type="button"
-                    class="min-h-10 min-w-10 justify-center rounded-l-none border-l border-line px-2 max-[640px]:min-h-11 max-[640px]:min-w-11"
+                    class="rounded-l-none max-[640px]:min-h-11 max-[640px]:min-w-11"
                     :aria-label="$t('board.colStage')"
                 >
                     <ChevronDown class="size-3.5" />
@@ -39,14 +40,7 @@ function advance(status: string) {
             </DropdownMenuContent>
         </DropdownMenu>
     </div>
-    <DropdownMenu v-else-if="archive">
-        <DropdownMenuTrigger as-child>
-            <Button variant="ghost" type="button" class="min-h-10 min-w-10 justify-center px-2 max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
-                <Ellipsis class="size-4" />
-            </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" class="w-[208px]">
-            <DropdownMenuItem @select="advance(archive.value)">{{ archive.label }}</DropdownMenuItem>
-        </DropdownMenuContent>
-    </DropdownMenu>
+    <Button v-else-if="archive" variant="secondary" type="button" class="max-[640px]:min-h-11" @click="advance(archive.value)">
+        {{ archive.label }}
+    </Button>
 </template>

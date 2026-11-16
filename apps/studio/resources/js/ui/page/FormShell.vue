@@ -25,6 +25,7 @@ const slots = useSlots()
                 :class="wide && !slots.aside ? 'max-w-[1480px]' : slots.nav || slots.preview ? 'max-w-[1540px]' : slots.aside ? 'max-w-[1140px]' : 'max-w-[780px]'"
             >
                 <PageHead :kicker="kicker" :kickerHref="kickerHref" :title="title">
+                    <slot name="status" />
                     <SaveState v-if="state" class="ml-auto" :state="state" />
                     <slot name="head" />
                 </PageHead>

@@ -49,9 +49,9 @@ const meta = {
     revenue: { projects: 11, revenue: 4686000, averagePerProject: 426000 },
     revenuePrior: { projects: 8, revenue: 3129000, averagePerProject: 391125 },
     perContact: [
-      { name: 'Rahn, Marie & Jonas', projects: 1, revenue: 426000 },
-      { name: 'Krohn, Lena', projects: 2, revenue: 639000 },
-      { name: 'Petersen, Ann-Kathrin', projects: 1, revenue: 298200 },
+      { id: 1, name: 'Rahn, Marie & Jonas', projects: 1, revenue: 426000 },
+      { id: 2, name: 'Krohn, Lena', projects: 2, revenue: 639000 },
+      { id: 3, name: 'Petersen, Ann-Kathrin', projects: 1, revenue: 298200 },
     ],
     cashFlow: {
       overdue: 85200,
@@ -172,7 +172,7 @@ export const ErstesJahr: Story = {
     acceptanceRatePrior: null,
     revenue: { projects: 1, revenue: 150000, averagePerProject: 150000 },
     revenuePrior: { projects: 0, revenue: 0, averagePerProject: null },
-    perContact: [{ name: 'Meier & Kowalski', projects: 1, revenue: 150000 }],
+    perContact: [{ id: 1, name: 'Meier & Kowalski', projects: 1, revenue: 150000 }],
     cashFlow: {
       overdue: 150000,
       projects: 1,

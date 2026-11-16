@@ -109,7 +109,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button type="submit" form="settle-plan-form" :disabled="form.processing">
+        <Button class="ml-auto" type="submit" form="settle-plan-form" :disabled="form.processing">
           {{ $t('payments.settleSubmit') }}
         </Button>
         <DialogClose as-child>

@@ -112,9 +112,9 @@ class FormInstanceController extends Controller
             ...$this->optionRules($request),
         ]);
 
-        $formInstance->update(['name' => $validated['name']]);
-
         $sync($formInstance, $validated['fields']);
+
+        $formInstance->update(['name' => $validated['name']]);
 
         AuditLogger::record(
             event: 'form_instance.updated',
@@ -145,6 +145,25 @@ class FormInstanceController extends Controller
 
         AuditLogger::record(
             event: $shared ? 'form_instance.shared' : 'form_instance.unshared',
+            actor: auth('staff')->user(),
+            subject: $formInstance->public_id,
+            projectId: $formInstance->case_id,
+        );
+
+        return back();
+    }
+
+    /** Closing locks the portal screen only; staff can still correct answers. */
+    public function close(Request $request, FormInstance $formInstance): RedirectResponse
+    {
+        $this->authorize('manageForms', $formInstance->case);
+
+        $closed = $request->validate(['closed' => ['required', 'boolean']])['closed'];
+
+        $formInstance->forceFill(['closed_at' => $closed ? now() : null])->save();
+
+        AuditLogger::record(
+            event: $closed ? 'form_instance.closed' : 'form_instance.reopened',
             actor: auth('staff')->user(),
             subject: $formInstance->public_id,
             projectId: $formInstance->case_id,

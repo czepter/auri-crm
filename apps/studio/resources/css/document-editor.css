@@ -42,6 +42,10 @@
   border: 1px solid var(--line); border-radius: 2px; background: #fff;
 }
 
+/* The text starts at the field's edge; the handle sits on the right. */
+.doc-editor-narrow .ce-block__content,
+.doc-editor-narrow .ce-toolbar__content { max-width: none; }
+
 /* merge-field chip: the sample value, with the path on hover */
 .doc-mf {
   display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px;

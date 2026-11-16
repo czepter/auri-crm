@@ -12,6 +12,7 @@ class QuoteRowData extends Data
 {
     public function __construct(
         public string $id,
+        public string $projectId,
         public string $projectName,
         public ?string $contact,
         public ?string $number,
@@ -20,12 +21,15 @@ class QuoteRowData extends Data
         public int $total,
         public ?string $sentAt,
         public ?string $createdAt,
+        public ?string $validUntil,
+        public ?string $acceptedAt,
     ) {}
 
     public static function fromModel(Quote $quote): self
     {
         return new self(
             id: $quote->public_id,
+            projectId: $quote->case->public_id,
             projectName: $quote->case->name,
             contact: $quote->case->primaryContact()?->name,
             number: $quote->number,
@@ -34,6 +38,8 @@ class QuoteRowData extends Data
             total: $quote->gross(),
             sentAt: $quote->sent_at?->toIso8601String(),
             createdAt: $quote->created_at?->toIso8601String(),
+            validUntil: $quote->valid_until?->toDateString(),
+            acceptedAt: $quote->accepted_at?->toIso8601String(),
         );
     }
 }

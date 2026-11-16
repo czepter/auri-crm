@@ -110,6 +110,16 @@ it('creates a form from a template, updates it, shares it and records an answer'
         ->json('data.sharedAt');
     expect($sharedAt)->not->toBeNull();
 
+    $this->withHeader('Idempotency-Key', 'form-3b')
+        ->postJson("/api/forms/{$formId}/close", ['closed' => true])
+        ->assertOk()
+        ->assertJsonPath('data.closedAt', fn ($closedAt) => $closedAt !== null);
+
+    $this->withHeader('Idempotency-Key', 'form-3c')
+        ->postJson("/api/forms/{$formId}/close", ['closed' => false])
+        ->assertOk()
+        ->assertJsonPath('data.closedAt', null);
+
     $this->withHeader('Idempotency-Key', 'form-4')
         ->postJson("/api/form-fields/{$fieldId}/answer", ['value' => 'Oma und Opa'])
         ->assertOk()

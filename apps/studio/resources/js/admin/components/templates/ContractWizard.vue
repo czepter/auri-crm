@@ -117,7 +117,7 @@ function submit() {
         <DialogClose as-child>
           <Button type="button" variant="outline">{{ $t('common.cancel') }}</Button>
         </DialogClose>
-        <Button type="submit" form="contract-wizard" :disabled="form.processing">
+        <Button class="ml-auto" type="submit" form="contract-wizard" :disabled="form.processing">
           {{ $t('contractWizard.submit') }}
         </Button>
       </DialogFooter>

@@ -28,7 +28,7 @@ const props = defineProps<{
   acceptanceRatePrior: number | null
   revenue: { projects: number; revenue: number; averagePerProject: number | null }
   revenuePrior: { projects: number; revenue: number; averagePerProject: number | null }
-  perContact: { name: string; projects: number; revenue: number }[]
+  perContact: { id: number; name: string; projects: number; revenue: number }[]
   cashFlow: { overdue: number; projects: number; quotes: number; months: { month: string; due: number; received: number; open: number }[] }
   cashFlowPast: { projects: number; months: { month: string; received: number }[] }
   revenueByType: { type: string; label: string; projects: number; revenue: number; average: number }[]
@@ -218,9 +218,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               :model-value="filters.type ?? 'all'"
               @update:model-value="(value) => filter({ typ: String(value) === 'all' ? null : String(value) })"
             >
-              <!-- sm ist die Variante für Schalter in einer Zeile statt in einem
-                   Formular; die 30px sind die Höhe der Segmentleiste daneben. -->
-              <SelectTrigger id="report-type" size="sm" class="h-[30px] w-[190px]">
+              <SelectTrigger id="report-type" size="sm" class="w-[190px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -231,7 +229,6 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
 
             <ChoiceGroup
               :model-value="filters.period"
-              variant="segmented"
               :options="periods"
               @update:model-value="(value) => filter({ zeitraum: value })"
             />
@@ -243,7 +240,7 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                the funnel, so a studio without history gets the funnel's own
                control rather than nine cards reporting no data. -->
           <Empty v-if="bare" :text="$t('reports.empty')">
-            <Button :as="Link" href="/anfragen/neu" variant="pill">{{ $t('leads.createKicker') }}</Button>
+            <Button :as="Link" href="/anfragen/neu" variant="default">{{ $t('leads.createKicker') }}</Button>
           </Empty>
 
           <!-- Same rule as the Übersicht's tiles: a figure with nothing behind it
@@ -369,7 +366,6 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
               <template #head>
                 <ChoiceGroup
                   v-model="cashMode"
-                  variant="segmented"
                   :options="[
                     { value: 'expected', label: $t('reports.cashAhead') },
                     { value: 'past', label: $t('reports.cashPast') },
@@ -504,14 +500,14 @@ const forecastFill = 'repeating-linear-gradient(45deg, var(--line-hover) 0 2px, 
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="row in perContact" :key="row.name">
+                  <tr v-for="row in perContact" :key="row.id">
                     <td class="border-t border-border py-2">
-                      <span class="inline-flex items-center gap-2.5">
+                      <Link :href="`/kontakte/${row.id}`" class="inline-flex items-center gap-2.5 hover:underline">
                         <span class="inline-flex size-[26px] items-center justify-center rounded-full bg-[var(--accent-bg)] text-small font-semibold text-ring">
                           {{ initials(row.name) }}
                         </span>
                         {{ row.name }}
-                      </span>
+                      </Link>
                     </td>
                     <td class="border-t border-border py-2 pl-4 text-right tabular-nums text-muted-foreground">{{ row.projects }}</td>
                     <td class="border-t border-border py-2 pl-4 text-right font-semibold tabular-nums">{{ formatEurosRounded(row.revenue) }}</td>

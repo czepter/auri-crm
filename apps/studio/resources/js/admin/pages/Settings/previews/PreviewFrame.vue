@@ -37,7 +37,7 @@ const open = ref(false)
   <template v-else>
     <Button
       class="fixed right-6 bottom-6 z-40 shadow-[0_8px_24px_rgb(20_16_14_/_0.16)]"
-      variant="pill"
+      variant="default"
       type="button"
       @click="open = true"
     >

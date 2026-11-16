@@ -12,7 +12,6 @@ const meta = {
   title: 'Zeit/DatePicker',
   component: DatePicker,
   argTypes: {
-    size: { control: 'inline-radio', options: ['default', 'lead'] },
   },
   args: { modelValue: '', size: 'default', disabled: false },
   render: ({ modelValue, ...rest }) => ({
@@ -33,9 +32,6 @@ export const Gefuellt: Story = {
   args: { modelValue: '2026-09-13' },
 }
 
-/** Der Haupttermin, an dem die ganze Anfrage hängt. */
-export const Lead: Story = { args: { modelValue: '2026-09-13', size: 'lead' } }
-
 export const Deaktiviert: Story = { args: { modelValue: '2026-09-13', disabled: true } }
 
 export const AlleZustaende: Story = {
@@ -46,7 +42,6 @@ export const AlleZustaende: Story = {
     setup: () => ({
       leer: ref(''),
       gefuellt: ref('2026-09-13'),
-      lead: ref('2026-09-13'),
       deaktiviert: ref('2026-09-13'),
     }),
     template: `
@@ -58,10 +53,6 @@ export const AlleZustaende: Story = {
         <div style="display: flex; flex-direction: column; gap: 6px; width: 260px;">
           <DatePicker v-model="gefuellt" />
           <code style="font-size: 11px; color: var(--muted);">default</code>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 6px; width: 260px;">
-          <DatePicker v-model="lead" size="lead" />
-          <code style="font-size: 11px; color: var(--muted);">lead</code>
         </div>
         <div style="display: flex; flex-direction: column; gap: 6px; width: 260px;">
           <DatePicker v-model="deaktiviert" disabled />

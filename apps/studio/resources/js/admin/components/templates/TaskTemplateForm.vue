@@ -111,7 +111,7 @@ function remove() {
 
     <div class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
       <template v-if="form.isDirty">
-        <Button type="submit" :disabled="form.processing">
+        <Button class="ml-auto" type="submit" :disabled="form.processing">
           {{ $t('taskTemplates.save') }}
         </Button>
         <Chip tone="warn">{{ $t('settings.unsaved') }}</Chip>

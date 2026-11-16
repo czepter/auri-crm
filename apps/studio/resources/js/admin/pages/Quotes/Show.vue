@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
 import { quoteTone, quoteTitle } from '@/admin/lib/quoteDisplay'
 import Chip from '@/ui/page/Chip.vue'
+import { ChoiceGroup } from '@/ui/choice-group'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
+import FormShell from '@/ui/page/FormShell.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Button } from '@/ui/button'
 import DocumentViews from '@/admin/components/DocumentViews.vue'
@@ -36,6 +38,8 @@ useLiveProps(['projectName', 'projectIsBooked', 'canManageQuotes', 'quotes', 'pa
 const { t } = useI18n()
 
 const quote = computed(() => props.quotes[0])
+const previewing = ref(false)
+const workspace = ref<InstanceType<typeof QuoteWorkspace>>()
 
 function day(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -67,7 +71,46 @@ const facts = computed(() => {
 
 <template>
   <AdminLayout active="angebote">
-    <Page data-tokens wide>
+    <FormShell
+      v-if="quote.status === 'draft'"
+      :kicker="recipientName ?? projectName" :kicker-href="`/auftraege/${projectId}`" :title="quoteTitle(quote, t)" :state="workspace?.state ?? 'saved'" wide
+    >
+      <template #status>
+        <Chip :tone="quoteTone(quote.status)">{{ quote.statusLabel }}</Chip>
+      </template>
+
+      <template #head>
+        <ChoiceGroup
+          :model-value="previewing ? 'preview' : 'edit'"
+          :options="[{ value: 'edit', label: $t('common.edit') }, { value: 'preview', label: $t('common.preview') }]"
+          @update:model-value="(value) => (previewing = value === 'preview')"
+        />
+        <Button type="button" variant="outline" @click="workspace?.saveNow()">
+          {{ $t('invoicesCreate.saveDraft') }}
+        </Button>
+        <div class="flex">
+          <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
+        </div>
+      </template>
+
+      <QuoteWorkspace
+        ref="workspace"
+        v-model:previewing="previewing"
+        :show-header="false"
+        :project-id="projectId"
+        :can-manage-quotes="canManageQuotes"
+        :can-manage-payment-plan="canManagePaymentPlan"
+        :quotes="quotes"
+        :packages="packages"
+        :catalog-items="catalogItems"
+        :contacts="contacts"
+        :can-manage-catalog="canManageCatalog"
+        :payment-plan="paymentPlan"
+        :vat-settings="vatSettings"
+      />
+    </FormShell>
+
+    <Page v-else data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="quoteTitle(quote, t)" :kicker="recipientName ?? projectName">
           <div class="ml-auto flex items-center gap-3.5 max-[640px]:ml-0 max-[640px]:w-full max-[640px]:flex-wrap max-[640px]:gap-y-2">
@@ -91,6 +134,7 @@ const facts = computed(() => {
 
         <div class="mx-8 mt-5">
           <QuoteWorkspace
+            v-model:previewing="previewing"
             :show-header="false"
             :project-id="projectId"
             :can-manage-quotes="canManageQuotes"

@@ -5,6 +5,7 @@ import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
 import { Button } from "@/ui/button";
+import { ChoiceGroup } from "@/ui/choice-group";
 import LineItems from "@/admin/components/quote/LineItems.vue";
 import NoteThread from "@/admin/components/crm/NoteThread.vue";
 import CappedList from "@/admin/components/crm/CappedList.vue";
@@ -360,19 +361,19 @@ function complete(row: App.Crm.Data.TaskRowData) {
                 <Button v-if="callHref" variant="outline" as-child class="max-[640px]:min-h-11">
                     <a :href="callHref">{{ $t("contacts.call") }}</a>
                 </Button>
-                <Button v-if="sendHref" variant="pill" as-child class="max-[640px]:min-h-11">
+                <Button v-if="sendHref" variant="default" as-child class="max-[640px]:min-h-11">
                     <Link :href="sendHref">{{ $t("lead.sendQuote") }}</Link>
                 </Button>
-                <Button v-else-if="createQuote" variant="pill" as-child class="max-[640px]:min-h-11">
+                <Button v-else-if="createQuote" variant="default" as-child class="max-[640px]:min-h-11">
                     <Link :href="`/angebote/neu?projekt=${header.id}`">{{ $t("quotes.create") }}</Link>
                 </Button>
-                <Button v-else-if="dueRate" variant="pill" type="button" class="max-[640px]:min-h-11" @click="issueRate(dueRate.id)">
+                <Button v-else-if="dueRate" variant="default" type="button" class="max-[640px]:min-h-11" @click="issueRate(dueRate.id)">
                     {{ $t("payments.issueInvoice") }}
                 </Button>
-                <Button v-else-if="addGallery" variant="pill" type="button" class="max-[640px]:min-h-11" @click="createGallery">
+                <Button v-else-if="addGallery" variant="default" type="button" class="max-[640px]:min-h-11" @click="createGallery">
                     {{ $t("galleries.create") }}
                 </Button>
-                <Button v-else-if="completeNow" variant="pill" type="button" class="max-[640px]:min-h-11" @click="completeProject">
+                <Button v-else-if="completeNow" variant="default" type="button" class="max-[640px]:min-h-11" @click="completeProject">
                     {{ $t("project.completeMenu") }}
                 </Button>
                 <ProjectStep v-else :header="header" :shoots="shoots" />
@@ -409,7 +410,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             class="inline-flex min-h-10 items-center text-ui font-medium text-ring no-underline hover:underline"
                             :href="`${base}/shootings`"
                         >{{ $t("project.showAll") }}</Link>
-                        <Button v-if="header.canManageShoots" variant="pill-muted" class="min-h-10 px-4" as-child>
+                        <Button v-if="header.canManageShoots" variant="secondary" as-child>
                             <Link :href="`${base}/shootings`">+ {{ $t("project.shootAdd") }}</Link>
                         </Button>
                     </div>
@@ -446,24 +447,15 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </div>
                         </template>
 
-                        <span class="mb-2 inline-flex gap-0.5 rounded-lg bg-sunk p-[3px]">
-                            <button
-                                class="min-h-10 cursor-pointer rounded-[var(--r-sm)] px-3 text-small leading-none"
-                                :class="showDone ? 'text-ink-2' : 'bg-paper font-semibold'"
-                                type="button"
-                                @click="showDone = false"
-                            >
-                                {{ $t("project.tasksOpen", { count: open.length }) }}
-                            </button>
-                            <button
-                                class="min-h-10 cursor-pointer rounded-[var(--r-sm)] px-3 text-small leading-none"
-                                :class="showDone ? 'bg-paper font-semibold' : 'text-ink-2'"
-                                type="button"
-                                @click="showDone = true"
-                            >
-                                {{ $t("project.tasksDone", { count: done.length }) }}
-                            </button>
-                        </span>
+                        <ChoiceGroup
+                            class="mb-2 w-fit"
+                            :model-value="showDone ? 'done' : 'open'"
+                            :options="[
+                                { value: 'open', label: $t('project.tasksOpen', { count: open.length }) },
+                                { value: 'done', label: $t('project.tasksDone', { count: done.length }) },
+                            ]"
+                            @update:model-value="showDone = $event === 'done'"
+                        />
 
                         <CappedList
                             v-slot="{ item: row }"
@@ -503,7 +495,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
                     <Panel v-if="installments.length && plan" :title="$t('dashboard.payments')">
                         <template v-if="header.canManagePaymentPlan && installments.some((row) => !row.invoiceNumber)" #action>
-                            <Button variant="pill-muted" class="ml-auto min-h-10 px-4" as-child>
+                            <Button variant="secondary" class="ml-auto" as-child>
                                 <Link :href="`/rechnungen/neu?projekt=${header.id}`">{{ $t("project.invoiceAdd") }}</Link>
                             </Button>
                         </template>
@@ -527,10 +519,10 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </div>
                             <Chip v-if="row.invoiceId" :tone="toneOf[installmentChipClass(row)]">{{ row.statusLabel }}</Chip>
                             <Chip v-else tone="neutral">{{ $t("project.noInvoice") }}</Chip>
-                            <Button v-if="row.invoiceId" variant="pill-muted" class="min-h-10 px-4" as-child>
+                            <Button v-if="row.invoiceId" variant="secondary" as-child>
                                 <Link :href="`/rechnungen/${row.invoiceId}`">{{ $t("project.toInvoice") }}</Link>
                             </Button>
-                            <Button v-else-if="canIssue" variant="pill-muted" type="button" class="min-h-10 px-4" @click="issueRate(row.id)">
+                            <Button v-else-if="canIssue" variant="secondary" type="button" @click="issueRate(row.id)">
                                 {{ $t("payments.issueInvoice") }}
                             </Button>
                             <span v-else />
@@ -542,7 +534,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                 <div class="flex flex-col gap-4">
                     <Panel :title="$t('project.client')">
                         <template v-if="header.canManageShoots && !kontakteEditing" #action>
-                            <Button class="ml-auto min-h-10 px-4" variant="ghost" type="button" @click="kontakteEditing = true">
+                            <Button class="ml-auto px-4" variant="ghost" type="button" @click="kontakteEditing = true">
                                 {{ $t("lead.edit") }}
                             </Button>
                         </template>
@@ -562,8 +554,8 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 </Field>
                             </div>
                             <div class="mt-3 flex gap-2">
-                                <Button class="min-h-10" variant="pill" type="button" :disabled="kontakte.processing" @click="saveKontakte">{{ $t("common.save") }}</Button>
-                                <Button class="min-h-10" variant="outline" type="button" @click="kontakte.reset(); kontakteEditing = false">{{ $t("common.cancel") }}</Button>
+                                <Button variant="default" type="button" :disabled="kontakte.processing" @click="saveKontakte">{{ $t("common.save") }}</Button>
+                                <Button variant="outline" type="button" @click="kontakte.reset(); kontakteEditing = false">{{ $t("common.cancel") }}</Button>
                             </div>
                         </template>
 
@@ -582,7 +574,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 <template v-if="person.email && person.phone"> · </template>
                                 <a v-if="person.phone" class="text-ring no-underline hover:underline" :href="`tel:${person.phone.replace(/ /g, '')}`">{{ person.phone }}</a>
                             </span>
-                            <Button v-else variant="pill-muted" class="ml-auto min-h-10 px-4" as-child>
+                            <Button v-else variant="secondary" class="ml-auto" as-child>
                                 <Link :href="`/kontakte/${person.id}`">{{ $t("project.contactDetails") }}</Link>
                             </Button>
                         </div>
@@ -593,7 +585,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 <b class="font-semibold">{{ $t("project.lead") }}</b>
                                 <Button
                                     v-if="header.canManageShoots && inquiry.text"
-                                    class="ml-auto min-h-10 px-4"
+                                    class="ml-auto px-4"
                                     variant="ghost"
                                     type="button"
                                     @click="textEditing = !textEditing"

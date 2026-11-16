@@ -141,7 +141,7 @@ function regenerateCarddavSecret() {
       <template #head>
         <Button
           v-if="activeForm?.isDirty && pane !== 'sicherheit'"
-          variant="pill"
+          variant="default"
           type="submit"
           :form="formId"
           :disabled="activeForm?.processing"
@@ -215,7 +215,7 @@ function regenerateCarddavSecret() {
               </Field>
             </div>
           </div>
-          <Button type="submit" :disabled="passwordForm.processing || !passwordForm.isDirty">{{ $t('profile.changePassword') }}</Button>
+          <Button class="ml-auto" type="submit" :disabled="passwordForm.processing || !passwordForm.isDirty">{{ $t('profile.changePassword') }}</Button>
         </FormSection>
 
         <FormSection :title="$t('profile.mfaSection')">
@@ -329,7 +329,7 @@ function regenerateCarddavSecret() {
         </dl>
         <AlertDialog>
           <AlertDialogTrigger as-child>
-            <Button class="mt-4" type="button" variant="pill-muted">{{ $t('profile.regenerate') }}</Button>
+            <Button class="mt-4" type="button" variant="secondary">{{ $t('profile.regenerate') }}</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -351,7 +351,7 @@ function regenerateCarddavSecret() {
         <code class="block text-small leading-[1.5] break-all">{{ calendarFeedUrl }}</code>
         <div class="mt-4 flex items-center gap-2">
           <CopyButton :value="calendarFeedUrl!" />
-          <Button type="button" variant="pill-muted" @click="regenerateFeedUrl()">
+          <Button type="button" variant="secondary" @click="regenerateFeedUrl()">
             {{ $t('calendar.revoke') }}
           </Button>
         </div>

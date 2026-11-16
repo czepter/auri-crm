@@ -468,7 +468,7 @@ class QuoteController extends Controller
      * further, and deleting one that a client has already seen would erase
      * a record they might still hold a copy or a mail of.
      */
-    public function destroy(Quote $quote, DeleteQuote $delete): RedirectResponse
+    public function destroy(Request $request, Quote $quote, DeleteQuote $delete): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->case);
 
@@ -480,7 +480,7 @@ class QuoteController extends Controller
             abort(422, 'Nur ein Entwurf lässt sich löschen.');
         }
 
-        return redirect("/auftraege/{$projectId}/angebote");
+        return redirect($request->query('back') === 'list' ? '/angebote' : "/auftraege/{$projectId}/angebote");
     }
 
     /**

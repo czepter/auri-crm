@@ -98,11 +98,7 @@ function hint(entry: App.Crm.Data.CaseSuggestionData) {
 
 const GROUP = 'mt-4 mb-1 px-0.5 text-small leading-none font-semibold text-muted-foreground'
 
-const ROW = [
-  'flex w-full cursor-pointer items-baseline gap-[9px] border-0 bg-none px-0 py-2 text-left text-inherit no-underline',
-  'shadow-[inset_0_1px_0_var(--rule)] first:shadow-none',
-  'not-first:border-t not-first:border-muted',
-].join(' ')
+const ROW = 'flex w-full cursor-pointer items-baseline gap-[9px] rounded-none border-0 border-t border-rule bg-none px-0 py-2 text-left text-inherit no-underline'
 </script>
 
 <template>
@@ -116,7 +112,7 @@ const ROW = [
     <span v-if="project" class="flex-none text-small" :class="project.isBooked ? 'text-ink-2' : 'text-ring'">
       {{ project.isBooked ? $t('create.project') : $t('create.lead') }}
     </span>
-    <Button class="ml-auto" type="button" variant="pill-muted" @click="clear">{{ $t('common.edit') }}</Button>
+    <Button class="ml-auto" type="button" variant="secondary" @click="clear">{{ $t('common.edit') }}</Button>
   </div>
 
   <div v-else>

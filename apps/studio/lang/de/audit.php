@@ -26,6 +26,8 @@ return [
     'form_instance.created' => 'Fragebogen angelegt',
     'form_instance.shared' => 'Fragebogen freigegeben',
     'form_instance.unshared' => 'Fragebogen zurückgezogen',
+    'form_instance.closed' => 'Fragebogen abgeschlossen',
+    'form_instance.reopened' => 'Fragebogen wieder geöffnet',
     'form_instance.updated' => 'Fragebogen geändert',
     'form_instance_field.answered' => 'Frage beantwortet',
     'form_instance_field.file_deleted' => 'Datei im Fragebogen gelöscht',

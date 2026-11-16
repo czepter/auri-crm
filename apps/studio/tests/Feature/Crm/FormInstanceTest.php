@@ -251,7 +251,7 @@ it('purges the files of a field removed by a save', function () {
         ->and(Storage::disk('local')->allFiles())->toBeEmpty();
 });
 
-it('starts a field fresh when its type changes', function () {
+it('rejects a type change on an answered field', function () {
     $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
     $field = FormInstanceField::factory()->for($instance, 'formInstance')->create(['type' => FormFieldType::ShortText]);
     $field->answer('Oma');
@@ -259,12 +259,24 @@ it('starts a field fresh when its type changes', function () {
     $this->actingAs(staffMember(), 'staff')->patch("/frageboegen/{$instance->public_id}", [
         'name' => $instance->name,
         'fields' => [['id' => $field->public_id, 'label' => 'Frage', 'type' => 'text', 'required' => false, 'options' => null]],
+    ])->assertInvalid(['fields.0.type']);
+
+    expect($field->fresh()->type)->toBe(FormFieldType::ShortText)
+        ->and($field->fresh()->currentAnswer->value)->toBe('Oma');
+});
+
+it('changes the type of an unanswered field in place', function () {
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+    $field = FormInstanceField::factory()->for($instance, 'formInstance')->create(['type' => FormFieldType::ShortText]);
+
+    $this->actingAs(staffMember(), 'staff')->patch("/frageboegen/{$instance->public_id}", [
+        'name' => $instance->name,
+        'fields' => [['id' => $field->public_id, 'label' => 'Frage', 'type' => 'text', 'required' => false, 'options' => null]],
     ])->assertRedirect();
 
-    $fresh = $instance->fresh()->fields->sole();
-
-    expect($fresh->public_id)->not->toBe($field->public_id)
-        ->and($fresh->currentAnswer)->toBeNull();
+    expect($instance->fresh()->fields->sole())
+        ->public_id->toBe($field->public_id)
+        ->type->toBe(FormFieldType::Text);
 });
 
 it('rejects two rows with the same field id', function () {
@@ -565,4 +577,20 @@ it('refuses a question without a title and names the field', function () {
             'fields' => [['label' => '', 'type' => 'text', 'required' => false, 'options' => null]],
         ])
         ->assertSessionHasErrors('fields.0.label');
+});
+
+it('closes and reopens a questionnaire and audit-logs both', function () {
+    $instance = FormInstance::factory()->for(ClientCase::factory()->create(), 'case')->create();
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/frageboegen/{$instance->public_id}/abschliessen", ['closed' => true])
+        ->assertRedirect();
+
+    expect($instance->fresh()->isClosed())->toBeTrue()
+        ->and(AuditLog::where('event', 'form_instance.closed')->count())->toBe(1);
+
+    $this->post("/frageboegen/{$instance->public_id}/abschliessen", ['closed' => false]);
+
+    expect($instance->fresh()->closed_at)->toBeNull()
+        ->and(AuditLog::where('event', 'form_instance.reopened')->count())->toBe(1);
 });

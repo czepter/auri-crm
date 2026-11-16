@@ -96,13 +96,13 @@ function at(iso: string) {
           </Field>
         </div>
 
-        <button
+        <Button
           type="button"
-          class="mb-2 cursor-pointer rounded-full border-0 px-3 py-1 text-small leading-[1.3]"
-          :class="query.anmeldungen ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+          class="mb-2"
+          :variant="query.anmeldungen ? 'default' : 'secondary'"
           :aria-pressed="query.anmeldungen"
           @click="query.anmeldungen = !query.anmeldungen; apply()"
-        >{{ $t('audit.logins') }}</button>
+        >{{ $t('audit.logins') }}</Button>
 
         <div
           v-for="entry in rows"

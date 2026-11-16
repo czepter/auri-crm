@@ -19,6 +19,10 @@ use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Payments\Models\CreditNote;
+use App\Payments\Models\Invoice;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Support\AuditLogger;
@@ -118,6 +122,31 @@ it('counts the questionnaires the client has not answered', function () {
     $documents = collect($tabs)->firstWhere('key', 'documents');
 
     expect(collect($documents['children'])->firstWhere('key', 'forms')['count'])->toBe(1)
+        ->and($documents['count'])->toBe(3);
+});
+
+it('lists the invoices with their credit notes and counts only the open ones', function () {
+    $plan = PaymentPlan::factory()->for($this->case, 'case')->create();
+    $invoice = function (string $number, bool $paid, bool $cancelled = false) use ($plan) {
+        $invoice = Invoice::query()->forceCreate([
+            'number' => $number, 'case_id' => $this->case->id, 'issued_at' => now(),
+            'cancelled_at' => $cancelled ? now() : null,
+        ]);
+        PaymentInstallment::factory()->for($plan, 'plan')->create(['invoice_id' => $invoice->id, 'status' => $paid ? 'paid' : 'invoiced']);
+
+        return $invoice;
+    };
+    $invoice('R-1', paid: false);
+    $invoice('R-2', paid: false, cancelled: true);
+    $paid = $invoice('R-3', paid: true);
+    CreditNote::query()->forceCreate(['invoice_id' => $paid->id, 'number' => 'G-1', 'issued_at' => now(), 'amount' => 5000, 'reason' => 'Nachlass']);
+
+    $page = props("/auftraege/{$this->case->public_id}/rechnungen");
+    $documents = collect($page['header']['tabs'])->firstWhere('key', 'documents');
+
+    expect(collect($page['invoices'])->pluck('number')->sort()->values()->all())->toBe(['R-1', 'R-2', 'R-3'])
+        ->and(collect($page['invoices'])->firstWhere('number', 'R-3')['creditNotes'][0]['number'])->toBe('G-1')
+        ->and(collect($documents['children'])->firstWhere('key', 'invoices')['count'])->toBe(1)
         ->and($documents['count'])->toBe(3);
 });
 

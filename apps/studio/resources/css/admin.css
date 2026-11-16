@@ -38,7 +38,7 @@
 /* ---------- Zugänglichkeit ---------- */
 
 /* Unlayered, so it beats the `outline-none` utilities on buttons and fields. */
-:where(a, button, input, select, textarea, summary, [role="tab"], [role="switch"], [role="checkbox"], [role="radio"], [tabindex]):focus-visible {
+:where(a, button, input, select, textarea, summary, [role="tab"], [role="switch"], [role="checkbox"], [role="radio"], [tabindex]):not([role="option"], [role^="menuitem"]):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
