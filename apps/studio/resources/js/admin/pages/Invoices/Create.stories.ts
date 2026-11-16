@@ -33,8 +33,14 @@ const letterEditor = {
 }
 
 // Der Projekt-Suche antwortet im Katalog niemand; die Liste kommt aus der Story.
+// Die Vorschau rendert nur der Server, hier bleibt sie leer.
 const fetchRecent = () => {
-  window.fetch = async () => new Response(JSON.stringify({ projects: [fuhrmann, ...others], contacts: [] }))
+  const original = window.fetch
+  window.fetch = async (input, init) => String(input).includes('/suche')
+    ? new Response(JSON.stringify({ projects: [fuhrmann, ...others], contacts: [] }))
+    : original(input, init)
+
+  return () => { window.fetch = original }
 }
 
 const meta = {
