@@ -1,7 +1,7 @@
 {
     "openapi": "3.1.0",
     "info": {
-        "title": "Laravel",
+        "title": "Studio",
         "version": "0.0.1"
     },
     "servers": [
@@ -24,7 +24,7 @@
                         "required": true,
                         "description": "The gallery version public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -47,13 +47,9 @@
                                                                 "type": "string"
                                                             },
                                                             "author": {
-                                                                "anyOf": [
-                                                                    {
-                                                                        "type": "string"
-                                                                    },
-                                                                    {
-                                                                        "type": "null"
-                                                                    }
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
                                                                 ]
                                                             },
                                                             "own": {
@@ -104,7 +100,7 @@
                         "required": true,
                         "description": "The gallery version public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -215,7 +211,7 @@
                         "required": true,
                         "description": "The gallery version public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -258,7 +254,7 @@
                         "required": true,
                         "description": "The gallery version public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -331,7 +327,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -388,10 +384,7 @@
                                             "type": "string"
                                         },
                                         "typeOther": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "source": {
                                             "type": [
@@ -400,10 +393,7 @@
                                             ]
                                         },
                                         "sourceOther": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -438,7 +428,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -464,7 +454,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -507,7 +497,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -549,7 +539,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -604,7 +594,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -662,7 +652,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -696,7 +686,7 @@
                                             "type": "string"
                                         },
                                         "portalVisible": {
-                                            "type": "boolean"
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -730,7 +720,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -739,7 +729,7 @@
                         "required": true,
                         "description": "The contact public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -788,7 +778,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -855,16 +845,10 @@
                                             "type": "string"
                                         },
                                         "email": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "phone": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "role": {
                                             "type": "string"
@@ -968,23 +952,13 @@
                                             "type": "string"
                                         },
                                         "email": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "phone": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "social_profiles": {
-                                            "type": [
-                                                "array",
-                                                "null"
-                                            ],
-                                            "items": {}
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -1107,7 +1081,7 @@
                         "required": true,
                         "description": "The contact public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -1200,41 +1174,22 @@
                                             "type": "string"
                                         },
                                         "email": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "phone": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "street": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "postcode": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "city": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "social_profiles": {
-                                            "type": [
-                                                "array",
-                                                "null"
-                                            ],
-                                            "items": {}
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -1246,6 +1201,335 @@
                                         "postcode",
                                         "city",
                                         "social_profiles"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/credit-notes": {
+            "get": {
+                "operationId": "credit-notes.index",
+                "tags": [
+                    "CreditNote"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/invoices/{invoice}/credit-note-draft": {
+            "get": {
+                "operationId": "invoices.credit-note-draft.show",
+                "tags": [
+                    "CreditNote"
+                ],
+                "parameters": [
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "description": "The invoice public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "invoices.credit-note-draft.save",
+                "tags": [
+                    "CreditNote"
+                ],
+                "parameters": [
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "description": "The invoice public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "issued_on": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "intro": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 20000
+                                    },
+                                    "outro": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 20000
+                                    },
+                                    "taken": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "reason": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 1000
+                                    },
+                                    "send": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "invoices.credit-note-draft.destroy",
+                "tags": [
+                    "CreditNote"
+                ],
+                "parameters": [
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "description": "The invoice public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/invoices/{invoice}/credit-notes": {
+            "post": {
+                "operationId": "invoices.credit-notes.store",
+                "tags": [
+                    "CreditNote"
+                ],
+                "parameters": [
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "description": "The invoice public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "issued_on": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "intro": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 20000
+                                    },
+                                    "outro": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 20000
+                                    },
+                                    "amount": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 1000
+                                    },
+                                    "send": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "amount",
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CreditNoteRowData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
                                     ]
                                 }
                             }
@@ -1304,7 +1588,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -1344,7 +1628,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -1407,7 +1691,7 @@
                         "required": true,
                         "description": "The assignment public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -1843,7 +2127,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -1885,7 +2169,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -1894,7 +2178,7 @@
                         "required": true,
                         "description": "The zip build part public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -1952,7 +2236,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -1995,7 +2279,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2057,7 +2341,7 @@
                         "required": true,
                         "description": "The form instance public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2158,7 +2442,7 @@
                         "required": true,
                         "description": "The form instance public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2221,7 +2505,7 @@
                         "required": true,
                         "description": "The form instance public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2284,7 +2568,7 @@
                         "required": true,
                         "description": "The form instance field public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2550,7 +2834,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2591,7 +2875,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2681,7 +2965,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2747,7 +3031,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2817,7 +3101,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2859,7 +3143,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2902,7 +3186,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2945,7 +3229,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -3028,7 +3312,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -3057,10 +3341,7 @@
                                                             "type": "string"
                                                         },
                                                         "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
+                                                            "type": "string"
                                                         },
                                                         "count": {
                                                             "type": "integer",
@@ -3101,7 +3382,7 @@
                                                                     "type": "object",
                                                                     "properties": {
                                                                         "number": {
-                                                                            "type": "integer"
+                                                                            "type": "string"
                                                                         },
                                                                         "bytes": {
                                                                             "type": "integer"
@@ -3151,10 +3432,7 @@
                                                             "type": "string"
                                                         },
                                                         "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
+                                                            "type": "string"
                                                         },
                                                         "count": {
                                                             "type": "integer",
@@ -3283,7 +3561,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -3330,10 +3608,7 @@
                                                             "type": "string"
                                                         },
                                                         "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
+                                                            "type": "string"
                                                         },
                                                         "count": {
                                                             "type": "integer",
@@ -3374,7 +3649,7 @@
                                                                     "type": "object",
                                                                     "properties": {
                                                                         "number": {
-                                                                            "type": "integer"
+                                                                            "type": "string"
                                                                         },
                                                                         "bytes": {
                                                                             "type": "integer"
@@ -3424,10 +3699,7 @@
                                                             "type": "string"
                                                         },
                                                         "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
+                                                            "type": "string"
                                                         },
                                                         "count": {
                                                             "type": "integer",
@@ -3500,7 +3772,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -3602,7 +3874,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -3694,7 +3966,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -3800,10 +4072,7 @@
                                                     "const": "redirect"
                                                 },
                                                 "url": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
+                                                    "type": "string"
                                                 }
                                             },
                                             "required": [
@@ -3834,10 +4103,7 @@
                                                             ]
                                                         },
                                                         "website": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
+                                                            "type": "string"
                                                         },
                                                         "impressum": {
                                                             "type": [
@@ -3899,10 +4165,7 @@
                                                         "type": "object",
                                                         "properties": {
                                                             "title": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ]
+                                                                "type": "string"
                                                             },
                                                             "date": {
                                                                 "type": [
@@ -3911,10 +4174,7 @@
                                                                 ]
                                                             },
                                                             "category": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ]
+                                                                "type": "string"
                                                             },
                                                             "path": {
                                                                 "type": "string"
@@ -3935,16 +4195,10 @@
                                                                 ],
                                                                 "properties": {
                                                                     "x": {
-                                                                        "type": [
-                                                                            "integer",
-                                                                            "null"
-                                                                        ]
+                                                                        "type": "string"
                                                                     },
                                                                     "y": {
-                                                                        "type": [
-                                                                            "integer",
-                                                                            "null"
-                                                                        ]
+                                                                        "type": "string"
                                                                     }
                                                                 },
                                                                 "required": [
@@ -4002,10 +4256,7 @@
                                                                     "type": "object",
                                                                     "properties": {
                                                                         "title": {
-                                                                            "type": [
-                                                                                "string",
-                                                                                "null"
-                                                                            ]
+                                                                            "type": "string"
                                                                         },
                                                                         "date": {
                                                                             "type": [
@@ -4014,10 +4265,7 @@
                                                                             ]
                                                                         },
                                                                         "category": {
-                                                                            "type": [
-                                                                                "string",
-                                                                                "null"
-                                                                            ]
+                                                                            "type": "string"
                                                                         },
                                                                         "path": {
                                                                             "type": "string"
@@ -4038,16 +4286,10 @@
                                                                             ],
                                                                             "properties": {
                                                                                 "x": {
-                                                                                    "type": [
-                                                                                        "integer",
-                                                                                        "null"
-                                                                                    ]
+                                                                                    "type": "string"
                                                                                 },
                                                                                 "y": {
-                                                                                    "type": [
-                                                                                        "integer",
-                                                                                        "null"
-                                                                                    ]
+                                                                                    "type": "string"
                                                                                 }
                                                                             },
                                                                             "required": [
@@ -4113,7 +4355,7 @@
                         "required": true,
                         "description": "The gallery version public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -4177,7 +4419,7 @@
                         "required": true,
                         "description": "The gallery version public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -4429,7 +4671,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -4458,10 +4700,7 @@
                                                             "type": "string"
                                                         },
                                                         "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
+                                                            "type": "string"
                                                         },
                                                         "draft": {
                                                             "type": "boolean"
@@ -4476,10 +4715,7 @@
                                                             "type": "object",
                                                             "properties": {
                                                                 "key": {
-                                                                    "type": [
-                                                                        "string",
-                                                                        "null"
-                                                                    ]
+                                                                    "type": "string"
                                                                 },
                                                                 "focal": {
                                                                     "type": [
@@ -4488,16 +4724,10 @@
                                                                     ],
                                                                     "properties": {
                                                                         "x": {
-                                                                            "type": [
-                                                                                "integer",
-                                                                                "null"
-                                                                            ]
+                                                                            "type": "string"
                                                                         },
                                                                         "y": {
-                                                                            "type": [
-                                                                                "integer",
-                                                                                "null"
-                                                                            ]
+                                                                            "type": "string"
                                                                         }
                                                                     },
                                                                     "required": [
@@ -4524,7 +4754,7 @@
                                                             }
                                                         },
                                                         "intro": {
-                                                            "type": "boolean"
+                                                            "type": "string"
                                                         },
                                                         "locked": {
                                                             "type": "boolean"
@@ -4560,38 +4790,20 @@
                                                                     "type": "string"
                                                                 },
                                                                 "version": {
-                                                                    "type": "integer"
+                                                                    "type": "string"
                                                                 },
                                                                 "published_at": {
-                                                                    "type": "string",
-                                                                    "format": "date-time"
+                                                                    "type": "string"
                                                                 },
                                                                 "assets": {
                                                                     "type": "array",
                                                                     "items": {
                                                                         "type": "object",
                                                                         "properties": {
-                                                                            "key": {
-                                                                                "type": "string"
-                                                                            },
-                                                                            "set": {
-                                                                                "type": [
-                                                                                    "string",
-                                                                                    "null"
-                                                                                ]
-                                                                            },
-                                                                            "width": {
-                                                                                "type": [
-                                                                                    "string",
-                                                                                    "null"
-                                                                                ]
-                                                                            },
-                                                                            "height": {
-                                                                                "type": [
-                                                                                    "string",
-                                                                                    "null"
-                                                                                ]
-                                                                            }
+                                                                            "key": {},
+                                                                            "set": {},
+                                                                            "width": {},
+                                                                            "height": {}
                                                                         },
                                                                         "required": [
                                                                             "key",
@@ -4641,10 +4853,7 @@
                                                             "type": "string"
                                                         },
                                                         "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
+                                                            "type": "string"
                                                         },
                                                         "prerelease": {
                                                             "type": "boolean"
@@ -4671,10 +4880,7 @@
                                                             "type": "string"
                                                         },
                                                         "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
+                                                            "type": "string"
                                                         },
                                                         "draft": {
                                                             "type": "boolean"
@@ -4689,10 +4895,7 @@
                                                             "type": "object",
                                                             "properties": {
                                                                 "key": {
-                                                                    "type": [
-                                                                        "string",
-                                                                        "null"
-                                                                    ]
+                                                                    "type": "string"
                                                                 },
                                                                 "focal": {
                                                                     "type": [
@@ -4701,16 +4904,10 @@
                                                                     ],
                                                                     "properties": {
                                                                         "x": {
-                                                                            "type": [
-                                                                                "integer",
-                                                                                "null"
-                                                                            ]
+                                                                            "type": "string"
                                                                         },
                                                                         "y": {
-                                                                            "type": [
-                                                                                "integer",
-                                                                                "null"
-                                                                            ]
+                                                                            "type": "string"
                                                                         }
                                                                     },
                                                                     "required": [
@@ -4731,7 +4928,7 @@
                                                             }
                                                         },
                                                         "intro": {
-                                                            "type": "boolean"
+                                                            "type": "string"
                                                         },
                                                         "locked": {
                                                             "type": "boolean"
@@ -4778,25 +4975,16 @@
                                                                         "type": "object",
                                                                         "properties": {
                                                                             "key": {
-                                                                                "type": [
-                                                                                    "string",
-                                                                                    "null"
-                                                                                ]
+                                                                                "type": "string"
                                                                             },
                                                                             "set": {
                                                                                 "type": "string"
                                                                             },
                                                                             "width": {
-                                                                                "type": [
-                                                                                    "integer",
-                                                                                    "null"
-                                                                                ]
+                                                                                "type": "string"
                                                                             },
                                                                             "height": {
-                                                                                "type": [
-                                                                                    "integer",
-                                                                                    "null"
-                                                                                ]
+                                                                                "type": "string"
                                                                             }
                                                                         },
                                                                         "required": [
@@ -5069,25 +5257,16 @@
                                                         "type": "string"
                                                     },
                                                     "projectId": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
+                                                        "type": "string"
                                                     },
                                                     "projectName": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
+                                                        "type": "string"
                                                     },
                                                     "subject": {
                                                         "type": "string"
                                                     },
                                                     "who": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
+                                                        "type": "string"
                                                     },
                                                     "snippet": {
                                                         "type": "string"
@@ -5151,7 +5330,7 @@
                         "required": true,
                         "description": "The thread public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5207,7 +5386,7 @@
                         "required": true,
                         "description": "The thread public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5258,7 +5437,7 @@
                         "required": true,
                         "description": "The thread public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5347,7 +5526,7 @@
                         "required": true,
                         "description": "The inbound message public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5425,7 +5604,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5468,7 +5647,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5487,10 +5666,7 @@
                                             "type": "string"
                                         },
                                         "author": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "writtenAt": {
                                             "type": "string"
@@ -5529,7 +5705,7 @@
                         "required": true,
                         "description": "The note public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5548,10 +5724,7 @@
                                             "type": "string"
                                         },
                                         "author": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "writtenAt": {
                                             "type": "string"
@@ -5588,7 +5761,484 @@
                         "required": true,
                         "description": "The note public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/invoices": {
+            "get": {
+                "operationId": "invoices.index",
+                "tags": [
+                    "Invoice"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "invoices.store",
+                "tags": [
+                    "Invoice"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/InvoiceDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/invoices/{invoice}": {
+            "get": {
+                "operationId": "invoices.show",
+                "tags": [
+                    "Invoice"
+                ],
+                "parameters": [
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "required": true,
+                        "description": "The invoice public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/InvoiceDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/invoice-drafts/{draft}/issue": {
+            "post": {
+                "operationId": "invoice-drafts.issue",
+                "tags": [
+                    "Invoice"
+                ],
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "description": "The draft public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/InvoiceDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/invoice-drafts": {
+            "get": {
+                "operationId": "invoice-drafts.index",
+                "tags": [
+                    "InvoiceDraft"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "invoice-drafts.store",
+                "tags": [
+                    "InvoiceDraft"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "projectId": {
+                                                    "type": "string"
+                                                },
+                                                "contactId": {
+                                                    "type": "string"
+                                                },
+                                                "updatedAt": {
+                                                    "type": "string"
+                                                },
+                                                "payload": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "projectId",
+                                                "contactId",
+                                                "updatedAt",
+                                                "payload"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/invoice-drafts/{draft}": {
+            "get": {
+                "operationId": "invoice-drafts.show",
+                "tags": [
+                    "InvoiceDraft"
+                ],
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "description": "The draft public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "projectId": {
+                                                    "type": "string"
+                                                },
+                                                "contactId": {
+                                                    "type": "string"
+                                                },
+                                                "updatedAt": {
+                                                    "type": "string"
+                                                },
+                                                "payload": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "projectId",
+                                                "contactId",
+                                                "updatedAt",
+                                                "payload"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "invoice-drafts.update",
+                "tags": [
+                    "InvoiceDraft"
+                ],
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "description": "The draft public id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "projectId": {
+                                                    "type": "string"
+                                                },
+                                                "contactId": {
+                                                    "type": "string"
+                                                },
+                                                "updatedAt": {
+                                                    "type": "string"
+                                                },
+                                                "payload": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "projectId",
+                                                "contactId",
+                                                "updatedAt",
+                                                "payload"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "invoice-drafts.destroy",
+                "tags": [
+                    "InvoiceDraft"
+                ],
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "description": "The draft public id",
+                        "schema": {
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5676,7 +6326,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5721,7 +6371,10 @@
                                             "type": "string"
                                         },
                                         "enteredAt": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "closedAt": {
                                             "type": [
@@ -5785,7 +6438,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5833,10 +6486,7 @@
                                             "type": "string"
                                         },
                                         "inquiryText": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "capturedVia": {
                                             "type": [
@@ -5845,10 +6495,7 @@
                                             ]
                                         },
                                         "capturedViaOther": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -5884,7 +6531,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5933,7 +6580,10 @@
                                             "type": "string"
                                         },
                                         "enteredAt": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "closedAt": {
                                             "type": [
@@ -5975,7 +6625,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -5994,7 +6644,10 @@
                                             "type": "string"
                                         },
                                         "enteredAt": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "closedAt": {
                                             "type": [
@@ -6109,7 +6762,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -6365,7 +7018,7 @@
                         "required": true,
                         "description": "The package public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -6525,7 +7178,7 @@
                         "required": true,
                         "description": "The package public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -6552,7 +7205,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -6633,7 +7286,7 @@
                         "required": true,
                         "description": "The payment plan public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -6727,7 +7380,7 @@
                         "required": true,
                         "description": "The installment public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -6802,7 +7455,7 @@
                         "required": true,
                         "description": "The installment public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -6892,7 +7545,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -6959,7 +7612,7 @@
                         "required": true,
                         "description": "The project type public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -7179,7 +7832,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -7507,7 +8160,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -7828,7 +8481,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -7855,7 +8508,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -7918,7 +8571,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -7961,7 +8614,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8044,7 +8697,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8087,7 +8740,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8130,7 +8783,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8173,7 +8826,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8216,7 +8869,7 @@
                         "required": true,
                         "description": "The quote public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8292,7 +8945,7 @@
                         "required": true,
                         "description": "The contact public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8335,7 +8988,7 @@
                         "required": true,
                         "description": "The contact public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8405,7 +9058,7 @@
                         "required": true,
                         "description": "The service suggestion public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8434,7 +9087,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8546,7 +9199,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8645,7 +9298,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8695,7 +9348,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8714,7 +9367,10 @@
                                             "type": "string"
                                         },
                                         "enteredAt": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "cancelledAt": {
                                             "type": [
@@ -8752,7 +9408,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8796,7 +9452,10 @@
                                             "type": "string"
                                         },
                                         "enteredAt": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "cancelledAt": {
                                             "type": [
@@ -8837,7 +9496,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8882,7 +9541,10 @@
                                             "type": "string"
                                         },
                                         "enteredAt": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "cancelledAt": {
                                             "type": [
@@ -8923,7 +9585,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -8942,7 +9604,10 @@
                                             "type": "string"
                                         },
                                         "enteredAt": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "cancelledAt": {
                                             "type": [
@@ -8980,7 +9645,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9023,7 +9688,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9087,7 +9752,7 @@
                         "required": true,
                         "description": "The item public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9129,7 +9794,7 @@
                         "required": true,
                         "description": "The item public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9263,7 +9928,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -9317,7 +9982,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9424,7 +10089,7 @@
                         "required": true,
                         "description": "The task public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9487,7 +10152,7 @@
                         "required": true,
                         "description": "The task public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9529,7 +10194,7 @@
                         "required": true,
                         "description": "The task public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9591,7 +10256,7 @@
                         "required": true,
                         "description": "The task public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9653,7 +10318,7 @@
                         "required": true,
                         "description": "The task public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9680,7 +10345,7 @@
                         "required": true,
                         "description": "The case public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9744,7 +10409,7 @@
                         "required": true,
                         "description": "The message public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9793,7 +10458,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9836,7 +10501,7 @@
                         "required": true,
                         "description": "The shoot public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -9924,7 +10589,7 @@
                         "required": true,
                         "description": "The entry public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -10153,6 +10818,11 @@
                 "additionalProperties": {},
                 "title": "CaseReadData"
             },
+            "CreditNoteRowData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "CreditNoteRowData"
+            },
             "CrewAssignmentReadData": {
                 "type": "object",
                 "additionalProperties": {},
@@ -10193,6 +10863,11 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "GalleryDetailData"
+            },
+            "InvoiceDetailData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "InvoiceDetailData"
             },
             "LazyCollection": {
                 "type": "object",
