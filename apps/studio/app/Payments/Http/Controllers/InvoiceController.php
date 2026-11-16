@@ -642,7 +642,7 @@ class InvoiceController extends Controller
 
         $validated = $request->validate([
             ...$this->creditNoteRules(),
-            'issued_on' => [...$this->creditNoteRules()['issued_on'], $this->notBeforeLatestCreditNote(...)],
+            'issued_on' => [...$this->creditNoteRules()['issued_on'], fn (string $attribute, mixed $value, \Closure $fail) => $this->notBeforeLatestCreditNote($invoice, $attribute, $value, $fail)],
             'amount' => ['required', 'integer', 'min:1'],
             'reason' => ['required', 'string', 'max:1000'],
             'send' => ['sometimes', 'boolean'],
@@ -669,10 +669,10 @@ class InvoiceController extends Controller
         return back();
     }
 
-    /** Gutschriften laufen in eigener Reihe, ihre Daten also auch. */
-    private function notBeforeLatestCreditNote(string $attribute, mixed $value, \Closure $fail): void
+    /** Gutschriften laufen in eigener Reihe, ihre Daten also auch; keine liegt vor der Rechnung. */
+    private function notBeforeLatestCreditNote(Invoice $invoice, string $attribute, mixed $value, \Closure $fail): void
     {
-        $latest = CreditNote::query()->orderByDesc('issued_at')->first()?->issued_at;
+        $latest = collect([CreditNote::query()->orderByDesc('issued_at')->first()?->issued_at, $invoice->issued_at])->filter()->max();
 
         if ($latest !== null && $value !== null && Carbon::parse($value)->startOfDay()->lt($latest->startOfDay())) {
             $fail(__('payments.issuedBeforeLatest', ['date' => $latest->format('d.m.Y')]));

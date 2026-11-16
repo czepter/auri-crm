@@ -320,12 +320,12 @@ it('sends the Gutschrift in the studio’s own wording where the builder asks fo
 it('takes a Gutschrift date no earlier than the latest Gutschrift and not in the future', function () {
     $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->andReturn('%PDF-1.4 fake');
 
+    $this->travelTo('2026-11-10 09:00:00');
     $paid = creditableInstallment();
     $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
     $url = "/rechnungen/{$paid->invoice->public_id}/gutschrift";
     $body = fn (string $issuedOn) => ['amount' => 5_000, 'reason' => 'Nachlass', 'issued_on' => $issuedOn];
 
-    $this->travelTo('2026-11-10 09:00:00');
     $admin->post($url, $body('2026-11-10'))->assertRedirect();
 
     $this->travelTo('2026-11-16 12:00:00');
@@ -395,4 +395,17 @@ it('keeps a staff member out of a credit-note draft whose project they cannot se
     $this->actingAs($crew, 'staff')
         ->put("/rechnungen/{$invoice->public_id}/gutschrift/entwurf", ['reason' => 'x'])
         ->assertForbidden();
+});
+
+it('takes no Gutschrift date before its invoice', function () {
+    $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->andReturn('%PDF-1.4 fake');
+
+    $this->travelTo('2026-11-10 09:00:00');
+    $paid = creditableInstallment();
+    $paid->invoice->update(['issued_at' => '2026-11-10 09:00:00']);
+    $url = "/rechnungen/{$paid->invoice->public_id}/gutschrift";
+    $admin = $this->actingAs(staffMember(StaffRole::Admin), 'staff');
+
+    $admin->post($url, ['amount' => 5_000, 'reason' => 'Nachlass', 'issued_on' => '2026-11-09'])->assertSessionHasErrors('issued_on');
+    $admin->post($url, ['amount' => 5_000, 'reason' => 'Nachlass', 'issued_on' => '2026-11-10'])->assertSessionHasNoErrors();
 });
