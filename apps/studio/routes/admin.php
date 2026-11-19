@@ -93,6 +93,8 @@ use App\Staff\Http\Controllers\MfaChallengeController;
 use App\Staff\Http\Controllers\MfaEnrollmentController;
 use App\Staff\Http\Controllers\NotificationController;
 use App\Staff\Http\Controllers\OwnershipController;
+use App\Staff\Http\Controllers\PasskeyController;
+use App\Staff\Http\Controllers\PasskeySessionController;
 use App\Staff\Http\Controllers\PasswordResetController;
 use App\Staff\Http\Controllers\ProfileController;
 use App\Staff\Http\Controllers\SessionController;
@@ -161,6 +163,8 @@ Route::middleware(['guest:staff', 'setup'])->group(function () {
 Route::middleware('guest:staff')->group(function () {
     Route::get('/login', [SessionController::class, 'create'])->name('login');
     Route::post('/login', [SessionController::class, 'store']);
+    Route::post('/login/passkey/optionen', [PasskeySessionController::class, 'options']);
+    Route::post('/login/passkey', [PasskeySessionController::class, 'store']);
 
     // The challenge runs between password and session: authenticated by the
     // pending-user session key, not by the staff guard.
@@ -338,6 +342,9 @@ Route::middleware('audience:staff')->group(function () {
             ->can('viewAny', Contact::class)
             ->name('carddav.regenerate');
         Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
+        Route::post('/profil/passkeys/optionen', [PasskeyController::class, 'options']);
+        Route::post('/profil/passkeys', [PasskeyController::class, 'store']);
+        Route::delete('/profil/passkeys/{passkey}', [PasskeyController::class, 'destroy']);
         Route::put('/profil/passwort', [ProfileController::class, 'updatePassword'])
             ->name('profile.password');
         Route::delete('/profil/sitzungen/{id}', [ProfileController::class, 'destroySession'])

@@ -35,6 +35,10 @@ const meta = {
       { id: 's1', ids: ['s1'], count: 1, device: 'Safari auf macOS', ip: '84.112.7.31', lastActiveAt: '2026-09-20T21:14:00+02:00', current: true },
       { id: 's2', ids: ['s2'], count: 1, device: 'Safari auf iOS', ip: '84.112.7.31', lastActiveAt: '2026-09-19T08:02:00+02:00', current: false },
     ],
+    passkeys: [
+      { id: 'p1', name: 'MacBook', createdAt: '2026-09-02T10:00:00+02:00', lastUsedAt: '2026-09-20T21:14:00+02:00' },
+      { id: 'p2', name: 'iPhone', createdAt: '2026-09-18T08:30:00+02:00', lastUsedAt: null },
+    ],
     recoveryCodesLeft: 8,
     digestFrequency: 'weekly',
     calendarFeedUrl: 'https://atelier-nordlicht.de/kalender/8f3c1a9e27b4/shootings.ics',

@@ -16,9 +16,9 @@ use Inertia\Response;
 
 class SessionController extends Controller
 {
-    private const MAX_ATTEMPTS = 5;
+    public const MAX_ATTEMPTS = 5;
 
-    private const DECAY_SECONDS = 300;
+    public const DECAY_SECONDS = 300;
 
     public function create(): Response|RedirectResponse
     {

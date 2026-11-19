@@ -274,7 +274,7 @@ await flow('mfa-enroll', async () => {
   await visit(p, `${ADMIN}/login`)
   await p.getByLabel('E-Mail').fill('e2e-basic@studio.test')
   await p.getByLabel('Passwort', { exact: true }).fill('correct-horse')
-  await p.getByRole('button', { name: 'Anmelden' }).click()
+  await p.getByRole('button', { name: 'Anmelden', exact: true }).click()
   await settle(p, 900)
   await visit(p, `${ADMIN}/auth/mfa/enroll`)
   await shot(p, SECTION, 'mfa--qr-code')
