@@ -25,6 +25,8 @@ const PUBLIC_ROUTES = [
     // at all, closed forever the moment one exists.
     'admin' => [
         'login',
+        'login/passkey',
+        'login/passkey/optionen',
         'einrichtung',
         'auth/mfa',
         'kalender/{token}/shootings.ics',

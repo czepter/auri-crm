@@ -12,6 +12,7 @@ import { CopyButton } from '@/ui/copy-button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import PasskeyList from './PasskeyList.vue'
 import SessionList from './SessionList.vue'
 import CalendarSettings from '@/admin/components/crm/CalendarSettings.vue'
 import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
@@ -23,6 +24,7 @@ const props = defineProps<{
   pendingEmail: string | null
   mfaConfirmed: boolean
   sessions: { id: string; ids: string[]; count: number; device: string; ip: string | null; lastActiveAt: string; current: boolean }[]
+  passkeys: { id: string; name: string; createdAt: string; lastUsedAt: string | null }[]
   recoveryCodesLeft: number
   digestFrequency: string | null
   calendarFeedUrl: string | null
@@ -31,7 +33,7 @@ const props = defineProps<{
   events: Record<string, Mode>
   briefable: Record<string, boolean>
 }>()
-useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'carddav', 'events'])
+useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'passkeys', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'carddav', 'events'])
 
 const DAY_KEYS = ['settings.dayMon', 'settings.dayTue', 'settings.dayWed', 'settings.dayThu', 'settings.dayFri', 'settings.daySat', 'settings.daySun']
 
@@ -359,6 +361,8 @@ function regenerateCarddavSecret() {
 
       <CalendarSettings v-if="workingDays" :working-days="workingDays" />
       </template>
+
+      <PasskeyList v-if="pane === 'sicherheit'" :passkeys="passkeys" />
 
       <SessionList v-if="pane === 'sicherheit'" :sessions="sessions" />
 

@@ -35,7 +35,7 @@ final class StudioExportTables
         'Zugangsdaten' => [
             'api_tokens', 'client_accesses', 'contact_email_changes', 'gallery_download_links',
             'gallery_email_verifications', 'oauth_clients', 'personal_access_tokens',
-            'staff_invitations', 'user_email_changes', 'user_email_verifications', 'users',
+            'staff_invitations', 'staff_passkeys', 'user_email_changes', 'user_email_verifications', 'users',
         ],
         'Betriebsdaten' => [
             'audit_logs', 'automation_runs', 'credit_note_drafts', 'document_views', 'download_events', 'gallery_grid_prefs',

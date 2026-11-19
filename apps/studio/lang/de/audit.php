@@ -135,6 +135,8 @@ return [
     'staff.carddav.secret_regenerated' => 'Adressbuch-Passwort erneuert',
     'staff.mfa.throttled' => 'Zweiter Faktor gesperrt',
     'staff.ownership_transferred' => 'Inhaber übertragen',
+    'staff.passkey.deleted' => 'Passkey gelöscht',
+    'staff.passkey.registered' => 'Passkey hinzugefügt',
     'staff.password_reset' => 'Passwort zurückgesetzt',
     'staff.password_reset_requested' => 'Passwort-Zurücksetzung angefordert',
     'staff.profile.email_changed' => 'E-Mail geändert',
