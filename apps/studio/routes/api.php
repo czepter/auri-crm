@@ -25,6 +25,7 @@ use App\Integration\Http\Controllers\CreditNoteController;
 use App\Integration\Http\Controllers\CrewController;
 use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\FormInstanceController;
+use App\Integration\Http\Controllers\FormTemplateController;
 use App\Integration\Http\Controllers\GalleryController;
 use App\Integration\Http\Controllers\InboxController;
 use App\Integration\Http\Controllers\InternalNoteController;
@@ -578,11 +579,14 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'id
     Route::delete('/shot-list/{item:public_id}', [ShotListItemController::class, 'destroy'])->name('api.shot-list.destroy');
 });
 
-Route::middleware(['audience:api', 'scope:'.Capability::ManageFormTemplates->value])
-    ->get('/cases/{case:public_id}/forms', [FormInstanceController::class, 'index'])
-    ->name('api.cases.forms.index');
+Route::middleware(['audience:api', 'scope:'.Capability::ManageFormTemplates->value])->group(function () {
+    Route::get('/cases/{case:public_id}/forms', [FormInstanceController::class, 'index'])->name('api.cases.forms.index');
+    Route::get('/form-templates', [FormTemplateController::class, 'index'])->name('api.form-templates.index');
+});
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageFormTemplates->value, 'idempotent'])->group(function () {
+    Route::post('/form-templates', [FormTemplateController::class, 'store'])->name('api.form-templates.store');
+    Route::patch('/form-templates/{formTemplate:public_id}', [FormTemplateController::class, 'update'])->name('api.form-templates.update');
     Route::post('/cases/{case:public_id}/forms', [FormInstanceController::class, 'store'])->name('api.cases.forms.store');
     Route::patch('/forms/{formInstance:public_id}', [FormInstanceController::class, 'update'])->name('api.forms.update');
     Route::post('/forms/{formInstance:public_id}/share', [FormInstanceController::class, 'share'])->name('api.forms.share');
