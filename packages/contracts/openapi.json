@@ -2665,6 +2665,298 @@
                 }
             }
         },
+        "/form-templates": {
+            "get": {
+                "operationId": "form-templates.index",
+                "tags": [
+                    "FormTemplate"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "form-templates.store",
+                "tags": [
+                    "FormTemplate"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 500
+                                    },
+                                    "project_type": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "label": {
+                                                    "type": "string",
+                                                    "maxLength": 255
+                                                },
+                                                "type": {
+                                                    "$ref": "#/components/schemas/FormFieldType"
+                                                },
+                                                "required": {
+                                                    "type": "boolean"
+                                                },
+                                                "help": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "maxLength": 500
+                                                }
+                                            },
+                                            "required": [
+                                                "label",
+                                                "type",
+                                                "required"
+                                            ]
+                                        },
+                                        "maxItems": 100,
+                                        "uniqueItems": true
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FormTemplateData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/form-templates/{formTemplate}": {
+            "patch": {
+                "operationId": "form-templates.update",
+                "tags": [
+                    "FormTemplate"
+                ],
+                "parameters": [
+                    {
+                        "name": "formTemplate",
+                        "in": "path",
+                        "required": true,
+                        "description": "The form template public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 500
+                                    },
+                                    "project_type": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "label": {
+                                                    "type": "string",
+                                                    "maxLength": 255
+                                                },
+                                                "type": {
+                                                    "$ref": "#/components/schemas/FormFieldType"
+                                                },
+                                                "required": {
+                                                    "type": "boolean"
+                                                },
+                                                "help": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "maxLength": 500
+                                                }
+                                            },
+                                            "required": [
+                                                "label",
+                                                "type",
+                                                "required"
+                                            ]
+                                        },
+                                        "maxItems": 100,
+                                        "uniqueItems": true
+                                    }
+                                },
+                                "required": [
+                                    "fields"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FormTemplateData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/galleries": {
             "get": {
                 "operationId": "galleries.index",
@@ -11014,7 +11306,8 @@
                     "time",
                     "name_list",
                     "group_photos",
-                    "file"
+                    "file",
+                    "section"
                 ],
                 "title": "FormFieldType"
             },
@@ -11022,6 +11315,11 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "FormInstanceData"
+            },
+            "FormTemplateData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "FormTemplateData"
             },
             "GalleryDetailData": {
                 "type": "object",

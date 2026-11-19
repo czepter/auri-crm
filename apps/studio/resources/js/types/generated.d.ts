@@ -318,6 +318,7 @@ uploadedAt: string,
 export type FormTemplateData = {
 id: string,
 name: string,
+description: string | null,
 projectType: string | null,
 projectTypeLabel: string | null,
 isActive: boolean,
@@ -463,7 +464,7 @@ export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'portal' | 'other';
 export type CaseContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
 export type DueAnchor = 'stage' | 'shoot';
-export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file';
+export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file' | 'section';
 export type LeadOutcome = 'lost' | 'declined' | 'closed';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'booked';

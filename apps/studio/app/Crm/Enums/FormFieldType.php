@@ -21,6 +21,7 @@ enum FormFieldType: string implements HasLabel
     case NameList = 'name_list';
     case GroupPhotos = 'group_photos';
     case File = 'file';
+    case Section = 'section';
 
     /** What a "Datei" field may be configured to accept. Nothing outside this list is storable. */
     public const FILE_FORMATS = ['pdf', 'jpg', 'jpeg', 'png', 'heic', 'webp', 'docx'];
@@ -46,6 +47,7 @@ enum FormFieldType: string implements HasLabel
             self::NameList => 'Namensliste',
             self::GroupPhotos => 'Gruppenfotos',
             self::File => 'Datei',
+            self::Section => 'Abschnitt',
         };
     }
 
@@ -80,6 +82,7 @@ enum FormFieldType: string implements HasLabel
                 "{$prefix}.options.suggestions.*" => ['string', 'max:255'],
                 "{$prefix}.options.minutesPerGroup" => ['nullable', 'integer', 'min:1', 'max:'.self::GROUP_MINUTES_MAX],
             ],
+            self::Section => ["{$prefix}.options" => ['prohibited']],
             default => [
                 "{$prefix}.options" => ['nullable', 'array'],
                 "{$prefix}.options.*" => ['string', 'max:255'],

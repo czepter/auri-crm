@@ -132,7 +132,11 @@ const LONG = ['text', 'name_list', 'group_photos']
                 <h2 class="mt-2.5 mb-6 text-[28px] leading-[0.98] font-medium tracking-[-0.03em]">{{ form.name }}</h2>
 
                 <template v-for="(field, index) in form.fields" :key="index">
-                  <label v-if="field.type === 'boolean'" class="mb-4 flex items-start gap-2.5 text-small">
+                  <div v-if="field.type === 'section'" class="mb-4 border-b border-border pb-1.5">
+                    <div class="text-small font-semibold">{{ field.label }}</div>
+                    <div v-if="field.helpText" class="mt-0.5 text-small text-ink-2">{{ field.helpText }}</div>
+                  </div>
+                  <label v-else-if="field.type === 'boolean'" class="mb-4 flex items-start gap-2.5 text-small">
                     <Checkbox disabled />
                     <span>{{ field.label }}</span>
                   </label>
