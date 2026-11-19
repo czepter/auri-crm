@@ -2,13 +2,16 @@
 
 namespace App\Crm\Actions;
 
+use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormField;
 use App\Crm\Models\FormTemplate;
 use Illuminate\Support\Facades\DB;
 
 /**
  * A row matched by public id is updated in place, a row without a match is
- * created, and an existing field no row matched is deleted.
+ * created, and an existing field no row matched is deleted. A kept non-select
+ * field keeps its options: the api cannot send a file or group_photos
+ * configuration, so a round trip must not wipe it.
  */
 class SyncFormTemplateFields
 {
@@ -34,6 +37,10 @@ class SyncFormTemplateFields
                 $field = $existing->get($row['id'] ?? '');
 
                 if ($field instanceof FormField) {
+                    if ($field->type->value === $row['type'] && $field->type !== FormFieldType::Select) {
+                        unset($attributes['options']);
+                    }
+
                     $field->update($attributes);
                     $kept[] = $field->id;
                 } else {

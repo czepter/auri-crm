@@ -15,8 +15,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * Mirrors App\Crm\Http\Controllers\FormTemplateController on the api surface.
- * The field rules are FormInstanceController's, so a field moves between a
- * form and a template unchanged. Editing a template touches no FormInstance:
+ * The field rules are FormInstanceController's, except options: select only. Editing a template touches no FormInstance:
  * seeding copies.
  */
 class FormTemplateController extends Controller
@@ -85,18 +84,16 @@ class FormTemplateController extends Controller
         ];
     }
 
-    /** Same shape FormInstanceController::optionRules() validates with. */
+    /**
+     * Options are a select's choices here. A file or group_photos field keeps
+     * the configuration the builder gave it; SyncFormTemplateFields leaves it alone.
+     */
     private function optionRules(Request $request): array
     {
-        $fields = (array) $request->input('fields', []);
-
-        return collect(array_keys($fields))
-            ->mapWithKeys(function (int|string $index) use ($request) {
-                $type = $request->input("fields.{$index}.type");
-
-                return (FormFieldType::tryFrom(is_string($type) ? $type : '') ?? FormFieldType::Text)
-                    ->optionRules("fields.{$index}");
-            })
+        return collect(array_keys((array) $request->input('fields', [])))
+            ->mapWithKeys(fn (int|string $index) => $request->input("fields.{$index}.type") === FormFieldType::Select->value
+                ? FormFieldType::Select->optionRules("fields.{$index}")
+                : ["fields.{$index}.options" => ['prohibited']])
             ->all();
     }
 

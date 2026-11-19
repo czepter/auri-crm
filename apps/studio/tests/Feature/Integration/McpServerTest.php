@@ -360,15 +360,24 @@ it('refuses a template name already taken, whatever its case', function () {
     CrmServer::tool(mcpTool('update_form_template'), ['template' => $other->public_id, 'name' => 'ANDERS', 'fields' => []])->assertOk();
 });
 
-it('takes options on a template field by the rule update_form uses', function () {
+it('takes options on select template fields only and keeps a file field\'s configuration', function () {
     mcpBearer(Capability::ManageFormTemplates);
     $field = fn (string $type, array $options) => [['label' => 'Frage', 'type' => $type, 'required' => false, 'options' => $options]];
 
-    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'A', 'fields' => $field('text', ['Ja'])])->assertOk();
-    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'B', 'fields' => $field('text', [['Ja']])])->assertHasErrors();
-    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'C', 'fields' => $field('file', ['formats' => ['exe']])])->assertHasErrors();
-    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'D', 'fields' => $field('file', ['formats' => ['pdf']])])->assertOk();
+    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'A', 'fields' => $field('select', ['Ja', 'Nein'])])->assertOk();
+    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'B', 'fields' => $field('text', ['Ja'])])->assertHasErrors();
+    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'C', 'fields' => $field('file', ['formats' => ['pdf']])])->assertHasErrors();
+
+    $template = FormTemplate::factory()->create(['name' => 'D']);
+    $file = $template->fields()->create(['label' => 'Ablaufplan', 'type' => 'file', 'required' => false, 'options' => ['formats' => ['pdf']], 'sort_order' => 0]);
 
     $listed = app()->call([mcpTool('list_form_templates'), 'handle'], ['request' => new McpRequest([])])->getStructuredContent()['templates'];
-    expect(collect($listed)->firstWhere('name', 'D')['fields'][0]['options'])->toBeNull();
+    $sent = collect($listed)->firstWhere('name', 'D')['fields'][0];
+    expect($sent['options'])->toBeNull();
+
+    CrmServer::tool(mcpTool('update_form_template'), ['template' => $template->public_id, 'fields' => [
+        ['id' => $sent['id'], 'label' => 'Ablauf', 'type' => 'file', 'required' => false],
+    ]])->assertOk();
+
+    expect($file->fresh()->options)->toBe(['formats' => ['pdf']]);
 });

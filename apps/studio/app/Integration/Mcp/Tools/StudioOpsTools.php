@@ -418,7 +418,7 @@ final class StudioOpsTools
             'type' => $schema->string()->enum(self::FORM_FIELD_TYPES)->required(),
             'required' => $schema->boolean()->required(),
             'help' => $schema->string()->max(500)->nullable()->description('Shown with the question in the portal. Plain text. Omitting it clears it.'),
-            'options' => $schema->array()->items($schema->string())->nullable()->description('Only "select" reads this, as a list of choices. Leave unset for every other type.'),
+            'options' => $schema->array()->items($schema->string())->nullable()->description('A "select" field\'s choices. Refused on every other type; a kept "file" or "group_photos" field keeps the configuration set in the studio.'),
         ]);
     }
 
