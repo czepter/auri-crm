@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-vue-next'
 import { Field } from '@/ui/field'
 import AuthLayout from '@/admin/layouts/AuthLayout.vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -22,17 +23,26 @@ const form = useForm({ email: '', password: '', remember: false })
 // für den Passwortmanager, solange niemand es aufdeckt.
 const revealed = ref(false)
 
+const { t } = useI18n()
 const passkeyForm = useForm({ credential: '' })
 const passkeys = ref(false)
+const busy = ref(false)
 onMounted(() => { passkeys.value = passkeysSupported() })
 
 async function signInWithPasskey() {
+  busy.value = true
+  passkeyForm.clearErrors()
+
   try {
     const response = await fetch('/login/passkey/optionen', {
       method: 'POST',
       headers: { Accept: 'application/json', ...xsrfHeader() },
       credentials: 'same-origin',
     })
+
+    if (!response.ok) {
+      throw new Error(String(response.status))
+    }
 
     const credential = (await navigator.credentials.get({
       publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(await response.json()),
@@ -41,8 +51,10 @@ async function signInWithPasskey() {
     passkeyForm.transform(() => ({ credential: JSON.stringify(credential.toJSON()) })).post('/login/passkey')
   } catch (error) {
     if (!ceremonyCancelled(error)) {
-      throw error
+      passkeyForm.setError('credential', t('auth.passkeyFailed'))
     }
+  } finally {
+    busy.value = false
   }
 }
 
@@ -101,7 +113,7 @@ function submit() {
       </Button>
     </form>
 
-    <Button v-if="passkeys" type="button" variant="outline" class="mt-3 w-full justify-center" :disabled="passkeyForm.processing" @click="signInWithPasskey">
+    <Button v-if="passkeys" type="button" variant="outline" class="mt-3 w-full justify-center" :disabled="busy || passkeyForm.processing" @click="signInWithPasskey">
       {{ $t('auth.passkeySignIn') }}
     </Button>
 

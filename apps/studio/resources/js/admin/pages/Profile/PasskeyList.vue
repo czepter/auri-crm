@@ -26,6 +26,21 @@ const addForm = useForm({ name: '', current_password: '' })
 const deleting = ref<Passkey | null>(null)
 const deleteForm = useForm({ current_password: '' })
 
+function setAdding(open: boolean) {
+  adding.value = open
+
+  if (!open) {
+    addForm.reset()
+    addForm.clearErrors()
+  }
+}
+
+function closeDelete() {
+  deleting.value = null
+  deleteForm.reset()
+  deleteForm.clearErrors()
+}
+
 function date(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE')
 }
@@ -61,8 +76,7 @@ async function add() {
       .post('/profil/passkeys', {
         preserveScroll: true,
         onSuccess: () => {
-          addForm.reset()
-          adding.value = false
+          setAdding(false)
         },
         onError: (errors) => {
           if (errors.credential) {
@@ -81,15 +95,14 @@ function remove() {
   deleteForm.delete(`/profil/passkeys/${deleting.value!.id}`, {
     preserveScroll: true,
     onSuccess: () => {
-      deleteForm.reset()
-      deleting.value = null
+      closeDelete()
     },
   })
 }
 </script>
 
 <template>
-  <FormSection :title="$t('profile.passkeysSection')">
+  <FormSection v-if="passkeys.length || supported" :title="$t('profile.passkeysSection')">
     <div
       v-for="passkey in passkeys"
       :key="passkey.id"
@@ -102,10 +115,10 @@ function remove() {
           passkey.lastUsedAt ? $t('profile.passkeyLastUsed', { date: date(passkey.lastUsedAt) }) : null,
         ].filter(Boolean).join(' · ') }}</span>
       </span>
-      <Button type="button" variant="outline" tone="accent" @click="deleting = passkey">{{ $t('common.delete') }}</Button>
+      <Button type="button" variant="outline" tone="accent" :aria-label="$t('profile.passkeyDeleteTitle', { name: passkey.name })" @click="deleting = passkey">{{ $t('common.delete') }}</Button>
     </div>
 
-    <Dialog v-model:open="adding">
+    <Dialog :open="adding" @update:open="setAdding">
       <DialogTrigger as-child>
         <Button v-if="supported" type="button" variant="outline" class="mt-4">{{ $t('profile.passkeyAdd') }}</Button>
       </DialogTrigger>
@@ -135,10 +148,10 @@ function remove() {
       </DialogContent>
     </Dialog>
 
-    <Dialog :open="deleting !== null" @update:open="(open) => { if (!open) deleting = null }">
+    <Dialog :open="deleting !== null" @update:open="(open) => { if (!open) closeDelete() }">
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{{ $t('profile.passkeyDeleteTitle') }}</DialogTitle>
+          <DialogTitle>{{ $t('profile.passkeyDeleteTitle', { name: deleting?.name }) }}</DialogTitle>
         </DialogHeader>
 
         <DialogBody>
