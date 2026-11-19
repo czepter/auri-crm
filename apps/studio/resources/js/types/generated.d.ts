@@ -318,6 +318,7 @@ uploadedAt: string,
 export type FormTemplateData = {
 id: string,
 name: string,
+description: string | null,
 projectType: string | null,
 projectTypeLabel: string | null,
 isActive: boolean,

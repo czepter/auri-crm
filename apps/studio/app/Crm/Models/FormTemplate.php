@@ -28,7 +28,7 @@ class FormTemplate extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['name', 'project_type', 'is_active'];
+    protected $fillable = ['name', 'description', 'project_type', 'is_active'];
 
     protected $attributes = ['is_active' => true];
 

@@ -13,6 +13,7 @@ class FormTemplateData extends Data
     public function __construct(
         public string $id,
         public string $name,
+        public ?string $description,
         public ?string $projectType,
         public ?string $projectTypeLabel,
         public bool $isActive,
@@ -28,6 +29,7 @@ class FormTemplateData extends Data
         return new self(
             id: $template->public_id,
             name: $template->name,
+            description: $template->description,
             projectType: $template->project_type?->key,
             projectTypeLabel: $template->project_type?->name,
             isActive: $template->is_active,
