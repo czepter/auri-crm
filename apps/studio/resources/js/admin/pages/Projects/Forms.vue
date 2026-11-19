@@ -112,7 +112,7 @@ function accept(field: App.Crm.Data.FormInstanceFieldData): string {
 const answerForms = Object.fromEntries(
   props.formInstances.flatMap((instance) =>
     instance.fields
-      .filter((field) => field.type !== 'file')
+      .filter((field) => field.type !== 'file' && field.type !== 'section')
       .map((field) => [field.id, useForm({ value: field.currentAnswer ?? '' })]),
   ),
 )
@@ -122,11 +122,12 @@ function answer(fieldId: string) {
 }
 
 function summary(instance: App.Crm.Data.FormInstanceData): string {
-  const answered = instance.fields.filter((field) => field.answeredAt).length
+  const questions = instance.fields.filter((field) => field.type !== 'section')
+  const answered = questions.filter((field) => field.answeredAt).length
 
-  return answered === instance.fields.length && answered > 0
+  return answered === questions.length && answered > 0
     ? t('formInstances.complete')
-    : t('formInstances.progress', { answered, total: instance.fields.length })
+    : t('formInstances.progress', { answered, total: questions.length })
 }
 </script>
 
@@ -174,9 +175,13 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
                als sein Eingabefeld, damit das Studio nachträgt, was im
                Gespräch kam. -->
           <div class="grid grid-cols-2 gap-x-[18px] gap-y-4 max-[640px]:grid-cols-1">
+            <template v-for="field in instance.fields" :key="field.id">
+            <div v-if="field.type === 'section'" class="col-span-full mt-2 border-b border-border pb-1.5">
+              <h3 class="text-ui leading-[1.35] font-semibold">{{ field.label }}</h3>
+              <p v-if="field.help" class="mt-0.5 text-small leading-[1.45] text-faint">{{ field.help }}</p>
+            </div>
             <Field
-              v-for="field in instance.fields"
-              :key="field.id"
+              v-else
               v-slot="{ id }"
               :label="field.label"
               :wide="field.type === 'group_photos'"
@@ -235,6 +240,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
 
               <span v-else class="text-ui leading-[1.47]">—</span>
             </Field>
+            </template>
           </div>
 
           <template #edit>

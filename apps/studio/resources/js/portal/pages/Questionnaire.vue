@@ -32,7 +32,7 @@ const { t } = useI18n()
 
 const form = useForm<{ answers: Record<string, string> }>({
   answers: Object.fromEntries(
-    props.questionnaire.fields.filter((f) => f.type !== 'file').map((f) => [f.id, f.currentAnswer ?? '']),
+    props.questionnaire.fields.filter((f) => f.type !== 'file' && f.type !== 'section').map((f) => [f.id, f.currentAnswer ?? '']),
   ),
 })
 
@@ -139,7 +139,12 @@ function errorFor(id: string) {
       <PortalChip v-if="questionnaire.closed" class="mt-4">{{ $t('formInstances.closed') }}</PortalChip>
 
       <dl v-if="questionnaire.closed" class="mt-12 grid gap-6">
-        <div v-for="field in questionnaire.fields" :key="field.id">
+        <template v-for="field in questionnaire.fields" :key="field.id">
+        <div v-if="field.type === 'section'" class="pt-4">
+          <h2 class="font-serif text-[22px] leading-[1.2]">{{ field.label }}</h2>
+          <p v-if="field.help" class="mt-1 whitespace-pre-line text-[12.5px] leading-[1.45] text-muted-foreground">{{ field.help }}</p>
+        </div>
+        <div v-else>
           <dt class="text-[14.5px] leading-[1.35] font-medium">{{ field.label }}</dt>
           <dd v-if="field.type === 'file'" class="mt-1 grid gap-1 text-[14.5px] leading-[1.5]">
             <a
@@ -151,13 +156,18 @@ function errorFor(id: string) {
           </dd>
           <dd v-else class="mt-1 whitespace-pre-line text-[14.5px] leading-[1.5]">{{ field.type === 'group_photos' ? shotNames(field) : field.currentAnswer || $t('portal.none') }}</dd>
         </div>
+        </template>
       </dl>
 
       <form v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-8" :data-direction="direction" @submit.prevent="submit">
         <Transition name="step" mode="out-in">
         <div :key="step" class="grid gap-8">
         <template v-for="field in pages[step]" :key="field.id">
-          <component :is="field.help ? 'div' : Fragment" v-if="field.type === 'boolean'">
+          <div v-if="field.type === 'section'">
+            <h2 class="font-serif text-[22px] leading-[1.2]">{{ field.label }}</h2>
+            <p v-if="field.help" class="mt-1 whitespace-pre-line text-[12.5px] leading-[1.45] text-muted-foreground">{{ field.help }}</p>
+          </div>
+          <component :is="field.help ? 'div' : Fragment" v-else-if="field.type === 'boolean'">
           <label
             class="flex cursor-pointer items-start gap-3.5 text-[14.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
           >

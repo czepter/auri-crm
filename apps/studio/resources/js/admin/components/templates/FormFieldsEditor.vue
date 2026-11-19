@@ -122,7 +122,7 @@ function optionsHint(type: string): string {
               </Field>
             </template>
 
-            <Field>
+            <Field v-if="field.type !== 'section'">
               <div class="flex items-center gap-2.5">
                 <Checkbox :id="`field-required-${index}`" v-model="field.required" />
                 <Label variant="inline" :for="`field-required-${index}`">{{ $t('formTemplates.requiredField') }}</Label>
@@ -141,7 +141,7 @@ function optionsHint(type: string): string {
             <div class="text-small leading-[1.4] font-medium">{{ field.label || $t('formTemplates.untitled') }}</div>
             <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
               <span class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-semibold text-muted-foreground">{{ typeLabel(field.type) }}</span>
-              <span v-if="field.required" class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-semibold text-muted-foreground">{{ $t('formTemplates.requiredChip') }}</span>
+              <span v-if="field.required && field.type !== 'section'" class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-small leading-[1.5] font-semibold text-muted-foreground">{{ $t('formTemplates.requiredChip') }}</span>
               <span v-if="(field.type === 'select' || field.type === 'file' || field.type === 'group_photos') && field.optionsText" class="text-small leading-[1.5] text-faint">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
               <span v-if="field.type === 'name_list'" class="text-small leading-[1.5] text-faint">{{ $t('formTemplates.nameListHint') }}</span>
             </div>

@@ -10,11 +10,18 @@ describe('questionnaire steps', () => {
     expect(steps(fields).map((s) => s.length)).toEqual([4, 4, 1])
   })
 
+  it('opens a step per section without counting it as a question', () => {
+    const fields = [field({ type: 'section' }), field({}), field({}), field({ type: 'section' }), field({})]
+
+    expect(steps(fields).map((s) => s.length)).toEqual([3, 2])
+  })
+
   it('flags a required field without an answer', () => {
     expect(unanswered(field({}), { a: '  ' })).toBe(true)
     expect(unanswered(field({}), { a: 'x' })).toBe(false)
     expect(unanswered(field({ required: false }), {})).toBe(false)
     expect(unanswered(field({ type: 'file' }), {})).toBe(true)
     expect(unanswered(field({ type: 'boolean' }), {})).toBe(false)
+    expect(unanswered(field({ type: 'section' }), {})).toBe(false)
   })
 })
