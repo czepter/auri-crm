@@ -11014,7 +11014,8 @@
                     "time",
                     "name_list",
                     "group_photos",
-                    "file"
+                    "file",
+                    "section"
                 ],
                 "title": "FormFieldType"
             },

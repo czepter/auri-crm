@@ -87,7 +87,7 @@ class QuestionnaireController extends Controller
         $changed = 0;
 
         foreach ($instance->fields as $field) {
-            if ($field->type === FormFieldType::File) {
+            if (in_array($field->type, [FormFieldType::File, FormFieldType::Section], true)) {
                 continue;
             }
 

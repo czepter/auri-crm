@@ -381,3 +381,25 @@ it('takes options on select template fields only and keeps a file field\'s confi
 
     expect($file->fresh()->options)->toBe(['formats' => ['pdf']]);
 });
+
+it('stores a section as never required, seeds it into a form and refuses an answer to it', function () {
+    mcpBearer(Capability::ManageFormTemplates, Capability::ViewAllCases);
+    $case = ClientCase::factory()->booked()->create();
+
+    $template = app()->call([mcpTool('create_form_template'), 'handle'], ['request' => new McpRequest([
+        'name' => 'Ablauf',
+        'fields' => [
+            ['label' => 'Zeitplan', 'type' => 'section', 'required' => true, 'help' => 'Vor der Trauung.'],
+            ['label' => 'Wer kommt?', 'type' => 'text', 'required' => true],
+        ],
+    ])])->getStructuredContent()['template'];
+
+    expect($template['fields'][0]['required'])->toBeFalse();
+
+    $form = app()->call([mcpTool('create_form'), 'handle'], ['request' => new McpRequest(['case' => $case->public_id, 'template' => $template['id']])])->getStructuredContent()['form'];
+
+    expect($form['fields'][0]['type'])->toBe('section')->and($form['fields'][0]['required'])->toBeFalse();
+
+    CrmServer::tool(mcpTool('answer_form_field'), ['field' => $form['fields'][0]['id'], 'value' => 'x'])->assertHasErrors();
+    CrmServer::tool(mcpTool('answer_form_field'), ['field' => $form['fields'][1]['id'], 'value' => 'x'])->assertOk();
+});

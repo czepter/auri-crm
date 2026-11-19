@@ -12,7 +12,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
  */
 final class StudioOpsTools
 {
-    private const FORM_FIELD_TYPES = ['text', 'short_text', 'boolean', 'select', 'date', 'time', 'name_list', 'group_photos', 'file'];
+    private const FORM_FIELD_TYPES = ['text', 'short_text', 'boolean', 'select', 'date', 'time', 'name_list', 'group_photos', 'file', 'section'];
 
     /** @return list<ToolDefinition> */
     public static function definitions(): array
@@ -116,7 +116,7 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'list_form_templates',
                 title: 'List form templates',
-                description: 'The studio\'s active questionnaire templates with their fields. The template id is what create_form seeds from; the field shape is the one update_form takes.',
+                description: 'The studio\'s active questionnaire templates with their fields. The template id is what create_form seeds from; the field shape is the one update_form takes. A "section" field is a heading with no answer.',
                 method: 'GET',
                 path: '/form-templates',
                 schema: fn (JsonSchema $schema) => [
@@ -141,7 +141,7 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'create_form_template',
                 title: 'Create a form template',
-                description: 'Creates a questionnaire template that create_form can seed projects from. Field ids are returned for update_form_template.',
+                description: 'Creates a questionnaire template that create_form can seed projects from. Field ids are returned for update_form_template. A "section" field is a heading with no answer; its required is always false.',
                 method: 'POST',
                 path: '/form-templates',
                 schema: fn (JsonSchema $schema) => [
@@ -158,7 +158,7 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'update_form_template',
                 title: 'Replace a form template\'s fields',
-                description: 'Renames a template and sets its fields. Send every field the template should keep, each with its id from list_form_templates. Forms already created from the template are not changed.',
+                description: 'Renames a template and sets its fields. Send every field the template should keep, each with its id from list_form_templates. Forms already created from the template are not changed. A "section" field is a heading with no answer.',
                 method: 'PATCH',
                 path: '/form-templates/{template}',
                 schema: fn (JsonSchema $schema) => [
@@ -177,7 +177,7 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'list_forms',
                 title: 'List a project\'s forms',
-                description: 'A project\'s questionnaires, seeded or blank, shared or not, with their fields and current answers.',
+                description: 'A project\'s questionnaires, seeded or blank, shared or not, with their fields and current answers. A "section" field is a heading with no answer.',
                 method: 'GET',
                 path: '/cases/{case}/forms',
                 schema: fn (JsonSchema $schema) => [
@@ -209,7 +209,7 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'update_form',
                 title: 'Replace a form\'s fields',
-                description: 'Renames a form and sets its fields, the same shape create_form seeds, personalised. Send every field the form should keep, each with its id from list_forms.',
+                description: 'Renames a form and sets its fields, the same shape create_form seeds, personalised. Send every field the form should keep, each with its id from list_forms. A "section" field is a heading with no answer.',
                 method: 'PATCH',
                 path: '/forms/{form}',
                 schema: fn (JsonSchema $schema) => [
@@ -265,7 +265,7 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'answer_form_field',
                 title: 'Record an answer',
-                description: 'Records (or corrects) the answer to one question on a form already seeded. Appends the next answer version; every earlier one stays. A "file" field cannot be answered here — there is no way to attach bytes through this tool.',
+                description: 'Records (or corrects) the answer to one question on a form already seeded. Appends the next answer version; every earlier one stays. A "file" field cannot be answered here — there is no way to attach bytes through this tool. A "section" has no answer.',
                 method: 'POST',
                 path: '/form-fields/{field}/answer',
                 schema: fn (JsonSchema $schema) => [

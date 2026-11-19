@@ -26,6 +26,15 @@ class FormField extends Model
 
     protected $attributes = ['required' => false, 'sort_order' => 0];
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $field) {
+            if ($field->type === FormFieldType::Section) {
+                $field->required = false;
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

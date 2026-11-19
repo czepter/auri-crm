@@ -3,6 +3,7 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Contracts\Models\Contract;
+use App\Crm\Enums\FormFieldType;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
@@ -116,8 +117,9 @@ class CaseController extends Controller
             ->map(fn (FormInstance $instance) => [
                 'id' => $instance->public_id,
                 'name' => $instance->name,
-                'count' => $instance->fields->count(),
+                'count' => $instance->fields->where('type', '!=', FormFieldType::Section)->count(),
                 'openCount' => $instance->fields
+                    ->where('type', '!=', FormFieldType::Section)
                     ->filter(fn ($field) => $field->currentAnswer?->value === null)
                     ->count(),
             ])

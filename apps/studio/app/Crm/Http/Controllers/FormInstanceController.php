@@ -182,6 +182,8 @@ class FormInstanceController extends Controller
     {
         $this->authorize('manageForms', $formInstanceField->formInstance->case);
 
+        abort_if($formInstanceField->type === FormFieldType::Section, 422);
+
         $validated = $request->validate([
             'value' => ['nullable', 'string', 'max:20000'],
         ]);
