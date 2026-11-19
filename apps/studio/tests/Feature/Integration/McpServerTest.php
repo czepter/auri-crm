@@ -8,6 +8,7 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
+use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectField;
@@ -260,6 +261,8 @@ function formArguments(string $tool): array
 
     return match ($tool) {
         'update_form' => ['form' => $form->public_id, 'name' => $form->name, 'fields' => $fields],
+        'create_form_template' => ['name' => 'Ablauf', 'fields' => [['label' => 'Wer kommt?', 'type' => 'text', 'required' => false]]],
+        'update_form_template' => ['template' => FormTemplate::factory()->create()->public_id, 'fields' => []],
         'share_form' => ['form' => $form->public_id, 'shared' => true],
         'close_form' => ['form' => $form->public_id, 'closed' => true],
         'answer_form_field' => ['field' => $form->fields->first()->public_id, 'value' => 'Oma und Opa'],
@@ -306,4 +309,63 @@ it('refuses the invoice tools to a token without the contracts scope', function 
     mcpBearer(Capability::ManageQuotes);
 
     CrmServer::tool(mcpTool('list_invoices'))->assertSee('403');
+});
+
+it('creates, lists and updates a form template without touching a form seeded from it', function () {
+    mcpBearer(Capability::ManageFormTemplates, Capability::ViewAllCases);
+    $case = ClientCase::factory()->booked()->create();
+
+    $created = app()->call([mcpTool('create_form_template'), 'handle'], ['request' => new McpRequest([
+        'name' => 'Ablauf', 'description' => 'Nur intern', 'project_type' => 'wedding',
+        'fields' => [
+            ['label' => 'Wer kommt?', 'type' => 'text', 'required' => true, 'help' => 'Auch Kinder.'],
+            ['label' => 'Fotos?', 'type' => 'select', 'required' => false, 'options' => ['Ja', 'Nein']],
+            ['label' => 'Alt', 'type' => 'text', 'required' => false],
+        ],
+    ])])->getStructuredContent()['template'];
+
+    expect($created['id'])->not->toBeEmpty()
+        ->and(collect($created['fields'])->pluck('id')->filter())->toHaveCount(3)
+        ->and($created['description'])->toBe('Nur intern');
+
+    $listed = app()->call([mcpTool('list_form_templates'), 'handle'], ['request' => new McpRequest([])])->getStructuredContent()['templates'];
+    expect($listed)->toHaveCount(1)->and($listed[0]['fieldCount'])->toBe(3)->and($listed[0]['projectType'])->toBe('wedding');
+
+    $form = app()->call([mcpTool('create_form'), 'handle'], ['request' => new McpRequest(['case' => $case->public_id, 'template' => $created['id']])])->getStructuredContent()['form'];
+    expect(collect($form['fields'])->pluck('label')->all())->toBe(['Wer kommt?', 'Fotos?', 'Alt'])
+        ->and($form['fields'][0]['help'])->toBe('Auch Kinder.');
+
+    $kept = $created['fields'][0];
+    $updated = app()->call([mcpTool('update_form_template'), 'handle'], ['request' => new McpRequest([
+        'template' => $created['id'],
+        'fields' => [
+            ['label' => 'Neu', 'type' => 'boolean', 'required' => false],
+            ['id' => $kept['id'], 'label' => 'Wer kommt mit?', 'type' => 'text', 'required' => true],
+        ],
+    ])])->getStructuredContent()['template'];
+
+    expect(collect($updated['fields'])->pluck('label')->all())->toBe(['Neu', 'Wer kommt mit?'])
+        ->and($updated['fields'][1]['id'])->toBe($kept['id'])
+        ->and(FormInstance::query()->with('fields')->first()->fields->pluck('label')->all())->toBe(['Wer kommt?', 'Fotos?', 'Alt']);
+});
+
+it('refuses a template name already taken, whatever its case', function () {
+    mcpBearer(Capability::ManageFormTemplates);
+    FormTemplate::factory()->create(['name' => 'Ablauf']);
+
+    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'ABLAUF'])->assertHasErrors();
+
+    $other = FormTemplate::factory()->create(['name' => 'Anders']);
+    CrmServer::tool(mcpTool('update_form_template'), ['template' => $other->public_id, 'name' => 'ablauf', 'fields' => []])->assertHasErrors();
+    CrmServer::tool(mcpTool('update_form_template'), ['template' => $other->public_id, 'name' => 'ANDERS', 'fields' => []])->assertOk();
+});
+
+it('takes options on a template field by the rule update_form uses', function () {
+    mcpBearer(Capability::ManageFormTemplates);
+    $field = fn (string $type, array $options) => [['label' => 'Frage', 'type' => $type, 'required' => false, 'options' => $options]];
+
+    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'A', 'fields' => $field('text', ['Ja'])])->assertOk();
+    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'B', 'fields' => $field('text', [['Ja']])])->assertHasErrors();
+    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'C', 'fields' => $field('file', ['formats' => ['exe']])])->assertHasErrors();
+    CrmServer::tool(mcpTool('create_form_template'), ['name' => 'D', 'fields' => $field('file', ['formats' => ['pdf']])])->assertOk();
 });
