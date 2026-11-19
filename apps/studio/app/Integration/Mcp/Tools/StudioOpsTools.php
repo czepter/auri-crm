@@ -129,7 +129,7 @@ final class StudioOpsTools
                     'per_page' => $arguments['limit'] ?? null,
                 ],
                 structure: fn (array $body) => [
-                    'templates' => $body['data'],
+                    'templates' => array_map(self::withSelectOptionsOnly(...), $body['data']),
                     'nextCursor' => $body['meta']['next_cursor'],
                 ],
                 outputSchema: fn (JsonSchema $schema) => [
@@ -151,7 +151,7 @@ final class StudioOpsTools
                     'fields' => $schema->array()->items(self::templateField($schema))->max(100),
                 ],
                 silent: false,
-                structure: fn (array $body) => ['template' => $body['data']],
+                structure: fn (array $body) => ['template' => self::withSelectOptionsOnly($body['data'])],
                 outputSchema: fn (JsonSchema $schema) => ['template' => self::formTemplate($schema)],
             ),
 
@@ -170,7 +170,7 @@ final class StudioOpsTools
                 ],
                 annotations: ['readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false],
                 silent: false,
-                structure: fn (array $body) => ['template' => $body['data']],
+                structure: fn (array $body) => ['template' => self::withSelectOptionsOnly($body['data'])],
                 outputSchema: fn (JsonSchema $schema) => ['template' => self::formTemplate($schema)],
             ),
 
@@ -394,6 +394,20 @@ final class StudioOpsTools
                 silent: false,
             ),
         ];
+    }
+
+    /**
+     * A file or group_photos field set up in the builder stores an options
+     * object, not a string list; list_forms hides it the same way.
+     */
+    private static function withSelectOptionsOnly(array $template): array
+    {
+        $template['fields'] = array_map(
+            fn (array $field) => $field['type'] === 'select' ? $field : [...$field, 'options' => null],
+            $template['fields'],
+        );
+
+        return $template;
     }
 
     private static function templateField(JsonSchema $schema): object

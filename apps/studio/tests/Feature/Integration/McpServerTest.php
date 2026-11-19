@@ -368,4 +368,7 @@ it('takes options on a template field by the rule update_form uses', function ()
     CrmServer::tool(mcpTool('create_form_template'), ['name' => 'B', 'fields' => $field('text', [['Ja']])])->assertHasErrors();
     CrmServer::tool(mcpTool('create_form_template'), ['name' => 'C', 'fields' => $field('file', ['formats' => ['exe']])])->assertHasErrors();
     CrmServer::tool(mcpTool('create_form_template'), ['name' => 'D', 'fields' => $field('file', ['formats' => ['pdf']])])->assertOk();
+
+    $listed = app()->call([mcpTool('list_form_templates'), 'handle'], ['request' => new McpRequest([])])->getStructuredContent()['templates'];
+    expect(collect($listed)->firstWhere('name', 'D')['fields'][0]['options'])->toBeNull();
 });
