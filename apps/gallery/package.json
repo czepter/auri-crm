@@ -10,9 +10,9 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@astrojs/node": "^11.1.0",
+    "@astrojs/node": "^11.1.14",
     "@sentry/node": "^10.69.0",
-    "astro": "^7.2.0"
+    "astro": "^7.2.10"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
