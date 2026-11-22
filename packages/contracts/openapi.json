@@ -2814,19 +2814,7 @@
                                             "properties": {
                                                 "message": {
                                                     "type": "string",
-                                                    "const": "The tenant already holds this file."
-                                                }
-                                            },
-                                            "required": [
-                                                "message"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "The tenant already holds this file."
+                                                    "const": "This upload already holds a file."
                                                 },
                                                 "document_id": {
                                                     "type": "string"
@@ -2842,7 +2830,19 @@
                                             "properties": {
                                                 "message": {
                                                     "type": "string",
-                                                    "const": "This upload already holds a file."
+                                                    "const": "The tenant already holds this file."
+                                                }
+                                            },
+                                            "required": [
+                                                "message"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "The tenant already holds this file."
                                                 },
                                                 "document_id": {
                                                     "type": "string"
