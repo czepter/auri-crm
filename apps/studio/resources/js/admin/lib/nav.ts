@@ -173,6 +173,36 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
             ],
         },
         {
+            // Ausgaben, Anlagen und die EÜR: Zahlen, die in eine Steuererklaerung
+            // gehen. Admin allein, wie die Faehigkeit selbst.
+            key: 'finanzen',
+            label: 'Finanzen',
+            icon: '<path d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4z"/><path d="M4 7V5.5A1.5 1.5 0 0 1 5.5 4H16"/><path d="M15 13.5h5"/>',
+            children: [
+                {
+                    key: 'ausgaben',
+                    label: 'Ausgaben',
+                    href: '/finanzen/ausgaben',
+                    needs: 'manage_finances',
+                    icon: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+                },
+                {
+                    key: 'anlagen',
+                    label: 'Anlagen',
+                    href: '/finanzen/anlagen',
+                    needs: 'manage_finances',
+                    icon: '<rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M9 9V6h6v3"/><path d="M4 14h16"/>',
+                },
+                {
+                    key: 'euer',
+                    label: 'EÜR',
+                    href: '/finanzen/euer',
+                    needs: 'manage_finances',
+                    icon: '<path d="M3.5 20h17"/><path d="M7 20v-6M12 20V6M17 20v-9"/>',
+                },
+            ],
+        },
+        {
             key: 'projekte',
             label: 'Projekte',
             href: '/projekte',

@@ -19,6 +19,7 @@ class EuerReportData extends Data
         public string $vatMode,
         public ?string $lockedAt,
         public int $operatingIncome,
+        public int $creditNotes,
         public int $collectedVat,
         public int $assetSales,
         public int $income,

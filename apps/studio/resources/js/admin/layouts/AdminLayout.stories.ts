@@ -26,6 +26,7 @@ const alle: App.Enums.Capability[] = [
   'manage_settings',
   'manage_form_templates',
   'manage_dsgvo',
+  'manage_finances',
 ]
 
 const user = {

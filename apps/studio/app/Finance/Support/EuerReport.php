@@ -48,7 +48,7 @@ final class EuerReport
         $mode = $fiscal?->vat_mode ?? StudioSettings::current()->vat_mode;
         $small = $mode === 'small_business';
 
-        [$operating, $collectedVat] = $this->income($year, $small);
+        [$operating, $collectedVat, $credits] = $this->income($year, $small);
 
         $categories = [];
         $inputVat = 0;
@@ -96,6 +96,7 @@ final class EuerReport
             vatMode: $mode,
             lockedAt: $fiscal?->locked_at?->format('Y-m-d'),
             operatingIncome: $operating,
+            creditNotes: $credits,
             collectedVat: $collectedVat,
             assetSales: $sales,
             income: $income,
@@ -146,10 +147,10 @@ final class EuerReport
         ];
     }
 
-    /** @return array{0: int, 1: int} operating income and collected VAT */
+    /** @return array{0: int, 1: int, 2: int} operating income after Gutschriften, collected VAT, and what the Gutschriften took off */
     private function income(int $year, bool $small): array
     {
-        $operating = $vat = 0;
+        $operating = $vat = $credits = 0;
 
         $installments = PaymentInstallment::query()
             ->whereYear('paid_on', $year)
@@ -169,10 +170,11 @@ final class EuerReport
         foreach ($notes as $note) {
             $figures = $this->figuresFor($note->invoice)->share((int) $note->amount);
             $operating -= $small ? $figures->gross : $figures->net;
+            $credits += $small ? $figures->gross : $figures->net;
             $vat -= $small ? 0 : $figures->vat;
         }
 
-        return [$operating, $vat];
+        return [$operating, $vat, $credits];
     }
 
     private function figuresFor(Invoice $invoice): InvoiceFigures

@@ -14,7 +14,10 @@ use App\Finance\Enums\ExpenseStatus;
 use App\Finance\Models\Expense;
 use App\Finance\Models\ExpenseCategory;
 use App\Finance\Models\FiscalYear;
+use App\Finance\Support\AfaCategories;
+use App\Finance\Support\Depreciation;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -58,6 +61,7 @@ class ExpenseController extends Controller
             'expense' => null,
             'locked' => false,
             'categories' => $this->categories(),
+            ...$this->assetOptions(),
         ]);
     }
 
@@ -71,6 +75,7 @@ class ExpenseController extends Controller
             'expense' => ExpenseDetailData::fromModel($expense),
             'locked' => FiscalYear::query()->where('year', $expense->year())->whereNotNull('locked_at')->exists(),
             'categories' => $this->categories(),
+            ...$this->assetOptions(),
         ]);
     }
 
@@ -119,6 +124,17 @@ class ExpenseController extends Controller
         $delete($expense, $request->user('staff'));
 
         return redirect()->route('finance.expenses.index');
+    }
+
+    /** What the form needs to preselect a method: the limit, the useful lives on offer and each year's VAT mode. */
+    private function assetOptions(): array
+    {
+        return [
+            'gwgLimit' => Depreciation::GWG_LIMIT,
+            'afaCategories' => AfaCategories::options(),
+            'vatModes' => (object) FiscalYear::query()->pluck('vat_mode', 'year')->all(),
+            'defaultVatMode' => StudioSettings::current()->vat_mode,
+        ];
     }
 
     /** @return list<ExpenseCategoryData> */

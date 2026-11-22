@@ -85,6 +85,7 @@ it('computes the regular year from payments, credit notes, expenses and deprecia
 
     expect($report->vatMode)->toBe('standard')
         ->and($report->operatingIncome)->toBe(116050)
+        ->and($report->creditNotes)->toBe(10000)
         ->and($report->collectedVat)->toBe(22050)
         ->and($report->assetSales)->toBe(30000)
         ->and($report->income)->toBe(168100)
@@ -107,6 +108,7 @@ it('computes the small business year in gross figures without VAT lines', functi
     $report = app(EuerReport::class)->forYear(2026);
 
     expect($report->operatingIncome)->toBe(138100)
+        ->and($report->creditNotes)->toBe(11900)
         ->and($report->collectedVat)->toBe(0)
         ->and($report->income)->toBe(168100)
         ->and(array_column($report->categories, 'amount'))->toBe([0, 11900, 2975])
