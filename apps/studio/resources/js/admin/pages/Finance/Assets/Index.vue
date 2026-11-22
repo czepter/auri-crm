@@ -5,7 +5,6 @@ import { EllipsisVertical } from 'lucide-vue-next'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
-import Empty from '@/ui/page/Empty.vue'
 import Chip from '@/ui/page/Chip.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
@@ -53,7 +52,8 @@ const clear = (id: string) => router.delete(`/finanzen/anlagen/${id}/abgang`, { 
             </Select>
           </div>
 
-          <Table v-if="rows.length" class="max-[640px]:block max-[640px]:overflow-x-auto">
+          <div v-if="rows.length" class="overflow-x-auto">
+          <Table>
             <thead>
               <tr>
                 <TableHead class="max-[640px]:hidden">{{ $t('financeAssets.inventoryNo') }}</TableHead>
@@ -69,7 +69,7 @@ const clear = (id: string) => router.delete(`/finanzen/anlagen/${id}/abgang`, { 
               <TableRow v-for="row in rows" :key="row.id">
                 <TableCell class="whitespace-nowrap tabular-nums max-[640px]:hidden">{{ row.inventoryNo }}</TableCell>
                 <TableCell tone="name">
-                  <div class="w-[320px] max-w-full max-[640px]:w-[130px]">
+                  <div class="max-w-[260px] max-[640px]:max-w-[130px]">
                     <span class="hidden text-small text-ink-2 max-[640px]:block">{{ row.inventoryNo }}</span>
                     <Link v-if="row.expenseId" class="block truncate" :href="`/finanzen/ausgaben/${row.expenseId}`">{{ row.name }}</Link>
                     <template v-else>{{ row.name }}</template>
@@ -96,9 +96,8 @@ const clear = (id: string) => router.delete(`/finanzen/anlagen/${id}/abgang`, { 
               </TableRow>
             </tbody>
           </Table>
+          </div>
         </div>
-
-        <Empty v-if="!rows.length" :text="$t('financeAssets.empty')" />
       </div>
     </Page>
     <DisposalDialog v-if="disposing" :key="disposing" v-model:open="dialog" :asset-id="disposing" />
