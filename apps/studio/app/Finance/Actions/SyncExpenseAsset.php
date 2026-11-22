@@ -59,7 +59,7 @@ class SyncExpenseAsset
         }
 
         if ($method === DepreciationMethod::Linear && self::months($asset) === null) {
-            $errors->add("{$prefix}useful_life_months", __('finance.lifeRequired'));
+            $validator->addFailure("{$prefix}useful_life_months", 'required');
         }
     }
 

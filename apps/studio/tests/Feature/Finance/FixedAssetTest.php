@@ -52,7 +52,7 @@ it('refuses a GWG above the limit and a linear asset without a life', function (
     $this->post('/finanzen/ausgaben', expensePayload(['asset' => assetPayload(['method' => 'gwg', 'cost_net' => 80001, 'cost_gross' => 95001])]))
         ->assertSessionHasErrors(['asset.method' => __('finance.gwgLimit')]);
     $this->post('/finanzen/ausgaben', expensePayload(['asset' => assetPayload(['useful_life_months' => null, 'afa_category' => null])]))
-        ->assertSessionHasErrors('asset.useful_life_months');
+        ->assertSessionHasErrors(['asset.useful_life_months' => 'Das Feld Nutzungsdauer (Monate) muss ausgefüllt werden.']);
     $this->post('/finanzen/ausgaben', expensePayload(['asset' => assetPayload(['method' => 'gwg', 'cost_net' => 80000, 'cost_gross' => 95200])]))
         ->assertSessionHasNoErrors();
 
