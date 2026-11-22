@@ -26,7 +26,7 @@ class FinanceDocumentData extends Data
             $document->mime,
             $document->size,
             $document->is_self_issued,
-            route('finance.documents.show', $document, absolute: false),
+            "/finanzen/belege/{$document->public_id}",
         );
     }
 }

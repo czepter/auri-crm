@@ -5,8 +5,10 @@ namespace App\Finance\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Finance\Enums\DepreciationMethod;
+use App\Finance\Enums\ExpenseStatus;
 use App\Finance\Support\FiscalYearLock;
 use Database\Factories\Finance\FixedAssetFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -64,6 +66,15 @@ class FixedAsset extends Model
         });
 
         static::deleting(fn (self $asset) => FiscalYearLock::assertOpen('acquired_at', $asset->acquired_at->year, $asset->disposed_at?->year));
+    }
+
+    /** Booked assets still on the books in a year: acquired by then and not disposed of before it. */
+    public function scopeHeldIn(Builder $query, int $year): void
+    {
+        $query
+            ->whereHas('expense', fn (Builder $expense) => $expense->where('status', ExpenseStatus::Booked))
+            ->whereYear('acquired_at', '<=', $year)
+            ->where(fn (Builder $held) => $held->whereNull('disposed_at')->orWhereYear('disposed_at', '>=', $year));
     }
 
     /** Anschaffungskosten: gross for a Kleinunternehmer year, net otherwise. */

@@ -24,12 +24,16 @@ class StoreFinanceDocument
 
     public const MIMES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 
-    /** @return array{0: FinanceDocument, 1: bool} the document and whether it was already held */
-    public function __invoke(UploadedFile $file, ?User $actor = null): array
+    /**
+     * What the bytes at $path are: sniffed type, size and hash. Refuses what is
+     * not a receipt.
+     *
+     * @return array{mime: string, size: int, sha256: string}
+     */
+    public function inspect(string $path): array
     {
-        $path = $file->getRealPath();
         $size = (int) filesize($path);
-        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($path);
+        $mime = (string) (new finfo(FILEINFO_MIME_TYPE))->file($path);
 
         if ($size === 0 || ! in_array($mime, self::MIMES, true)) {
             throw ValidationException::withMessages(['file' => __('finance.unsupportedFile')]);
@@ -39,7 +43,14 @@ class StoreFinanceDocument
             throw ValidationException::withMessages(['file' => __('finance.tooLarge')]);
         }
 
-        $hash = hash_file('sha256', $path);
+        return ['mime' => $mime, 'size' => $size, 'sha256' => hash_file('sha256', $path)];
+    }
+
+    /** @return array{0: FinanceDocument, 1: bool} the document and whether it was already held */
+    public function __invoke(UploadedFile $file, ?User $actor = null): array
+    {
+        $path = $file->getRealPath();
+        ['mime' => $mime, 'size' => $size, 'sha256' => $hash] = $this->inspect($path);
 
         if ($existing = FinanceDocument::query()->where('sha256', $hash)->first()) {
             return [$existing, true];

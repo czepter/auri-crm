@@ -30,9 +30,15 @@ class SaveExpense
     public static function validate(array $input, bool $booking): array
     {
         $input['currency'] = strtoupper((string) ($input['currency'] ?? 'EUR'));
+        $input['vat_rate'] ??= 0;
+        $input['business_share'] ??= 100;
+
+        if (! isset($input['gross']) && isset($input['net'], $input['vat'])) {
+            $input['gross'] = (int) $input['net'] + (int) $input['vat'];
+        }
 
         if (! isset($input['net'], $input['vat']) && isset($input['gross'])) {
-            $rate = (int) ($input['vat_rate'] ?? 0);
+            $rate = (int) $input['vat_rate'];
             $vat = intdiv((int) $input['gross'] * $rate * 2 + (10000 + $rate), (10000 + $rate) * 2);
             $input['vat'] = $vat;
             $input['net'] = (int) $input['gross'] - $vat;

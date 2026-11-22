@@ -26,9 +26,7 @@ class FixedAssetController extends Controller
         $year = (int) ($request->validate(['jahr' => ['nullable', 'integer', 'between:2000,2100']])['jahr'] ?? now()->year);
 
         $assets = FixedAsset::query()
-            ->whereHas('expense', fn ($expense) => $expense->where('status', ExpenseStatus::Booked))
-            ->whereYear('acquired_at', '<=', $year)
-            ->where(fn ($query) => $query->whereNull('disposed_at')->orWhereYear('disposed_at', '>=', $year))
+            ->heldIn($year)
             ->with('expense')
             ->orderBy('acquired_at')
             ->orderBy('id')

@@ -28,7 +28,7 @@ class FixedAssetRowData extends Data
         public ?string $expenseId,
     ) {}
 
-    public static function fromModel(FixedAsset $asset, int $year): self
+    public static function fromModel(FixedAsset $asset, int $year, ?CarbonImmutable $at = null): self
     {
         return new self(
             $asset->public_id,
@@ -38,7 +38,7 @@ class FixedAssetRowData extends Data
             $asset->method,
             $asset->useful_life_months,
             $asset->basis(),
-            Depreciation::of($asset)->bookValue(CarbonImmutable::create($year, 12, 31)),
+            Depreciation::of($asset)->bookValue($at ?? CarbonImmutable::create($year, 12, 31)),
             $asset->business_share,
             $asset->disposed_at?->format('Y-m-d'),
             $asset->disposal_proceeds,

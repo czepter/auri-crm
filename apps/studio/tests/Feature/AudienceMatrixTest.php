@@ -128,6 +128,10 @@ const PUBLIC_ROUTES = [
         'api/galleries/{gallery}/download', 'api/galleries/{gallery}/download/pin',
         'api/galleries/{gallery}/download/vorbereiten',
         'api/galleries/{gallery}/download/{zipBuildPart}/{guestId}',
+        // The bytes of a finance receipt. The signed address that
+        // api/finance/documents/uploads handed out is the whole credential:
+        // 15 minutes, one row, throttled.
+        'api/finance/documents/{document}/content',
     ],
 
     // The client's way in. Public by necessity — the only person who needs it
