@@ -207,7 +207,7 @@ function setStatus(next: 'draft' | 'ignored') {
 
         <div class="grid max-w-[1280px] items-start gap-10 px-6 pt-6 pb-10 max-[640px]:px-5 min-[1000px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div class="min-[1000px]:sticky min-[1000px]:top-6">
-            <ReceiptPane v-model:documents="documents" :expense-id="e?.id" :readonly="locked" />
+            <ReceiptPane v-model:documents="documents" :expense-id="e?.id" :readonly="locked || status === 'ignored'" />
           </div>
 
           <dl v-if="locked && e" class="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2.5 text-ui">
@@ -217,6 +217,7 @@ function setStatus(next: 'draft' | 'ignored') {
           </dl>
 
           <form v-else class="grid min-w-0 gap-4" @submit.prevent="submit(false)">
+            <fieldset :disabled="status === 'ignored'" class="contents">
             <Field v-slot="{ id }" :label="$t('financeExpense.vendor')" :error="errors.vendor">
               <Input :id="id" v-model="form.vendor" type="text" maxlength="200" />
             </Field>
@@ -314,6 +315,8 @@ function setStatus(next: 'draft' | 'ignored') {
               @method="methodTouched = true"
             />
             <p v-if="errors.asset" class="text-small text-destructive">{{ errors.asset }}</p>
+
+            </fieldset>
 
             <div class="flex flex-wrap items-center gap-2 pt-2">
               <template v-if="status !== 'ignored'">

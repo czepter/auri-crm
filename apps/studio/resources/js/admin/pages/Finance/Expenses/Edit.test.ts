@@ -35,5 +35,18 @@ it('rebuilds the form for the saved expense instead of keeping the create form',
   expect(root.querySelector('h1')?.textContent).not.toContain('Neue')
   expect(buttons()).toContain('Verwerfen')
   expect(buttons()).toContain('Löschen')
+
+  props.value = { ...props.value, expense: { ...Entwurf.args!.expense!, status: 'booked' } }
+  await nextTick()
+
+  expect(buttons()).toContain('Als Entwurf')
+  expect(buttons()).not.toContain('Buchen')
+  expect(buttons()).not.toContain('Löschen')
+
+  props.value = { ...props.value, expense: { ...Entwurf.args!.expense!, status: 'ignored' } }
+  await nextTick()
+
+  expect(buttons()).toContain('Wiederherstellen')
+  expect(root.querySelector('fieldset')?.disabled).toBe(true)
   app.unmount()
 })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ExpenseForm from '@/admin/components/finance/ExpenseForm.vue'
 
-// The form seeds its state once; a new key per expense rebuilds it after a save and after a jump to another expense.
+// The form seeds its state once; the key rebuilds it after a save, a jump to another expense and a status change.
 const props = defineProps<{
   expense: App.Finance.Data.ExpenseDetailData | null
   locked: boolean
@@ -14,5 +14,5 @@ const props = defineProps<{
 </script>
 
 <template>
-  <ExpenseForm :key="props.expense?.id ?? 'new'" v-bind="props" />
+  <ExpenseForm :key="`${props.expense?.id ?? 'new'}:${props.expense?.status}`" v-bind="props" />
 </template>
