@@ -34,7 +34,7 @@ class FixedAssetController extends Controller
 
         return Inertia::render('Finance/Assets/Index', [
             'year' => $year,
-            'years' => FiscalYear::known(),
+            'years' => FiscalYear::known($year),
             'locked' => FiscalYear::query()->where('year', $year)->whereNotNull('locked_at')->exists(),
             'rows' => $assets->map(fn (FixedAsset $asset) => FixedAssetRowData::fromModel($asset, $year))->values(),
         ]);

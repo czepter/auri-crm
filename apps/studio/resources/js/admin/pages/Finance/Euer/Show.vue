@@ -87,10 +87,10 @@ const LINK = 'tabular-nums text-foreground underline decoration-line-hover under
           </section>
 
           <section class="min-[900px]:col-span-2">
-            <div :class="[ROW, 'text-[18px] font-semibold']"><span>{{ $t('financeEuer.profit') }}</span><span class="tabular-nums">{{ formatEuros(report.profit) }}</span></div>
+            <div :class="[ROW, 'text-[18px] font-semibold']"><span>{{ $t('financeEuer.profit') }}</span><span class="tabular-nums">{{ formatEuros(report.profit).replace('-', '−') }}</span></div>
           </section>
 
-          <section v-if="checklist.length" class="min-[900px]:col-span-2">
+          <section v-if="!report.lockedAt && checklist.length" class="min-[900px]:col-span-2">
             <h2 class="text-ui font-semibold">{{ $t('financeEuer.checklist') }}</h2>
             <div v-for="row in checklist" :key="row.key" :class="ROW">
               <span>{{ $t(`financeEuer.${row.key}`) }}</span>

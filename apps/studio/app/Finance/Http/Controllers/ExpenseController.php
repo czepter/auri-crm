@@ -39,7 +39,7 @@ class ExpenseController extends Controller
 
         return Inertia::render('Finance/Expenses/Index', [
             'year' => (int) $year,
-            'years' => FiscalYear::known(),
+            'years' => FiscalYear::known((int) $year),
             'locked' => FiscalYear::query()->where('year', $year)->whereNotNull('locked_at')->exists(),
             'totals' => $totals,
             'filters' => [

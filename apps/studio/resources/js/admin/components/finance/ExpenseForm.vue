@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -34,6 +35,7 @@ const props = defineProps<{
   defaultVatMode: string
 }>()
 
+const { t } = useI18n()
 const e = props.expense
 const cents = (value: string) => parseCents(value) ?? 0
 const field = (value: number | null | undefined) => (value == null ? '' : centsToField(value))
@@ -131,10 +133,40 @@ function syncAsset() {
   }
 }
 
+const lockedRows = computed(() => {
+  if (!e) return []
+
+  const eur = (cents: number | null) => (cents === null ? '' : formatEuros(cents))
+  const rows: { label: string; value: string; numeric?: boolean }[] = [
+    { label: t('financeExpense.vendor'), value: e.vendor ?? '' },
+    { label: t('financeExpense.description'), value: e.description ?? '' },
+    { label: t('financeExpense.invoiceNo'), value: e.invoiceNo ?? '' },
+    { label: t('financeExpense.invoiceDate'), value: dayWithWeekday(e.invoiceDate, '') ?? '' },
+    { label: t('financeExpense.paidAt'), value: dayWithWeekday(e.paidAt, '') ?? '' },
+    { label: t('financeExpense.net'), value: eur(e.net), numeric: true },
+    { label: t('financeExpense.vat'), value: `${eur(e.vat)} · ${formatPercent(e.vatRate)} %`, numeric: true },
+    { label: t('financeExpense.gross'), value: `${eur(e.gross)}${e.currency !== 'EUR' ? ` ${e.currency}` : ''}`, numeric: true },
+    ...(e.currency !== 'EUR' ? [{ label: t('financeExpense.grossEur'), value: eur(e.grossEur), numeric: true }] : []),
+    { label: t('financeExpense.category'), value: props.categories.find((c) => c.id === e.categoryId)?.label ?? '' },
+    { label: t('financeExpense.share'), value: `${e.businessShare} %`, numeric: true },
+    { label: t('financeExpense.note'), value: e.note ?? '' },
+    ...(e.asset
+      ? [
+          { label: t('financeExpense.inventoryNo'), value: e.asset.inventoryNo, numeric: true },
+          { label: t('financeExpense.assetName'), value: e.asset.name },
+          { label: t('financeExpense.method'), value: e.asset.method === 'gwg' ? t('financeExpense.gwg') : `${t('financeExpense.linear')} · ${e.asset.usefulLifeMonths} ${t('common.unitMonths')}` },
+        ]
+      : []),
+  ]
+
+  return rows.filter((row) => row.value !== '')
+})
+
 const errors = computed(() => form.errors as Record<string, string>)
 const status = computed(() => e?.status ?? 'draft')
 
 function submit(book: boolean) {
+  form.clearErrors()
   form
     .transform((data) => ({
       ...data,
@@ -179,22 +211,8 @@ function setStatus(next: 'draft' | 'ignored') {
           </div>
 
           <dl v-if="locked && e" class="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2.5 text-ui">
-            <dt class="text-ink-2">{{ $t('financeExpense.vendor') }}</dt><dd>{{ e.vendor }}</dd>
-            <dt class="text-ink-2">{{ $t('financeExpense.description') }}</dt><dd>{{ e.description }}</dd>
-            <dt class="text-ink-2">{{ $t('financeExpense.invoiceNo') }}</dt><dd>{{ e.invoiceNo }}</dd>
-            <dt class="text-ink-2">{{ $t('financeExpense.invoiceDate') }}</dt><dd>{{ dayWithWeekday(e.invoiceDate, '') }}</dd>
-            <dt class="text-ink-2">{{ $t('financeExpense.paidAt') }}</dt><dd>{{ dayWithWeekday(e.paidAt, '') }}</dd>
-            <dt class="text-ink-2">{{ $t('financeExpense.net') }}</dt><dd class="tabular-nums">{{ formatEuros(e.net) }}</dd>
-            <dt class="text-ink-2">{{ $t('financeExpense.vat') }}</dt><dd class="tabular-nums">{{ formatEuros(e.vat) }} · {{ formatPercent(e.vatRate) }} %</dd>
-            <dt class="text-ink-2">{{ $t('financeExpense.gross') }}</dt><dd class="tabular-nums">{{ formatEuros(e.gross) }} {{ e.currency !== 'EUR' ? e.currency : '' }}</dd>
-            <template v-if="e.currency !== 'EUR'"><dt class="text-ink-2">{{ $t('financeExpense.grossEur') }}</dt><dd class="tabular-nums">{{ e.grossEur === null ? '' : formatEuros(e.grossEur) }}</dd></template>
-            <dt class="text-ink-2">{{ $t('financeExpense.category') }}</dt><dd>{{ categories.find((c) => c.id === e?.categoryId)?.label }}</dd>
-            <dt class="text-ink-2">{{ $t('financeExpense.share') }}</dt><dd class="tabular-nums">{{ e.businessShare }} %</dd>
-            <dt class="text-ink-2">{{ $t('financeExpense.note') }}</dt><dd class="whitespace-pre-line">{{ e.note }}</dd>
-            <template v-if="e.asset">
-              <dt class="text-ink-2">{{ $t('financeExpense.inventoryNo') }}</dt><dd class="tabular-nums">{{ e.asset.inventoryNo }}</dd>
-              <dt class="text-ink-2">{{ $t('financeExpense.assetName') }}</dt><dd>{{ e.asset.name }}</dd>
-              <dt class="text-ink-2">{{ $t('financeExpense.method') }}</dt><dd>{{ e.asset.method === 'gwg' ? $t('financeExpense.gwg') : `${$t('financeExpense.linear')} · ${e.asset.usefulLifeMonths}` }}</dd>
+            <template v-for="row in lockedRows" :key="row.label">
+              <dt class="text-ink-2">{{ row.label }}</dt><dd class="whitespace-pre-line" :class="row.numeric && 'tabular-nums'">{{ row.value }}</dd>
             </template>
           </dl>
 

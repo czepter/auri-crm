@@ -20,8 +20,8 @@ function lock() {
       <AlertDialogHeader>
         <AlertDialogTitle>{{ $t('financeEuer.lockTitle', { year }) }}</AlertDialogTitle>
         <AlertDialogDescription>{{ $t('financeEuer.lockFact') }}</AlertDialogDescription>
+        <p v-if="error" class="text-small text-destructive">{{ error }}</p>
       </AlertDialogHeader>
-      <p v-if="error" class="text-small text-destructive">{{ error }}</p>
       <AlertDialogFooter>
         <HoldToConfirm tone="destructive" @confirm="lock">{{ $t('financeEuer.lock') }}</HoldToConfirm>
         <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>

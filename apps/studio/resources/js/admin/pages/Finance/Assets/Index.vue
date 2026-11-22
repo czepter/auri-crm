@@ -56,28 +56,29 @@ const clear = (id: string) => router.delete(`/finanzen/anlagen/${id}/abgang`, { 
           <Table v-if="rows.length" class="max-[640px]:block max-[640px]:overflow-x-auto">
             <thead>
               <tr>
-                <TableHead>{{ $t('financeAssets.inventoryNo') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('financeAssets.inventoryNo') }}</TableHead>
                 <TableHead>{{ $t('financeAssets.name') }}</TableHead>
-                <TableHead>{{ $t('financeAssets.acquiredAt') }}</TableHead>
-                <TableHead>{{ $t('financeAssets.method') }}</TableHead>
-                <TableHead align="right">{{ $t('financeAssets.cost') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('financeAssets.acquiredAt') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('financeAssets.method') }}</TableHead>
+                <TableHead align="right" class="max-[640px]:hidden">{{ $t('financeAssets.cost') }}</TableHead>
                 <TableHead align="right">{{ $t('financeAssets.bookValue', { year }) }}</TableHead>
                 <TableHead />
               </tr>
             </thead>
             <tbody>
               <TableRow v-for="row in rows" :key="row.id">
-                <TableCell class="whitespace-nowrap tabular-nums">{{ row.inventoryNo }}</TableCell>
+                <TableCell class="whitespace-nowrap tabular-nums max-[640px]:hidden">{{ row.inventoryNo }}</TableCell>
                 <TableCell tone="name">
-                  <div class="w-[320px] max-w-full">
+                  <div class="w-[320px] max-w-full max-[640px]:w-[130px]">
+                    <span class="hidden text-small text-ink-2 max-[640px]:block">{{ row.inventoryNo }}</span>
                     <Link v-if="row.expenseId" class="block truncate" :href="`/finanzen/ausgaben/${row.expenseId}`">{{ row.name }}</Link>
                     <template v-else>{{ row.name }}</template>
                     <span v-if="row.disposedAt" class="block text-small text-ink-2">{{ $t('financeAssets.dispose') }} {{ dayWithWeekday(row.disposedAt) }} · {{ formatEuros(row.disposalProceeds ?? 0) }}</span>
                   </div>
                 </TableCell>
-                <TableCell class="whitespace-nowrap">{{ dayWithWeekday(row.acquiredAt) }}</TableCell>
-                <TableCell class="whitespace-nowrap">{{ row.method === 'gwg' ? $t('financeExpense.gwg') : `${$t('financeExpense.linear')} · ${row.usefulLifeMonths}` }}</TableCell>
-                <TableCell align="right" class="whitespace-nowrap tabular-nums">{{ formatEuros(row.cost) }}</TableCell>
+                <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(row.acquiredAt) }}</TableCell>
+                <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ row.method === 'gwg' ? $t('financeExpense.gwg') : `${$t('financeExpense.linear')} · ${row.usefulLifeMonths} ${$t('common.unitMonths')}` }}</TableCell>
+                <TableCell align="right" class="whitespace-nowrap tabular-nums max-[640px]:hidden">{{ formatEuros(row.cost) }}</TableCell>
                 <TableCell align="right" class="whitespace-nowrap tabular-nums">{{ formatEuros(row.bookValue) }}</TableCell>
                 <TableCell align="right">
                   <template v-if="!locked">

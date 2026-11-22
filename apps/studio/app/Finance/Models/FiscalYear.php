@@ -49,14 +49,15 @@ class FiscalYear extends Model
     }
 
     /**
-     * Every year with data, plus the current one, newest first.
+     * Every year with data, plus the current one and the one being looked at, newest first.
      *
      * @return list<int>
      */
-    public static function known(): array
+    public static function known(?int $viewing = null): array
     {
         return collect([
             now()->year,
+            ...$viewing === null ? [] : [$viewing],
             ...static::query()->pluck('year'),
             ...Expense::query()->selectRaw('distinct extract(year from coalesce(paid_at, invoice_date, created_at::date))::int as year')->pluck('year'),
             ...FixedAsset::query()->selectRaw('distinct extract(year from acquired_at)::int as year')->pluck('year'),

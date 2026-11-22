@@ -28,7 +28,7 @@ class EuerController extends Controller
 
         return Inertia::render('Finance/Euer/Show', [
             'report' => $data,
-            'years' => FiscalYear::known(),
+            'years' => FiscalYear::known($year),
             'lockable' => $data->lockedAt === null && $year < now()->year,
         ]);
     }

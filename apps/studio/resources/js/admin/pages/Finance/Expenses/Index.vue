@@ -112,9 +112,9 @@ const TONE = { draft: 'warn', booked: 'success', ignored: 'neutral' } as const
             <thead>
               <tr>
                 <TableHead>{{ $t('financeExpenses.vendor') }}</TableHead>
-                <TableHead>{{ $t('financeExpenses.paidAt') }}</TableHead>
-                <TableHead>{{ $t('financeExpenses.category') }}</TableHead>
-                <TableHead align="right">{{ $t('financeExpenses.share') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('financeExpenses.paidAt') }}</TableHead>
+                <TableHead class="max-[640px]:hidden">{{ $t('financeExpenses.category') }}</TableHead>
+                <TableHead align="right" class="max-[640px]:hidden">{{ $t('financeExpenses.share') }}</TableHead>
                 <TableHead align="right">{{ $t('financeExpenses.amount') }}</TableHead>
                 <TableHead>{{ $t('financeExpenses.status') }}</TableHead>
               </tr>
@@ -122,17 +122,17 @@ const TONE = { draft: 'warn', booked: 'success', ignored: 'neutral' } as const
             <tbody>
               <TableRow v-for="row in rows" :key="row.id">
                 <TableCell tone="name">
-                  <div class="w-[340px] max-w-full">
+                  <div class="w-[340px] max-w-full max-[640px]:w-[130px]">
                     <Link class="block truncate" :href="`/finanzen/ausgaben/${row.id}`">{{ row.vendor ?? '—' }}</Link>
                     <span v-if="row.description" class="block truncate text-small text-ink-2">{{ row.description }}</span>
                     <span v-if="!row.hasReceipt" class="block text-small text-ink-2">{{ $t('financeExpenses.withoutReceipt') }}</span>
                   </div>
                 </TableCell>
-                <TableCell class="whitespace-nowrap">{{ row.paidAt ? dayWithWeekday(row.paidAt) : '' }}</TableCell>
-                <TableCell>{{ row.categoryLabel }}</TableCell>
-                <TableCell align="right" class="whitespace-nowrap tabular-nums">{{ row.businessShare }} %</TableCell>
+                <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ row.paidAt ? dayWithWeekday(row.paidAt) : '' }}</TableCell>
+                <TableCell class="max-[640px]:hidden">{{ row.categoryLabel }}</TableCell>
+                <TableCell align="right" class="whitespace-nowrap tabular-nums max-[640px]:hidden">{{ row.businessShare }} %</TableCell>
                 <TableCell align="right" class="whitespace-nowrap tabular-nums">
-                  {{ formatEuros(row.grossEur ?? 0) }}
+                  {{ row.grossEur === null ? '—' : formatEuros(row.grossEur) }}
                   <span v-if="row.currency !== 'EUR'" class="block text-small text-ink-2">{{ (row.gross / 100).toFixed(2).replace('.', ',') }} {{ row.currency }}</span>
                 </TableCell>
                 <TableCell class="whitespace-nowrap"><Chip :tone="TONE[row.status]">{{ $t(`financeExpenses.${row.status}`) }}</Chip></TableCell>
