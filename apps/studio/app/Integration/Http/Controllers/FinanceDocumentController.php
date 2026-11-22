@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * A receipt arrives in two steps: an authenticated request announces it and
@@ -41,7 +42,7 @@ class FinanceDocumentController extends Controller
 
         $principal = $request->user('api');
         $document = FinanceDocument::create([
-            'filename' => basename($data['filename']),
+            'filename' => StoreFinanceDocument::cleanName($data['filename']),
             'mime' => $data['mime'],
             'size' => $data['size'],
             'source_ref' => $data['source_ref'] ?? null,
@@ -100,14 +101,23 @@ class FinanceDocumentController extends Controller
                 return response()->json(['message' => 'The tenant already holds this file.', 'document_id' => $other->public_id], 409);
             }
 
-            Storage::disk('s3')->put($document->storageKey(), fopen($path, 'r'));
+            // Claim the row first: of two concurrent puts on one address only one gets to write.
+            try {
+                $claimed = FinanceDocument::query()->whereKey($document->id)->whereNull('uploaded_at')->update([...$file, 'uploaded_at' => now()]);
+            } catch (UniqueConstraintViolationException) {
+                return response()->json(['message' => 'The tenant already holds this file.'], 409);
+            }
+
+            if ($claimed === 0) {
+                return response()->json(['message' => 'This upload already holds a file.', 'document_id' => $document->public_id], 409);
+            }
 
             try {
-                $document->update([...$file, 'uploaded_at' => now()]);
-            } catch (UniqueConstraintViolationException) {
-                Storage::disk('s3')->delete($document->storageKey());
+                Storage::disk('s3')->put($document->storageKey(), fopen($path, 'r'));
+            } catch (Throwable $e) {
+                FinanceDocument::query()->whereKey($document->id)->update(['uploaded_at' => null, 'sha256' => null]);
 
-                return response()->json(['message' => 'The tenant already holds this file.'], 409);
+                throw $e;
             }
         } finally {
             @unlink($path);

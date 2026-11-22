@@ -24,6 +24,15 @@ class StoreFinanceDocument
 
     public const MIMES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 
+    /** The last segment of a path in either separator, free of control characters; the name is data and ends up in a header. */
+    public static function cleanName(string $name): string
+    {
+        $parts = preg_split('#[\\\\/]#', preg_replace('/[\x00-\x1F\x7F]/', '', $name));
+        $last = (string) end($parts);
+
+        return mb_substr($last === '' ? 'beleg' : $last, 0, 255);
+    }
+
     /**
      * What the bytes at $path are: sniffed type, size and hash. Refuses what is
      * not a receipt.
@@ -59,7 +68,7 @@ class StoreFinanceDocument
         try {
             $document = DB::transaction(function () use ($file, $path, $size, $mime, $hash, $actor) {
                 $document = FinanceDocument::create([
-                    'filename' => mb_substr(basename($file->getClientOriginalName()), 0, 255),
+                    'filename' => self::cleanName($file->getClientOriginalName()),
                     'mime' => $mime,
                     'size' => $size,
                     'sha256' => $hash,

@@ -68,7 +68,7 @@ it('streams a receipt inline under a sandbox and nosniff', function () {
 
     expect($response->headers->get('Content-Type'))->toBe('application/pdf')
         ->and($response->headers->get('X-Content-Type-Options'))->toBe('nosniff')
-        ->and($response->headers->get('Content-Security-Policy'))->toBe('sandbox')
+        ->and($response->headers->get('Content-Security-Policy'))->toBe("default-src 'none'; frame-ancestors 'self'")
         ->and($response->headers->get('Content-Disposition'))->toStartWith('inline');
 });
 
@@ -79,4 +79,19 @@ it('answers 404 for an unknown id and for another tenant’s document', function
 
     $this->get('/finanzen/belege/'.$foreign->public_id)->assertNotFound();
     $this->get('/finanzen/belege/aaaaaaaaaaaaaaaaaaaaaaaa')->assertNotFound();
+});
+
+it('keeps only the last segment of a client filename, so a Windows path stays downloadable', function () {
+    $this->actingAs($this->admin, 'staff');
+    $id = $this->postJson('/finanzen/belege', ['file' => pdfUpload('C:\\Scans\\beleg.pdf')])->assertCreated()->json('document.id');
+
+    expect(FinanceDocument::query()->sole()->filename)->toBe('beleg.pdf');
+    $this->get("/finanzen/belege/$id")->assertOk();
+});
+
+it('serves an image receipt under a sandbox', function () {
+    $this->actingAs($this->admin, 'staff');
+    $id = $this->postJson('/finanzen/belege', ['file' => UploadedFile::fake()->createWithContent('a.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='))])->json('document.id');
+
+    expect($this->get("/finanzen/belege/$id")->headers->get('Content-Security-Policy'))->toBe('sandbox');
 });

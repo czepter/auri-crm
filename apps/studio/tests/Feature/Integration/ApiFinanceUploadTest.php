@@ -109,3 +109,9 @@ it('announces only a known type within the size limit', function () {
     announceReceipt(['size' => 10 * 1024 * 1024 + 1], 'bad-2')->assertUnprocessable();
     announceReceipt(['sha256' => 'xyz'], 'bad-3')->assertUnprocessable();
 });
+
+it('keeps only the last segment of a announced Windows path', function () {
+    announceReceipt(['filename' => 'C:\\Scans\\beleg.pdf'], 'win')->assertCreated();
+
+    expect(FinanceDocument::query()->sole()->filename)->toBe('beleg.pdf');
+});
