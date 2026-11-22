@@ -2887,7 +2887,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "const": "H\u00f6chstens 10 MB."
+                                            "const": "Die Datei darf h\u00f6chstens 10 MB gro\u00df sein."
                                         }
                                     },
                                     "required": [
