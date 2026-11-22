@@ -15,23 +15,6 @@ beforeEach(function () {
     $this->category = ExpenseCategory::query()->where('key', 'hosting_domains')->firstOrFail();
 });
 
-function expensePayload(array $overrides = []): array
-{
-    return [
-        'vendor' => 'Nordhost Hosting GmbH',
-        'paid_at' => '2026-03-04',
-        'invoice_date' => '2026-03-01',
-        'net' => 10000,
-        'vat_rate' => 1900,
-        'vat' => 1900,
-        'gross' => 11900,
-        'currency' => 'EUR',
-        'category_id' => ExpenseCategory::query()->where('key', 'hosting_domains')->value('public_id'),
-        'business_share' => 100,
-        ...$overrides,
-    ];
-}
-
 it('saves a draft, sets the euro amount for euro and keeps it as entered for another currency', function () {
     $this->actingAs($this->admin, 'staff')->post('/finanzen/ausgaben', expensePayload(['category_id' => null, 'paid_at' => null]))->assertRedirect();
     $this->post('/finanzen/ausgaben', expensePayload([

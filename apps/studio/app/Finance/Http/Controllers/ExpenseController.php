@@ -65,7 +65,7 @@ class ExpenseController extends Controller
     {
         $this->authorizeFinances();
 
-        $expense->load(['category', 'documents']);
+        $expense->load(['category', 'documents', 'asset']);
 
         return Inertia::render('Finance/Expenses/Edit', [
             'expense' => ExpenseDetailData::fromModel($expense),

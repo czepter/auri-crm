@@ -10,5 +10,7 @@ return [
     'unsupportedFile' => 'Nur PDF, JPEG, PNG oder WebP.',
     'tooLarge' => 'Höchstens 10 MB.',
     'notDeletable' => 'Nur Entwürfe und verworfene Ausgaben.',
+    'assetDisposed' => 'Anlage mit Abgang.',
+    'lifeRequired' => 'Nutzungsdauer fehlt.',
     'beforeAcquisition' => 'Vor der Anschaffung.',
 ];

@@ -667,6 +667,7 @@ grossEur: number | null,
 note: string | null,
 isSelfIssued: boolean,
 documents: App.Finance.Data.FinanceDocumentData[],
+asset: App.Finance.Data.FixedAssetData | null,
 };
 export type ExpenseRowData = {
 id: string,
@@ -697,6 +698,33 @@ mime: string,
 size: number | null,
 isSelfIssued: boolean,
 url: string,
+};
+export type FixedAssetData = {
+id: string,
+inventoryNo: string,
+name: string,
+acquiredAt: string,
+costNet: number,
+costGross: number,
+method: App.Finance.Enums.DepreciationMethod,
+usefulLifeMonths: number | null,
+afaCategory: string | null,
+disposedAt: string | null,
+disposalProceeds: number | null,
+};
+export type FixedAssetRowData = {
+id: string,
+inventoryNo: string,
+name: string,
+acquiredAt: string,
+method: App.Finance.Enums.DepreciationMethod,
+usefulLifeMonths: number | null,
+cost: number,
+bookValue: number,
+businessShare: number,
+disposedAt: string | null,
+disposalProceeds: number | null,
+expenseId: string | null,
 };
 }
 namespace Enums {

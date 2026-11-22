@@ -42,6 +42,7 @@ use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Finance\Http\Controllers\ExpenseController;
 use App\Finance\Http\Controllers\FinanceDocumentController;
+use App\Finance\Http\Controllers\FixedAssetController;
 use App\Gallery\Http\Controllers\AssetCommentReplyController;
 use App\Gallery\Http\Controllers\AssetHideController;
 use App\Gallery\Http\Controllers\GalleryAssetController;
@@ -1013,6 +1014,9 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/finanzen/ausgaben/{expense}', [ExpenseController::class, 'destroy'])->name('finance.expenses.destroy');
         Route::post('/finanzen/belege', [FinanceDocumentController::class, 'store'])->name('finance.documents.store');
         Route::get('/finanzen/belege/{document}', [FinanceDocumentController::class, 'show'])->name('finance.documents.show');
+        Route::get('/finanzen/anlagen', [FixedAssetController::class, 'index'])->name('finance.assets.index');
+        Route::post('/finanzen/anlagen/{asset}/abgang', [FixedAssetController::class, 'dispose'])->name('finance.assets.dispose');
+        Route::delete('/finanzen/anlagen/{asset}/abgang', [FixedAssetController::class, 'clearDisposal'])->name('finance.assets.dispose.clear');
 
         Route::get('/vertraege', ContractIndexController::class)->name('contracts.index');
         Route::get('/rechnungen/{invoice}/gutschrift/neu', [InvoiceController::class, 'creditNoteForm'])->name('invoices.credit-note-form');

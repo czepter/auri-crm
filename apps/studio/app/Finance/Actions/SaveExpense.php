@@ -58,12 +58,20 @@ class SaveExpense
             'is_self_issued' => ['sometimes', 'boolean'],
             'document_ids' => ['sometimes', 'array', 'max:20'],
             'document_ids.*' => ['string', 'distinct', Rule::exists('finance_documents', 'public_id')->where('tenant_id', config('tenancy.tenant_id'))],
+            'asset' => ['sometimes', 'nullable', 'array'],
+            ...SyncExpenseAsset::rules('asset.', is_array($input['asset'] ?? null)),
         ])->after(function ($validator) use ($input) {
             if (! $validator->errors()->hasAny(['net', 'vat', 'gross']) && (int) $input['net'] + (int) $input['vat'] !== (int) $input['gross']) {
                 $validator->errors()->add('gross', __('finance.grossMismatch'));
             }
+
+            if (is_array($input['asset'] ?? null)) {
+                SyncExpenseAsset::check($validator, $input['asset'], 'asset.');
+            }
         })->validate();
     }
+
+    public function __construct(private readonly SyncExpenseAsset $syncAsset) {}
 
     public function __invoke(array $data, ?Expense $expense = null, ?User $actor = null): Expense
     {
@@ -93,6 +101,8 @@ class SaveExpense
                     ->whereIn('id', $expense->documents()->pluck('finance_documents.id'))
                     ->update(['is_self_issued' => (bool) $data['is_self_issued']]);
             }
+
+            ($this->syncAsset)($expense, array_key_exists('asset', $data) ? $data['asset'] : false, $actor);
 
             AuditLogger::record(
                 $created ? 'finance.expense.created' : 'finance.expense.updated',

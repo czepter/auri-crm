@@ -31,6 +31,7 @@ class ExpenseDetailData extends Data
         public ?string $note,
         public bool $isSelfIssued,
         public array $documents,
+        public ?FixedAssetData $asset,
     ) {}
 
     public static function fromModel(Expense $expense): self
@@ -54,6 +55,7 @@ class ExpenseDetailData extends Data
             note: $expense->note,
             isSelfIssued: $expense->documents->contains(fn (FinanceDocument $document) => $document->is_self_issued),
             documents: $expense->documents->map(FinanceDocumentData::fromModel(...))->values()->all(),
+            asset: $expense->asset ? FixedAssetData::fromModel($expense->asset) : null,
         );
     }
 }
