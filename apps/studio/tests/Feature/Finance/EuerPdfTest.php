@@ -17,6 +17,7 @@ beforeEach(function () {
 
 it('renders an open year live, with the figures and escaped values', function () {
     Expense::factory()->create(['vendor' => '<script>alert(1)</script> GmbH', 'paid_at' => '2026-02-01']);
+    Expense::factory()->create(['vendor' => 'Pixelnetz', 'paid_at' => '2026-03-01', 'currency' => 'USD', 'net' => 4900, 'vat' => 0, 'gross' => 4900, 'gross_eur' => null]);
     $html = null;
     $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->once()->andReturnUsing(function (string $page, bool $cssPageSize) use (&$html) {
         $html = $cssPageSize ? $page : null;
@@ -29,7 +30,9 @@ it('renders an open year live, with the figures and escaped values', function ()
     expect($response->headers->get('Content-Type'))->toBe('application/pdf')
         ->and($response->getContent())->toBe('%PDF-1.4 live')
         ->and($html)->toContain('Einnahmenüberschussrechnung 2026', '&lt;script&gt;alert(1)&lt;/script&gt; GmbH')
-        ->and($html)->not->toContain('<script>');
+        ->and($html)->not->toContain('<script>')
+        ->and(preg_match('/Pixelnetz.*?—/s', $html))->toBe(1)
+        ->and($html)->toMatch('/Gewinn.*?−\d/s');
 });
 
 it('streams a locked year’s stored PDF and makes it from the snapshot when it is missing', function () {

@@ -1,5 +1,5 @@
 @php
-    $eur = fn (int $cents): string => number_format($cents / 100, 2, ',', '.').' €';
+    $eur = fn (int $cents): string => str_replace('-', '−', number_format($cents / 100, 2, ',', '.').' €');
     $date = fn (?string $day): string => $day === null ? '' : \Illuminate\Support\Carbon::parse($day)->format('d.m.Y');
     $standard = $report->vatMode === 'standard';
 @endphp
@@ -19,6 +19,7 @@
     table { width: 100%; border-collapse: collapse; }
     td, th { padding: 6px 10px 6px 0; border-bottom: 1px solid #e3e3e3; text-align: left; vertical-align: top; }
     th { font-size: 9.5px; text-transform: uppercase; color: #666; }
+    .sub td { color: #555; padding-left: 12px; }
     td:last-child, th:last-child { padding-right: 0; }
     .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .total td { font-weight: 700; border-bottom: 2px solid #1a1a1a; }
@@ -39,7 +40,10 @@
         <div class="block">
             <h2>Betriebseinnahmen</h2>
             <table>
-                <tr><td>Betriebseinnahmen</td><td class="n">{{ $eur($report->operatingIncome) }}</td></tr>
+                <tr><td>Einnahmen</td><td class="n">{{ $eur($report->operatingIncome) }}</td></tr>
+                @if ($report->creditNotes)
+                    <tr class="sub"><td>Gutschriften</td><td class="n">−{{ $eur($report->creditNotes) }}</td></tr>
+                @endif
                 @if ($standard)
                     <tr><td>Vereinnahmte Umsatzsteuer</td><td class="n">{{ $eur($report->collectedVat) }}</td></tr>
                 @endif
@@ -79,7 +83,7 @@
                     <td>{{ $expense['invoiceNo'] }}</td>
                     <td>{{ $expense['category'] }}</td>
                     <td class="n">{{ $expense['businessShare'] }} %</td>
-                    <td class="n">{{ $eur($expense['grossEur']) }}</td>
+                    <td class="n">{{ $expense['grossEur'] === null ? '—' : $eur($expense['grossEur']) }}</td>
                 </tr>
             @endforeach
         </table>

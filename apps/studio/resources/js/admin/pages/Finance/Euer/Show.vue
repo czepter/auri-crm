@@ -50,7 +50,10 @@ const LINK = 'tabular-nums text-foreground underline decoration-line-hover under
               <SelectItem v-for="y in years" :key="y" :value="String(y)">{{ y }}</SelectItem>
             </SelectContent>
           </Select>
-          <Chip v-if="report.lockedAt">{{ $t('financeEuer.lockedOn', { date: dayWithWeekday(report.lockedAt) }) }}</Chip>
+          <template v-if="report.lockedAt">
+            <Chip>{{ $t('financeEuer.lockedOn', { date: dayWithWeekday(report.lockedAt) }) }}</Chip>
+            <Chip>{{ standard ? $t('financeEuer.standard') : $t('financeEuer.smallBusiness') }}</Chip>
+          </template>
           <Select v-else :model-value="report.vatMode" @update:model-value="(value) => router.patch(`/finanzen/euer/${year}/ust`, { vat_mode: String(value) }, { preserveScroll: true })">
             <SelectTrigger :aria-label="$t('financeEuer.vatStatus')" size="sm" class="w-[170px]"><SelectValue /></SelectTrigger>
             <SelectContent>

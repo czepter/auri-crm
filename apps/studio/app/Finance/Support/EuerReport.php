@@ -125,7 +125,7 @@ final class EuerReport
                 'invoiceNo' => $expense->invoice_no,
                 'paidAt' => $expense->paid_at->format('Y-m-d'),
                 'category' => $expense->category?->label,
-                'grossEur' => (int) $expense->gross_eur,
+                'grossEur' => $expense->gross_eur,
                 'businessShare' => $expense->business_share,
                 'asset' => $expense->asset_id !== null,
             ])->all(),
