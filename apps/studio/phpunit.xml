@@ -26,6 +26,15 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
         <!--
+            StudioSettings::current() reads the `redis` cache store by name, and
+            bootstrap/app.php asks it for the schedule's timezone before any test
+            has swapped that store for an array. With the dev app running on the
+            same Redis, the suite read its cached settings (a studio set to
+            Europe/Berlin) instead of the test database's. Own prefix, own keys.
+        -->
+        <env name="CACHE_PREFIX" value="phpunit_" force="true"/>
+        <server name="CACHE_PREFIX" value="phpunit_" force="true"/>
+        <!--
             Same reason as DB_DATABASE below: docker-compose.yml sets
             MAIL_MAILER=smtp on the php service, and a real environment
             variable is in $_SERVER, which Laravel's env repository reads
