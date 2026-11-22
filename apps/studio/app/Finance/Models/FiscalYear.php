@@ -48,6 +48,21 @@ class FiscalYear extends Model
         return static::query()->where('year', $year)->value('vat_mode') ?? StudioSettings::current()->vat_mode;
     }
 
+    /**
+     * Every year with data, plus the current one, newest first.
+     *
+     * @return list<int>
+     */
+    public static function known(): array
+    {
+        return collect([
+            now()->year,
+            ...static::query()->pluck('year'),
+            ...Expense::query()->selectRaw('distinct extract(year from coalesce(paid_at, invoice_date, created_at::date))::int as year')->pluck('year'),
+            ...FixedAsset::query()->selectRaw('distinct extract(year from acquired_at)::int as year')->pluck('year'),
+        ])->map(fn ($year) => (int) $year)->unique()->sortDesc()->values()->all();
+    }
+
     public function isLocked(): bool
     {
         return $this->locked_at !== null;

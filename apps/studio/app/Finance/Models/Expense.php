@@ -81,6 +81,28 @@ class Expense extends Model
         $query->whereRaw('extract(year from coalesce(expenses.paid_at, expenses.invoice_date, expenses.created_at::date)) = ?', [$year]);
     }
 
+    /** @param  array{kategorie?: ?string, status?: ?string, anteil?: ?string, 'ohne-beleg'?: mixed, vendor?: ?string}  $filters */
+    public function scopeFiltered(Builder $query, array $filters): void
+    {
+        $query
+            ->when($filters['kategorie'] ?? null, fn (Builder $q, string $key) => $q->whereHas('category', fn (Builder $c) => $c->where('key', $key)))
+            ->when(ExpenseStatus::tryFrom($filters['status'] ?? ''), fn (Builder $q, ExpenseStatus $status) => $q->where('status', $status))
+            ->when($filters['anteil'] ?? null, fn (Builder $q, string $share) => match ($share) {
+                'voll' => $q->where('business_share', 100),
+                'keiner' => $q->where('business_share', 0),
+                'anteilig' => $q->whereBetween('business_share', [1, 99]),
+                default => $q,
+            })
+            ->when($filters['ohne-beleg'] ?? null, fn (Builder $q) => $q->whereDoesntHave('documents'))
+            ->when($filters['vendor'] ?? null, fn (Builder $q, string $vendor) => $q->where('vendor', 'ilike', '%'.addcslashes($vendor, '%_\\').'%'));
+    }
+
+    /** Drafts first, then the latest payments. */
+    public function scopeListed(Builder $query): void
+    {
+        $query->orderByRaw("expenses.status = 'draft' desc")->orderByRaw('expenses.paid_at desc nulls last')->orderByDesc('expenses.id');
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(ExpenseCategory::class, 'category_id');

@@ -25,6 +25,8 @@ class FinanceDocument extends Model
         'filename', 'mime', 'size', 'sha256', 'source_ref', 'is_self_issued', 'uploaded_at', 'created_by',
     ];
 
+    protected $attributes = ['is_self_issued' => false];
+
     protected function casts(): array
     {
         return [

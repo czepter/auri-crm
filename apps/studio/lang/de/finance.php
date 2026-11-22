@@ -9,5 +9,6 @@ return [
     'gwgLimit' => 'Über der GWG-Grenze.',
     'unsupportedFile' => 'Nur PDF, JPEG, PNG oder WebP.',
     'tooLarge' => 'Höchstens 10 MB.',
+    'notDeletable' => 'Nur Entwürfe und verworfene Ausgaben.',
     'beforeAcquisition' => 'Vor der Anschaffung.',
 ];

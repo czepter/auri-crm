@@ -40,6 +40,8 @@ use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Documents\Http\Controllers\DocumentViewController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
+use App\Finance\Http\Controllers\ExpenseController;
+use App\Finance\Http\Controllers\FinanceDocumentController;
 use App\Gallery\Http\Controllers\AssetCommentReplyController;
 use App\Gallery\Http\Controllers\AssetHideController;
 use App\Gallery\Http\Controllers\GalleryAssetController;
@@ -998,6 +1000,19 @@ Route::middleware('audience:staff')->group(function () {
         // Die Gutschriften des ganzen Buchs. Eine Gutschrift haengt an ihrer
         // Rechnung, die Frage nach allen stellt aber der Jahresabschluss.
         Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
+
+        // Ausgaben, Belege, Anlagen und die EÜR. Alles hinter ManageFinances,
+        // das als 404 antwortet. /ausgaben/neu bleibt über /ausgaben/{expense}.
+        Route::get('/finanzen', fn () => redirect()->route('finance.expenses.index'))->name('finance.index');
+        Route::get('/finanzen/ausgaben', [ExpenseController::class, 'index'])->name('finance.expenses.index');
+        Route::get('/finanzen/ausgaben/neu', [ExpenseController::class, 'create'])->name('finance.expenses.create');
+        Route::post('/finanzen/ausgaben', [ExpenseController::class, 'store'])->name('finance.expenses.store');
+        Route::get('/finanzen/ausgaben/{expense}', [ExpenseController::class, 'show'])->name('finance.expenses.show');
+        Route::put('/finanzen/ausgaben/{expense}', [ExpenseController::class, 'update'])->name('finance.expenses.update');
+        Route::post('/finanzen/ausgaben/{expense}/status', [ExpenseController::class, 'status'])->name('finance.expenses.status');
+        Route::delete('/finanzen/ausgaben/{expense}', [ExpenseController::class, 'destroy'])->name('finance.expenses.destroy');
+        Route::post('/finanzen/belege', [FinanceDocumentController::class, 'store'])->name('finance.documents.store');
+        Route::get('/finanzen/belege/{document}', [FinanceDocumentController::class, 'show'])->name('finance.documents.show');
 
         Route::get('/vertraege', ContractIndexController::class)->name('contracts.index');
         Route::get('/rechnungen/{invoice}/gutschrift/neu', [InvoiceController::class, 'creditNoteForm'])->name('invoices.credit-note-form');

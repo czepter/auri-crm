@@ -640,6 +640,65 @@ export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_cases' |
 export type StaffRole = 'admin' | 'manager' | 'contributor' | 'reader';
 }
 namespace Finance {
+namespace Data {
+export type ExpenseCategoryData = {
+id: string,
+key: string,
+label: string,
+euerLine: string,
+skr04Account: string | null,
+};
+export type ExpenseDetailData = {
+id: string,
+vendor: string | null,
+description: string | null,
+invoiceNo: string | null,
+invoiceDate: string | null,
+paidAt: string | null,
+status: App.Finance.Enums.ExpenseStatus,
+categoryId: string | null,
+businessShare: number,
+currency: string,
+net: number,
+vatRate: number,
+vat: number,
+gross: number,
+grossEur: number | null,
+note: string | null,
+isSelfIssued: boolean,
+documents: App.Finance.Data.FinanceDocumentData[],
+};
+export type ExpenseRowData = {
+id: string,
+vendor: string | null,
+description: string | null,
+invoiceNo: string | null,
+invoiceDate: string | null,
+paidAt: string | null,
+status: App.Finance.Enums.ExpenseStatus,
+categoryId: string | null,
+categoryLabel: string | null,
+businessShare: number,
+currency: string,
+gross: number,
+grossEur: number | null,
+hasReceipt: boolean,
+isAsset: boolean,
+};
+export type ExpenseTotalsData = {
+sum: number,
+business: number,
+drafts: number,
+};
+export type FinanceDocumentData = {
+id: string,
+filename: string,
+mime: string,
+size: number | null,
+isSelfIssued: boolean,
+url: string,
+};
+}
 namespace Enums {
 export type DepreciationMethod = 'gwg' | 'linear';
 export type ExpenseStatus = 'draft' | 'booked' | 'ignored';
