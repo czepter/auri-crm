@@ -641,6 +641,35 @@ export type StaffRole = 'admin' | 'manager' | 'contributor' | 'reader';
 }
 namespace Finance {
 namespace Data {
+export type EuerChecklistData = {
+withoutReceipt: number,
+drafts: number,
+openInvoices: number,
+openInvoicesRemaining: number,
+foreignWithoutEur: number,
+};
+export type EuerReportData = {
+year: number,
+vatMode: string,
+lockedAt: string | null,
+operatingIncome: number,
+collectedVat: number,
+assetSales: number,
+income: number,
+categories: {
+key: string,
+label: string,
+euerLine: string,
+amount: number,
+count: number,
+}[],
+depreciation: number,
+residualBookValue: number,
+paidInputVat: number,
+expenses: number,
+profit: number,
+checklist: App.Finance.Data.EuerChecklistData,
+};
 export type ExpenseCategoryData = {
 id: string,
 key: string,
