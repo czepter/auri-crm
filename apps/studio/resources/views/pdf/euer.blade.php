@@ -17,11 +17,11 @@
     .meta { color: #555; font-size: 12px; line-height: 1.7; }
     .page { page-break-before: always; }
     table { width: 100%; border-collapse: collapse; }
-    td, th { padding: 6px 0; border-bottom: 1px solid #e3e3e3; text-align: left; vertical-align: top; }
+    td, th { padding: 6px 10px 6px 0; border-bottom: 1px solid #e3e3e3; text-align: left; vertical-align: top; }
     th { font-size: 9.5px; text-transform: uppercase; color: #666; }
+    td:last-child, th:last-child { padding-right: 0; }
     .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .total td { font-weight: 700; border-bottom: 2px solid #1a1a1a; }
-    .sub td { color: #555; padding-left: 12px; }
     .block { margin-bottom: 22px; }
 </style>
 </head>

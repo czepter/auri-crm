@@ -18,8 +18,8 @@ beforeEach(function () {
 it('renders an open year live, with the figures and escaped values', function () {
     Expense::factory()->create(['vendor' => '<script>alert(1)</script> GmbH', 'paid_at' => '2026-02-01']);
     $html = null;
-    $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->once()->andReturnUsing(function (string $page) use (&$html) {
-        $html = $page;
+    $this->mock(GotenbergClient::class)->shouldReceive('htmlToPdf')->once()->andReturnUsing(function (string $page, bool $cssPageSize) use (&$html) {
+        $html = $cssPageSize ? $page : null;
 
         return '%PDF-1.4 live';
     });
@@ -60,4 +60,12 @@ it('shows the report page for the selected year', function () {
         ->and($props['report']['paidInputVat'])->toBe(1900)
         ->and($props['lockable'])->toBeFalse()
         ->and(props('/finanzen/euer?jahr=2025')['lockable'])->toBeTrue();
+});
+
+it('offers the year being looked at even when it has no data', function () {
+    $this->actingAs($this->admin, 'staff');
+
+    foreach (['/finanzen/ausgaben', '/finanzen/anlagen', '/finanzen/euer'] as $path) {
+        expect(props("$path?jahr=2015")['years'])->toContain(2015);
+    }
 });

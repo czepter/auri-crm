@@ -23,7 +23,7 @@ class RenderEuerPdf
             'report' => $this->report->forYear($year),
             'appendix' => $snapshot !== null ? $snapshot : $this->report->appendix($year),
             'createdOn' => ($fiscal?->locked_at ?? now())->format('d.m.Y'),
-        ])->render());
+        ])->render(), preferCssPageSize: true);
     }
 
     /** The stored PDF of a locked year, made from its snapshot and kept when it was missing. */
