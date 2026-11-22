@@ -39,8 +39,8 @@ class FinanceDocumentController extends Controller
 
         return $disk->response($document->storageKey(), $document->filename, [
             'Content-Type' => $document->mime,
-            // Chromium's PDF viewer will not start under `sandbox`; a PDF runs no script of ours, so it is only kept from being framed elsewhere.
-            'Content-Security-Policy' => $document->mime === 'application/pdf' ? "default-src 'none'; frame-ancestors 'self'" : 'sandbox',
+            // Chromium's PDF viewer will not start under `sandbox`; a PDF carries no script or sub-resource of ours, so it is only kept from being framed elsewhere.
+            'Content-Security-Policy' => $document->mime === 'application/pdf' ? "frame-ancestors 'self'" : 'sandbox',
             'X-Content-Type-Options' => 'nosniff',
         ]);
     }

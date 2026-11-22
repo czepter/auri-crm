@@ -68,7 +68,7 @@ it('streams a receipt inline under a sandbox and nosniff', function () {
 
     expect($response->headers->get('Content-Type'))->toBe('application/pdf')
         ->and($response->headers->get('X-Content-Type-Options'))->toBe('nosniff')
-        ->and($response->headers->get('Content-Security-Policy'))->toBe("default-src 'none'; frame-ancestors 'self'")
+        ->and($response->headers->get('Content-Security-Policy'))->toBe("frame-ancestors 'self'")
         ->and($response->headers->get('Content-Disposition'))->toStartWith('inline');
 });
 
