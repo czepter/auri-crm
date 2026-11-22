@@ -98,3 +98,11 @@ it('gives only the admin role the finance capability', function (StaffRole $role
     [StaffRole::Contributor, false],
     [StaffRole::Reader, false],
 ]);
+
+it('refuses to change the proceeds of a disposal in a locked year', function () {
+    $asset = FixedAsset::factory()->create(['acquired_at' => '2024-03-10', 'disposed_at' => '2025-09-01', 'disposal_proceeds' => 100]);
+    FiscalYear::factory()->locked()->create(['year' => 2025]);
+
+    expect(fn () => $asset->update(['disposal_proceeds' => 1]))->toThrow(ValidationException::class)
+        ->and($asset->fresh()->disposal_proceeds)->toBe(100);
+});

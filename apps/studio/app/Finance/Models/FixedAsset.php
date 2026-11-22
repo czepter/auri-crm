@@ -60,7 +60,7 @@ class FixedAsset extends Model
                 FiscalYearLock::assertOpen('acquired_at', $asset->acquired_at?->year, $original('acquired_at'));
             }
 
-            if (! $asset->exists || $asset->isDirty('disposed_at')) {
+            if (! $asset->exists || $asset->isDirty(['disposed_at', 'disposal_proceeds'])) {
                 FiscalYearLock::assertOpen('disposed_at', $asset->disposed_at?->year, $original('disposed_at'));
             }
         });
