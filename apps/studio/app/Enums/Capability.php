@@ -110,6 +110,12 @@ enum Capability: string
      */
     case ManageDsgvo = 'manage_dsgvo';
 
+    /**
+     * Expenses, fixed assets and the yearly EÜR. Admin-only: the figures end
+     * up in a tax return, so the same narrowness as ManageStaff applies.
+     */
+    case ManageFinances = 'manage_finances';
+
     /** N-04's consent screen is the one place a capability is shown to a human rather than checked in code. */
     public function label(): string
     {
@@ -131,6 +137,7 @@ enum Capability: string
             self::ManageSettings => 'Einstellungen verwalten',
             self::ManageFormTemplates => 'Fragebögen verwalten',
             self::ManageDsgvo => 'DSGVO-Anfragen bearbeiten',
+            self::ManageFinances => 'Finanzen verwalten',
         };
     }
 }

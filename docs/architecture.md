@@ -129,11 +129,12 @@ app/Crm/
 | 12 | `Automation` | Rules that fire on events and on date offsets |
 | 13 | `Settings` | Studio profile, portal capabilities, document settings |
 | 14 | `Reporting` | Revenue, funnel, cash-flow and shoot reports |
-| 15 | `Privacy` | Studio export and deletion, DSGVO requests, retention |
-| 16 | `Integration` | The public integration API, API tokens |
-| 17 | `Help` | Help articles |
-| 18 | `Releases` | The release log |
-| 19 | `Staff` | Staff notifications, digests, onboarding reminders |
+| 15 | `Finance` | Expenses, receipts, fixed assets, the yearly EÜR and its lock |
+| 16 | `Privacy` | Studio export and deletion, DSGVO requests, retention |
+| 17 | `Integration` | The public integration API, API tokens |
+| 18 | `Help` | Help articles |
+| 19 | `Releases` | The release log |
+| 20 | `Staff` | Staff notifications, digests, onboarding reminders |
 
 `tests/Arch/LayeringTest.php` holds this list. A module may use the kernel
 (`Concerns`, `Support`, `Enums`, `Models`, `Data`, `Jobs`, `Notifications`)
