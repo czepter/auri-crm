@@ -95,7 +95,7 @@ class ExpenseController extends Controller
         return $this->answer($save($data, $expense, $this->actor($request)));
     }
 
-    public function asset(Request $request, Expense $expense, SyncExpenseAsset $sync): JsonResponse
+    public function asset(Request $request, Expense $expense): JsonResponse
     {
         $this->assertDraft($expense);
 
@@ -118,7 +118,7 @@ class ExpenseController extends Controller
 
         $validator = Validator::make($asset, SyncExpenseAsset::rules('', true))
             ->after(fn ($validator) => SyncExpenseAsset::check($validator, $asset, ''));
-        $sync($expense, $validator->validate(), $this->actor($request));
+        app(SyncExpenseAsset::class)($expense, $validator->validate(), $this->actor($request));
 
         return $this->answer($expense->refresh());
     }

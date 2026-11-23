@@ -2571,9 +2571,19 @@
         "/finance/expenses/{expense}/asset": {
             "post": {
                 "operationId": "finance.expenses.asset",
-                "description": "\u26a0\ufe0f Cannot generate request documentation: Cannot evaluate validation rules (2 evaluators failed):\n  [FormRequestRulesEvaluator] Too few arguments to function App\\Finance\\Actions\\SyncExpenseAsset::rules(), 0 passed in /app/apps/studio/vendor/dedoc/scramble/src/Support/OperationExtensions/RulesEvaluator/FormRequestRulesEvaluator.php on line 38 and exactly 2 expected (at /app/apps/studio/app/Finance/Actions/SyncExpenseAsset.php:30)\n  [NodeRulesEvaluator] array_merge(): Argument #2 must be of type array, true given (at /app/apps/studio/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php:157)",
                 "tags": [
                     "Expense"
+                ],
+                "parameters": [
+                    {
+                        "name": "expense",
+                        "in": "path",
+                        "required": true,
+                        "description": "The expense public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
                 ],
                 "responses": {
                     "200": {
@@ -2593,6 +2603,9 @@
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
