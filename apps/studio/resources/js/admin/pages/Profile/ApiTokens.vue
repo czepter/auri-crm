@@ -181,7 +181,7 @@ function revoke() {
             </div>
             <div class="flex justify-end gap-2">
               <Button v-if="editing" type="button" variant="outline" @click="resetConnection">{{ $t('common.cancel') }}</Button>
-              <Button type="submit" :disabled="connectionForm.processing">
+              <Button type="submit" variant="outline" :disabled="connectionForm.processing">
                 {{ editing ? $t('common.save') : $t('apiTokens.create') }}
               </Button>
             </div>
