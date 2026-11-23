@@ -206,7 +206,7 @@ function setStatus(next: 'draft' | 'ignored') {
         </PageHead>
 
         <div class="grid max-w-[1280px] items-start gap-10 px-6 pt-6 pb-10 max-[640px]:px-5 min-[1000px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div class="min-[1000px]:sticky min-[1000px]:top-6">
+          <div class="min-w-0 min-[1000px]:sticky min-[1000px]:top-6">
             <ReceiptPane v-model:documents="documents" :expense-id="e?.id" :readonly="locked || status === 'ignored'" />
           </div>
 
