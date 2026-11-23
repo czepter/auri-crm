@@ -10,12 +10,18 @@ const ALL = [
   { key: 'benachrichtigungen', href: '/profil/benachrichtigungen', label: 'profile.navNotifications' },
   { key: 'kalender', href: '/profil/kalender', label: 'calendar.subscribe' },
   { key: 'adressbuch', href: '/profil/adressbuch', label: 'profile.addressBook' },
+  { key: 'api-token', href: '/profil/api-token', label: 'apiTokens.title' },
   { key: 'abwesenheiten', href: '/abwesenheiten', label: 'profile.navAbsences' },
 ]
 
 const page = usePage()
 const NAV = computed(() =>
-  ALL.filter((item) => item.key !== 'adressbuch' || (page.props.auth.can ?? []).includes('manage_contacts')),
+  ALL.filter((item) => {
+    const can = page.props.auth.can ?? []
+    if (item.key === 'adressbuch') return can.includes('manage_contacts')
+    if (item.key === 'api-token') return can.includes('manage_settings')
+    return true
+  }),
 )
 </script>
 

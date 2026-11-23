@@ -4,7 +4,7 @@ import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormSection from '@/ui/page/FormSection.vue'
 import FormShell from '@/ui/page/FormShell.vue'
-import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
+import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +44,7 @@ function toggleScope(value: string, on: boolean | 'indeterminate') {
 }
 
 function create() {
-  form.post('/einstellungen/api-token', {
+  form.post('/profil/api-token', {
     preserveScroll: true,
     onSuccess: () => form.reset(),
   })
@@ -57,16 +57,16 @@ const revoking = ref<string | null>(null)
 const confirmingRevoke = ref(false)
 
 function revoke() {
-  if (revoking.value) router.delete(`/einstellungen/api-token/${revoking.value}`, { preserveScroll: true })
+  if (revoking.value) router.delete(`/profil/api-token/${revoking.value}`, { preserveScroll: true })
 }
 </script>
 
 <template>
   <AdminLayout active="einstellungen">
     <FormShell
-      :kicker="$t('settings.kicker')" :title="$t('apiTokens.title')"
+      :kicker="$t('profile.kicker')" :title="$t('apiTokens.title')"
     >
-      <template #nav><SettingsNav active="api-tokens" /></template>
+      <template #nav><ProfileNav active="api-token" /></template>
 
       <div class="min-w-0">
         <FormSection v-if="secret" :title="$t('apiTokens.secret')">

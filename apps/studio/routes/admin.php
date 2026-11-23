@@ -75,7 +75,6 @@ use App\Privacy\Http\Controllers\ContactDsgvoController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
-use App\Settings\Http\Controllers\ApiTokenController;
 use App\Settings\Http\Controllers\AuditLogController;
 use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
@@ -89,6 +88,7 @@ use App\Settings\Http\Controllers\StudioExportController;
 use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use App\Staff\Http\Controllers\AbsenceController;
+use App\Staff\Http\Controllers\ApiTokenController;
 use App\Staff\Http\Controllers\DashboardController;
 use App\Staff\Http\Controllers\DevLoginController;
 use App\Staff\Http\Controllers\EmailVerificationController;
@@ -359,6 +359,13 @@ Route::middleware('audience:staff')->group(function () {
             ->name('profile.recovery-codes');
         Route::patch('/profil/benachrichtigungen', [ProfileController::class, 'updateNotifications'])
             ->name('profile.notifications');
+        Route::redirect('/einstellungen/api-token', '/profil/api-token');
+        Route::get('/profil/api-token', [ApiTokenController::class, 'index'])
+            ->name('api-tokens.index');
+        Route::post('/profil/api-token', [ApiTokenController::class, 'store'])
+            ->name('api-tokens.store');
+        Route::delete('/profil/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
+            ->name('api-tokens.destroy');
 
         Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
@@ -601,13 +608,6 @@ Route::middleware('audience:staff')->group(function () {
             ->name('gallery-presets.default');
         Route::delete('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'destroy'])
             ->name('gallery-presets.destroy');
-
-        Route::get('/einstellungen/api-token', [ApiTokenController::class, 'index'])
-            ->name('api-tokens.index');
-        Route::post('/einstellungen/api-token', [ApiTokenController::class, 'store'])
-            ->name('api-tokens.store');
-        Route::delete('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
-            ->name('api-tokens.destroy');
 
         // /anfragen/neu stays above /anfragen/{case}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
