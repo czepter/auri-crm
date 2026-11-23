@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/vue3'
 import { FileText, X } from 'lucide-vue-next'
 import { DropArea } from '@/ui/drop-area'
 import { Button } from '@/ui/button'
+import PdfViewer from './PdfViewer.vue'
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 
 type Doc = App.Finance.Data.FinanceDocumentData
@@ -58,7 +59,7 @@ function remove(id: string) {
 <template>
   <div class="flex min-w-0 flex-col gap-3">
     <div class="flex min-h-[420px] items-center justify-center overflow-hidden rounded-lg border border-border bg-sunk max-[900px]:min-h-[280px]" :class="!current() && 'max-[999px]:hidden'">
-      <iframe v-if="current()?.mime === 'application/pdf'" :key="current()?.id" :src="current()?.url" :title="current()?.filename" class="size-full min-h-[520px] border-0 bg-white" />
+      <PdfViewer v-if="current()?.mime === 'application/pdf'" :key="current()?.id" :url="current()!.url" :title="current()!.filename" class="h-[640px] max-[900px]:h-[420px]" />
       <img v-else-if="current()" :key="current()?.id" :src="current()?.url" :alt="current()?.filename" class="max-h-[640px] max-w-full object-contain">
       <FileText v-else class="size-9 stroke-ink-2 stroke-[1.5]" aria-hidden="true" />
     </div>
