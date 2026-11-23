@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ]);
 
             $this->call(DemoCrmSeeder::class);
+            $this->call(DemoFinanceSeeder::class);
         }
     }
 }

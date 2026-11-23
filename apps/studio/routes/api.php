@@ -24,6 +24,11 @@ use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\CreditNoteController;
 use App\Integration\Http\Controllers\CrewController;
 use App\Integration\Http\Controllers\CrmReadController;
+use App\Integration\Http\Controllers\EuerController;
+use App\Integration\Http\Controllers\ExpenseCategoryController;
+use App\Integration\Http\Controllers\ExpenseController;
+use App\Integration\Http\Controllers\FinanceDocumentController;
+use App\Integration\Http\Controllers\FixedAssetController;
 use App\Integration\Http\Controllers\FormInstanceController;
 use App\Integration\Http\Controllers\FormTemplateController;
 use App\Integration\Http\Controllers\GalleryController;
@@ -597,3 +602,29 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageFormTemplates->val
 Route::middleware(['audience:api', 'scope:'.Capability::ManagePortalAccess->value, 'idempotent'])
     ->post('/cases/{case:public_id}/portal-visibility', [CaseController::class, 'setPortalVisibility'])
     ->name('api.cases.portal-visibility.update');
+
+// Expenses, receipts, assets and the EÜR. ManageFinances, which only Admin
+// holds. Writes make drafts and nothing else: no route here books, ignores,
+// locks, deletes or disposes — those stay in the screens.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageFinances->value])->group(function () {
+    Route::get('/finance/expense-categories', [ExpenseCategoryController::class, 'index'])->name('api.finance.categories.index');
+    // Above /finance/expenses/{expense}, which would take "duplicates" as an id.
+    Route::get('/finance/expenses/duplicates', [ExpenseController::class, 'duplicates'])->name('api.finance.expenses.duplicates');
+    Route::get('/finance/expenses', [ExpenseController::class, 'index'])->name('api.finance.expenses.index');
+    Route::get('/finance/assets', [FixedAssetController::class, 'index'])->name('api.finance.assets.index');
+    Route::get('/finance/euer/{year}', [EuerController::class, 'show'])->where('year', '[0-9]{4}')->name('api.finance.euer.show');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageFinances->value, 'idempotent'])->group(function () {
+    Route::post('/finance/documents/uploads', [FinanceDocumentController::class, 'uploads'])->name('api.finance.documents.uploads');
+    Route::post('/finance/expenses', [ExpenseController::class, 'store'])->name('api.finance.expenses.store');
+    Route::patch('/finance/expenses/{expense:public_id}', [ExpenseController::class, 'update'])->name('api.finance.expenses.update');
+    Route::post('/finance/expenses/{expense:public_id}/asset', [ExpenseController::class, 'asset'])->name('api.finance.expenses.asset');
+});
+
+// The one write on this surface without an audience: the bytes of a receipt
+// announced by api.finance.documents.uploads. Its credential is the signature
+// that call handed out, good for 15 minutes and for one filled row.
+Route::put('/finance/documents/{document:public_id}/content', [FinanceDocumentController::class, 'content'])
+    ->middleware(['signed', 'throttle:finance-uploads'])
+    ->name('api.finance.documents.content');
