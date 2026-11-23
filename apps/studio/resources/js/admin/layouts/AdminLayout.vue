@@ -74,6 +74,9 @@ const can = computed(() => page.props.auth.can ?? []);
 const items = computed(() => navItems(can.value, nav.value ?? {}));
 
 const phone = computed(() => phoneNav(items.value));
+const studioRows = computed(() => items.value.filter((item) => item.studio));
+const studioIcon =
+    '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>';
 const moreOpen = ref(false);
 const phoneViewport = useMediaQuery("(max-width: 640px)");
 
@@ -140,7 +143,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         <circle cx="11" cy="11" r="6.5" />
                         <path d="m16 16 4.5 4.5" />
                     </svg>
-                    <span>{{ $t("palette.search") }}</span>
+                    <span class="max-[1080px]:sr-only">{{ $t("palette.search") }}</span>
                     <!-- font-sans against the browser's monospace default for kbd; the
                shorthand in crm.css carried the family along. -->
                     <kbd
@@ -177,11 +180,37 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         >
                             {{ item.group }}
                         </div>
+                        <DropdownMenu v-if="item.fold">
+                            <DropdownMenuTrigger
+                                class="mb-px hidden w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent py-2 transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:flex"
+                                :class="studioKeys.includes(props.active) && 'bg-sunk'"
+                                :aria-label="item.group"
+                                :title="item.group"
+                            >
+                                <svg
+                                    class="size-4.25 flex-none fill-none stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
+                                    :class="studioKeys.includes(props.active) ? 'stroke-ring' : 'stroke-ink-2'"
+                                    viewBox="0 0 24 24"
+                                    v-html="studioIcon"
+                                />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent side="right" align="start" class="w-[190px]">
+                                <DropdownMenuItem v-for="row in studioRows" :key="row.key" as-child>
+                                    <Link :href="row.href!" :class="row.key === props.active && 'font-semibold'">
+                                        <svg
+                                            class="size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
+                                            viewBox="0 0 24 24"
+                                            v-html="row.icon"
+                                        />
+                                        {{ row.label }}
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </template>
 
                     <!-- A collecting entry goes nowhere itself, it opens its rows.
-               On the narrow rail it is dropped and the rows stand open, or
-               they would be unreachable there. -->
+               On the narrow rail it is one icon that opens them as a menu. -->
                     <template v-else-if="item.children">
                         <button
                             class="mb-px flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-ui tracking-[-0.01em] text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:hidden"
@@ -208,26 +237,45 @@ const collectorsOpen = ref<Record<string, boolean>>(
                                 <path d="m6 9 6 6 6-6" />
                             </svg>
                         </button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                class="mb-px hidden w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent py-2 transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:flex"
+                                :class="item.children.some((child) => child.key === props.active) && 'bg-sunk'"
+                                :aria-label="item.label"
+                                :title="item.label"
+                            >
+                                <svg
+                                    class="size-4.25 flex-none fill-none stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
+                                    :class="item.children.some((child) => child.key === props.active) ? 'stroke-ring' : 'stroke-ink-2'"
+                                    viewBox="0 0 24 24"
+                                    v-html="item.icon"
+                                />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent side="right" align="start" class="w-[190px]">
+                                <DropdownMenuItem v-for="child in item.children" :key="child.key" as-child>
+                                    <Link :href="child.href!" :class="child.key === props.active && 'font-semibold'">
+                                        <svg
+                                            class="size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
+                                            viewBox="0 0 24 24"
+                                            v-html="child.icon"
+                                        />
+                                        {{ child.label }}
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <div
-                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:ml-0 max-[1080px]:pl-0"
-                            :class="!collectorsOpen[item.key!] && 'hidden max-[1080px]:block'"
+                            class="mb-px ml-[19px] pl-1.5 max-[1080px]:hidden"
+                            :class="!collectorsOpen[item.key!] && 'hidden'"
                         >
                             <Link
                                 v-for="child in item.children"
                                 :key="child.key"
-                                class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1 text-ui tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
+                                class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1 text-ui tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
                                 :class="child.key === props.active && 'font-semibold text-foreground'"
                                 :href="child.href!"
-                                :title="child.label"
                             >
-                                <svg
-                                    class="hidden size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round] max-[1080px]:block"
-                                    viewBox="0 0 24 24"
-                                    v-html="child.icon"
-                                />
-                                <span class="max-[1080px]:sr-only">{{
-                                    child.label
-                                }}</span>
+                                {{ child.label }}
                             </Link>
                         </div>
                     </template>
@@ -242,8 +290,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         :class="[
                             item.key === props.active && 'bg-sunk font-semibold',
                             item.studio &&
-                                !studioOpen &&
-                                'hidden max-[1080px]:flex',
+                                (studioOpen ? 'max-[1080px]:hidden' : 'hidden'),
                         ]"
                         :href="item.href!"
                         :aria-current="item.key === props.active ? 'page' : undefined"
@@ -265,7 +312,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
                         }}</span>
                         <span
                             v-if="item.count !== undefined"
-                            class="ml-auto text-small tabular-nums text-ink-2"
+                            class="ml-auto text-small tabular-nums text-ink-2 max-[1080px]:hidden"
                         >
                             {{ item.count }}
                         </span>
@@ -299,22 +346,24 @@ const collectorsOpen = ref<Record<string, boolean>>(
              centring inside the avatar. -->
                 <DropdownMenu>
                     <DropdownMenuTrigger
-                        class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-ui leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:hidden"
+                        class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-ui leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:mt-auto max-[1080px]:justify-center max-[1080px]:p-2"
+                        :aria-label="user?.name"
+                        :title="user?.name"
                     >
                         <span
                             class="flex size-6 flex-none items-center justify-center rounded-full bg-sunk text-small font-semibold text-ink-2"
                         >
                             {{ initials }}
                         </span>
-                        <span class="min-w-0 truncate">{{ user?.name }}</span>
+                        <span class="min-w-0 truncate max-[1080px]:hidden">{{ user?.name }}</span>
                         <svg
-                            class="ml-auto size-4 flex-none fill-none stroke-ink-2 stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]"
+                            class="ml-auto size-4 flex-none max-[1080px]:hidden fill-none stroke-ink-2 stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]"
                             viewBox="0 0 24 24"
                         >
                             <path d="m8 10 4-4 4 4M8 14l4 4 4-4" />
                         </svg>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent side="top" class="w-[190px]">
+                    <DropdownMenuContent side="top" align="start" class="w-[190px]">
                         <DropdownMenuItem as-child>
                             <Link href="/profil">{{ $t("profile.nav") }}</Link>
                         </DropdownMenuItem>

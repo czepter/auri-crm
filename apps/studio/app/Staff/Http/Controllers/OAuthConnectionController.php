@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Http\Controllers;
+namespace App\Staff\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
@@ -25,7 +25,7 @@ class OAuthConnectionController extends Controller
 
         AuditLogger::record('mcp_oauth.client_created', auth('staff')->user(), subject: $client->public_id);
 
-        return redirect('/einstellungen/api-token');
+        return redirect('/profil/api-token');
     }
 
     public function update(Request $request, OAuthClient $oauthClient): RedirectResponse
@@ -36,7 +36,7 @@ class OAuthConnectionController extends Controller
 
         AuditLogger::record('mcp_oauth.client_updated', auth('staff')->user(), subject: $oauthClient->public_id);
 
-        return redirect('/einstellungen/api-token');
+        return redirect('/profil/api-token');
     }
 
     public function destroy(OAuthClient $oauthClient): RedirectResponse
@@ -48,7 +48,7 @@ class OAuthConnectionController extends Controller
 
         AuditLogger::record('mcp_oauth.client_deleted', auth('staff')->user(), subject: $oauthClient->public_id);
 
-        return redirect('/einstellungen/api-token');
+        return redirect('/profil/api-token');
     }
 
     /** @return array{client_name: string, redirect_uris: list<string>} */

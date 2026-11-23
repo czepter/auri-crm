@@ -75,8 +75,6 @@ use App\Privacy\Http\Controllers\ContactDsgvoController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
-use App\Settings\Http\Controllers\ApiTokenController;
-use App\Settings\Http\Controllers\OAuthConnectionController;
 use App\Settings\Http\Controllers\AuditLogController;
 use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
@@ -90,6 +88,7 @@ use App\Settings\Http\Controllers\StudioExportController;
 use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use App\Staff\Http\Controllers\AbsenceController;
+use App\Staff\Http\Controllers\ApiTokenController;
 use App\Staff\Http\Controllers\DashboardController;
 use App\Staff\Http\Controllers\DevLoginController;
 use App\Staff\Http\Controllers\EmailVerificationController;
@@ -97,6 +96,7 @@ use App\Staff\Http\Controllers\InvitationController;
 use App\Staff\Http\Controllers\MfaChallengeController;
 use App\Staff\Http\Controllers\MfaEnrollmentController;
 use App\Staff\Http\Controllers\NotificationController;
+use App\Staff\Http\Controllers\OAuthConnectionController;
 use App\Staff\Http\Controllers\OwnershipController;
 use App\Staff\Http\Controllers\PasskeyController;
 use App\Staff\Http\Controllers\PasskeySessionController;
@@ -360,6 +360,21 @@ Route::middleware('audience:staff')->group(function () {
             ->name('profile.recovery-codes');
         Route::patch('/profil/benachrichtigungen', [ProfileController::class, 'updateNotifications'])
             ->name('profile.notifications');
+        Route::redirect('/einstellungen/api-token', '/profil/api-token');
+        Route::get('/profil/api-token', [ApiTokenController::class, 'index'])
+            ->name('api-tokens.index');
+        Route::post('/profil/api-token', [ApiTokenController::class, 'store'])
+            ->name('api-tokens.store');
+        Route::patch('/profil/api-token/{apiToken}', [ApiTokenController::class, 'update'])
+            ->name('api-tokens.update');
+        Route::delete('/profil/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
+            ->name('api-tokens.destroy');
+        Route::post('/profil/api-token/verbindungen', [OAuthConnectionController::class, 'store'])
+            ->name('oauth-connections.store');
+        Route::patch('/profil/api-token/verbindungen/{oauthClient}', [OAuthConnectionController::class, 'update'])
+            ->name('oauth-connections.update');
+        Route::delete('/profil/api-token/verbindungen/{oauthClient}', [OAuthConnectionController::class, 'destroy'])
+            ->name('oauth-connections.destroy');
 
         Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
@@ -602,21 +617,6 @@ Route::middleware('audience:staff')->group(function () {
             ->name('gallery-presets.default');
         Route::delete('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'destroy'])
             ->name('gallery-presets.destroy');
-
-        Route::get('/einstellungen/api-token', [ApiTokenController::class, 'index'])
-            ->name('api-tokens.index');
-        Route::post('/einstellungen/api-token', [ApiTokenController::class, 'store'])
-            ->name('api-tokens.store');
-        Route::patch('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'update'])
-            ->name('api-tokens.update');
-        Route::delete('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
-            ->name('api-tokens.destroy');
-        Route::post('/einstellungen/api-token/verbindungen', [OAuthConnectionController::class, 'store'])
-            ->name('oauth-connections.store');
-        Route::patch('/einstellungen/api-token/verbindungen/{oauthClient}', [OAuthConnectionController::class, 'update'])
-            ->name('oauth-connections.update');
-        Route::delete('/einstellungen/api-token/verbindungen/{oauthClient}', [OAuthConnectionController::class, 'destroy'])
-            ->name('oauth-connections.destroy');
 
         // /anfragen/neu stays above /anfragen/{case}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
