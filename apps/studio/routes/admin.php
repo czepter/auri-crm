@@ -76,6 +76,7 @@ use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
 use App\Settings\Http\Controllers\ApiTokenController;
+use App\Settings\Http\Controllers\OAuthConnectionController;
 use App\Settings\Http\Controllers\AuditLogController;
 use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
@@ -606,8 +607,16 @@ Route::middleware('audience:staff')->group(function () {
             ->name('api-tokens.index');
         Route::post('/einstellungen/api-token', [ApiTokenController::class, 'store'])
             ->name('api-tokens.store');
+        Route::patch('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'update'])
+            ->name('api-tokens.update');
         Route::delete('/einstellungen/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
             ->name('api-tokens.destroy');
+        Route::post('/einstellungen/api-token/verbindungen', [OAuthConnectionController::class, 'store'])
+            ->name('oauth-connections.store');
+        Route::patch('/einstellungen/api-token/verbindungen/{oauthClient}', [OAuthConnectionController::class, 'update'])
+            ->name('oauth-connections.update');
+        Route::delete('/einstellungen/api-token/verbindungen/{oauthClient}', [OAuthConnectionController::class, 'destroy'])
+            ->name('oauth-connections.destroy');
 
         // /anfragen/neu stays above /anfragen/{case}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.

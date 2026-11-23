@@ -14,6 +14,9 @@ const meta = {
       { value: 'manage_contacts', label: 'Kontakte verwalten' },
       { value: 'view_all_cases', label: 'Alle Aufträge einsehen' },
     ],
+    connections: [
+      { id: 'con_01', clientId: 'q3v8Zt1mWk0Xb7YpLr2NfHs5DaJc9EuG', name: 'Claude', redirectUris: ['https://claude.ai/api/mcp/auth_callback'], lastUsedAt: '2026-11-20T09:12:00+01:00' },
+    ],
     mcpUrl: 'https://api.atelier-nordlicht.de/mcp',
   },
 } satisfies Meta<typeof ApiTokens>
@@ -26,5 +29,5 @@ export const Aktiv: Story = {}
 
 /** Ohne Token. */
 export const Leer: Story = {
-  args: { tokens: [] },
+  args: { tokens: [], connections: [] },
 }

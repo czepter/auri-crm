@@ -55,6 +55,7 @@ class OAuthTokenController extends Controller
 
         $ttl = (int) config('mcp_oauth.token_ttl');
         $token = $user->createToken('mcp', $payload['scopes'], now()->addSeconds($ttl));
+        $token->accessToken->forceFill(['oauth_client_id' => $validated['client_id']])->save();
 
         AuditLogger::record('mcp_oauth.token_issued', $user, [
             'client_id' => $validated['client_id'],

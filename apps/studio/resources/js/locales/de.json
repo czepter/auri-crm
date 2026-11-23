@@ -1831,11 +1831,15 @@
     "lastUsed": "Zuletzt genutzt",
     "never": "Nie",
     "new": "Neuer Token",
+    "edit": "Token bearbeiten",
     "name": "Name",
     "scopes": "Berechtigungen",
     "create": "Erzeugen",
     "revoke": "Widerrufen",
     "revokeTitle": "Token widerrufen?",
+    "connections": "OAuth-Verbindungen",
+    "redirectUris": "Weiterleitungs-Adressen",
+    "removeTitle": "Verbindung löschen?",
     "mcpHelp": "Claude verbinden"
   },
   "formTemplates": {
