@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ZoomIn, ZoomOut } from 'lucide-vue-next'
-import { getDocument, GlobalWorkerOptions, type PDFDocumentProxy } from 'pdfjs-dist'
+import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask, type PDFDocumentProxy } from 'pdfjs-dist'
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-import { Button } from '@/ui/button'
+import { ChoiceGroup } from '@/ui/choice-group'
 
 GlobalWorkerOptions.workerSrc = workerUrl
+
+const FULL_SCALE = 96 / 72
 
 const props = defineProps<{ url: string; title: string }>()
 
 const pages = ref<HTMLElement | null>(null)
-const total = ref(1)
 const failed = ref(false)
-const zoom = ref(1)
-const current = ref(1)
+const fit = ref(true)
+let task: PDFDocumentLoadingTask | null = null
 let doc: PDFDocumentProxy | null = null
 let width = 0
 let run = 0
@@ -33,15 +33,14 @@ async function render() {
     if (token !== run) return
 
     const base = page.getViewport({ scale: 1 })
-    const scale = (width / base.width) * zoom.value
+    const scale = fit.value ? width / base.width : FULL_SCALE
     const viewport = page.getViewport({ scale })
     const canvas = document.createElement('canvas')
     canvas.width = Math.floor(viewport.width * ratio)
     canvas.height = Math.floor(viewport.height * ratio)
     canvas.style.width = `${Math.floor(viewport.width)}px`
     canvas.style.height = `${Math.floor(viewport.height)}px`
-    canvas.dataset.page = String(number)
-    canvas.className = 'mx-auto mb-3 block bg-white shadow-sm'
+    canvas.className = 'mx-auto mb-4 block border border-border bg-white shadow-[0_18px_40px_-24px_rgba(20,16,14,.28)]'
 
     const context = canvas.getContext('2d')
     if (!context) return
@@ -57,24 +56,15 @@ async function load() {
   failed.value = false
   doc = null
   run++
+  void task?.destroy()
 
   try {
-    doc = await getDocument({ url: props.url, withCredentials: true }).promise
-    total.value = doc.numPages
+    task = getDocument({ url: props.url, withCredentials: true })
+    doc = await task.promise
     await render()
   } catch {
     failed.value = true
   }
-}
-
-function track() {
-  const container = pages.value
-  if (!container) return
-
-  const middle = container.scrollTop + container.clientHeight / 2
-  const canvases = Array.from(container.querySelectorAll<HTMLCanvasElement>('canvas'))
-  const hit = canvases.find((canvas) => canvas.offsetTop + canvas.offsetHeight > middle)
-  current.value = Number(hit?.dataset.page ?? canvases.length ?? 1)
 }
 
 onMounted(() => {
@@ -91,23 +81,25 @@ onMounted(() => {
 onBeforeUnmount(() => {
   observer?.disconnect()
   run++
-  void doc?.destroy()
+  void task?.destroy()
 })
 
 watch(() => props.url, load)
-watch(zoom, render)
+watch(fit, render)
 </script>
 
 <template>
-  <div class="flex w-full min-h-0 flex-col bg-sunk" role="document" :aria-label="title">
-    <div class="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-background px-2 py-1">
-      <span class="px-1 text-small tabular-nums text-ink-2">{{ current }} / {{ total }}</span>
-      <div class="flex items-center gap-1">
-        <Button variant="ghost" size="icon" type="button" class="size-7" :aria-label="$t('financeExpense.zoomOut')" :title="$t('financeExpense.zoomOut')" :disabled="zoom <= 0.5" @click="zoom = Math.max(0.5, zoom - 0.25)"><ZoomOut /></Button>
-        <Button variant="ghost" size="icon" type="button" class="size-7" :aria-label="$t('financeExpense.zoomIn')" :title="$t('financeExpense.zoomIn')" :disabled="zoom >= 3" @click="zoom = Math.min(3, zoom + 0.25)"><ZoomIn /></Button>
-      </div>
+  <div class="flex min-w-0 flex-col">
+    <div class="flex items-center border-b border-border pb-2.5">
+      <span class="mb-[5px] text-small leading-none font-semibold text-faint">{{ $t('financeExpense.receipt') }}</span>
+      <ChoiceGroup
+        :model-value="fit ? 'fit' : 'full'"
+        :options="[{ value: 'fit', label: $t('quotes.zoomFit') }, { value: 'full', label: $t('quotes.zoomFull') }]"
+        class="ml-auto"
+        @update:model-value="(value) => (fit = value === 'fit')"
+      />
     </div>
-    <div ref="pages" class="min-h-0 flex-1 overflow-auto p-3" tabindex="0" @scroll.passive="track" />
-    <p v-if="failed" class="p-3 text-small text-destructive">{{ $t('financeExpense.previewFailed') }}</p>
+    <div ref="pages" role="document" :aria-label="title" class="mt-4 h-[640px] overflow-auto bg-sunk p-4 max-[900px]:h-[420px]" tabindex="0" />
+    <p v-if="failed" class="mt-2 text-small text-destructive">{{ $t('financeExpense.previewFailed') }}</p>
   </div>
 </template>
