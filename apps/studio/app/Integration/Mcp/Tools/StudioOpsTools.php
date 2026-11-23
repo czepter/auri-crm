@@ -12,7 +12,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
  */
 final class StudioOpsTools
 {
-    private const FORM_FIELD_TYPES = ['text', 'short_text', 'boolean', 'select', 'date', 'time', 'name_list', 'group_photos', 'file'];
+    private const FORM_FIELD_TYPES = ['text', 'short_text', 'boolean', 'select', 'date', 'time', 'name_list', 'group_photos', 'file', 'section'];
 
     /** @return list<ToolDefinition> */
     public static function definitions(): array
@@ -114,9 +114,70 @@ final class StudioOpsTools
             ),
 
             new ToolDefinition(
+                name: 'list_form_templates',
+                title: 'List form templates',
+                description: 'The studio\'s active questionnaire templates with their fields. The template id is what create_form seeds from; the field shape is the one update_form takes. A "section" field is a heading with no answer.',
+                method: 'GET',
+                path: '/form-templates',
+                schema: fn (JsonSchema $schema) => [
+                    'cursor' => $schema->string()->description('Opaque cursor from a previous call\'s nextCursor.'),
+                    'limit' => $schema->integer()->min(1)->max(100)->description('Page size, up to 100. Defaults to 25.'),
+                ],
+                annotations: ToolDefinition::READ,
+                payload: fn (array $arguments) => [
+                    'cursor' => $arguments['cursor'] ?? null,
+                    'per_page' => $arguments['limit'] ?? null,
+                ],
+                structure: fn (array $body) => [
+                    'templates' => array_map(self::withSelectOptionsOnly(...), $body['data']),
+                    'nextCursor' => $body['meta']['next_cursor'],
+                ],
+                outputSchema: fn (JsonSchema $schema) => [
+                    'templates' => $schema->array()->items(self::formTemplate($schema)),
+                    'nextCursor' => $schema->string()->nullable(),
+                ],
+            ),
+
+            new ToolDefinition(
+                name: 'create_form_template',
+                title: 'Create a form template',
+                description: 'Creates a questionnaire template that create_form can seed projects from. Field ids are returned for update_form_template. A "section" field is a heading with no answer; its required is always false.',
+                method: 'POST',
+                path: '/form-templates',
+                schema: fn (JsonSchema $schema) => [
+                    'name' => $schema->string()->max(120)->required()->description('Unique per studio, case-insensitive.'),
+                    'description' => $schema->string()->max(500)->nullable()->description('Staff-only note.'),
+                    'project_type' => $schema->string()->nullable()->description('The project type key — see list_project_types'),
+                    'fields' => $schema->array()->items(self::templateField($schema))->max(100),
+                ],
+                silent: false,
+                structure: fn (array $body) => ['template' => self::withSelectOptionsOnly($body['data'])],
+                outputSchema: fn (JsonSchema $schema) => ['template' => self::formTemplate($schema)],
+            ),
+
+            new ToolDefinition(
+                name: 'update_form_template',
+                title: 'Replace a form template\'s fields',
+                description: 'Renames a template and sets its fields. Send every field the template should keep, each with its id from list_form_templates. Forms already created from the template are not changed. A "section" field is a heading with no answer.',
+                method: 'PATCH',
+                path: '/form-templates/{template}',
+                schema: fn (JsonSchema $schema) => [
+                    'template' => $schema->string()->description('The form template public id')->required(),
+                    'name' => $schema->string()->max(120),
+                    'description' => $schema->string()->max(500)->nullable()->description('Omitting it keeps the current one.'),
+                    'project_type' => $schema->string()->nullable()->description('The project type key — see list_project_types. Omitting it keeps the current one.'),
+                    'fields' => $schema->array()->items(self::templateField($schema))->max(100)->required(),
+                ],
+                annotations: ['readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false],
+                silent: false,
+                structure: fn (array $body) => ['template' => self::withSelectOptionsOnly($body['data'])],
+                outputSchema: fn (JsonSchema $schema) => ['template' => self::formTemplate($schema)],
+            ),
+
+            new ToolDefinition(
                 name: 'list_forms',
                 title: 'List a project\'s forms',
-                description: 'A project\'s questionnaires, seeded or blank, shared or not, with their fields and current answers.',
+                description: 'A project\'s questionnaires, seeded or blank, shared or not, with their fields and current answers. A "section" field is a heading with no answer.',
                 method: 'GET',
                 path: '/cases/{case}/forms',
                 schema: fn (JsonSchema $schema) => [
@@ -148,7 +209,7 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'update_form',
                 title: 'Replace a form\'s fields',
-                description: 'Renames a form and sets its fields, the same shape create_form seeds, personalised. Send every field the form should keep, each with its id from list_forms.',
+                description: 'Renames a form and sets its fields, the same shape create_form seeds, personalised. Send every field the form should keep, each with its id from list_forms. A "section" field is a heading with no answer.',
                 method: 'PATCH',
                 path: '/forms/{form}',
                 schema: fn (JsonSchema $schema) => [
@@ -204,7 +265,7 @@ final class StudioOpsTools
             new ToolDefinition(
                 name: 'answer_form_field',
                 title: 'Record an answer',
-                description: 'Records (or corrects) the answer to one question on a form already seeded. Appends the next answer version; every earlier one stays. A "file" field cannot be answered here — there is no way to attach bytes through this tool.',
+                description: 'Records (or corrects) the answer to one question on a form already seeded. Appends the next answer version; every earlier one stays. A "file" field cannot be answered here — there is no way to attach bytes through this tool. A "section" has no answer.',
                 method: 'POST',
                 path: '/form-fields/{field}/answer',
                 schema: fn (JsonSchema $schema) => [
@@ -333,6 +394,55 @@ final class StudioOpsTools
                 silent: false,
             ),
         ];
+    }
+
+    /**
+     * A file or group_photos field set up in the builder stores an options
+     * object, not a string list; list_forms hides it the same way.
+     */
+    private static function withSelectOptionsOnly(array $template): array
+    {
+        $template['fields'] = array_map(
+            fn (array $field) => $field['type'] === 'select' ? $field : [...$field, 'options' => null],
+            $template['fields'],
+        );
+
+        return $template;
+    }
+
+    private static function templateField(JsonSchema $schema): object
+    {
+        return $schema->object([
+            'id' => $schema->string()->nullable()->description('The field public id. Send it to keep the field; a field without one is created new, a field left out is deleted.'),
+            'label' => $schema->string()->max(255)->required(),
+            'type' => $schema->string()->enum(self::FORM_FIELD_TYPES)->required(),
+            'required' => $schema->boolean()->required(),
+            'help' => $schema->string()->max(500)->nullable()->description('Shown with the question in the portal. Plain text. Omitting it clears it.'),
+            'options' => $schema->array()->items($schema->string())->nullable()->description('A "select" field\'s choices. Refused on every other type; a kept "file" or "group_photos" field keeps the configuration set in the studio.'),
+        ]);
+    }
+
+    private static function formTemplate(JsonSchema $schema): object
+    {
+        return $schema->object([
+            'id' => $schema->string(),
+            'name' => $schema->string(),
+            'description' => $schema->string()->nullable(),
+            'projectType' => $schema->string()->nullable(),
+            'projectTypeLabel' => $schema->string()->nullable(),
+            'isActive' => $schema->boolean(),
+            'fieldCount' => $schema->integer(),
+            'updatedAt' => $schema->string(),
+            'fields' => $schema->array()->items($schema->object([
+                'id' => $schema->string(),
+                'label' => $schema->string(),
+                'type' => $schema->string()->enum(self::FORM_FIELD_TYPES),
+                'typeLabel' => $schema->string(),
+                'required' => $schema->boolean(),
+                'help' => $schema->string()->nullable(),
+                'options' => $schema->array()->items($schema->string())->nullable(),
+            ])),
+        ]);
     }
 
     private static function form(JsonSchema $schema): object

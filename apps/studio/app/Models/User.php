@@ -8,6 +8,7 @@ use App\Crm\Models\CrewAssignment;
 use App\Enums\StaffRole;
 use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Models\InAppNotification;
+use App\Staff\Models\Passkey;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -145,6 +146,11 @@ class User extends Authenticatable
     public function inAppNotifications(): MorphMany
     {
         return $this->morphMany(InAppNotification::class, 'notifiable')->latest();
+    }
+
+    public function passkeys(): HasMany
+    {
+        return $this->hasMany(Passkey::class);
     }
 
     public function crewAssignments(): HasMany

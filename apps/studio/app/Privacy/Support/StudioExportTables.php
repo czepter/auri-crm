@@ -35,7 +35,7 @@ final class StudioExportTables
         'Zugangsdaten' => [
             'api_tokens', 'client_accesses', 'contact_email_changes', 'gallery_download_links',
             'gallery_email_verifications', 'oauth_clients', 'personal_access_tokens',
-            'staff_invitations', 'user_email_changes', 'user_email_verifications', 'users',
+            'staff_invitations', 'staff_passkeys', 'user_email_changes', 'user_email_verifications', 'users',
         ],
         'Betriebsdaten' => [
             'audit_logs', 'automation_runs', 'credit_note_drafts', 'document_views', 'download_events', 'gallery_grid_prefs',
@@ -53,7 +53,8 @@ final class StudioExportTables
         ],
         'Nicht im Umfang von #489' => [
             'absences', 'asset_comments', 'asset_favorites', 'asset_hides', 'contract_signatures', 'contract_signers',
-            'contracts', 'crew_assignments', 'dsgvo_requests', 'form_answers', 'form_instance_fields',
+            'contracts', 'crew_assignments', 'dsgvo_requests', 'expense_categories', 'expense_documents', 'expenses',
+            'finance_documents', 'fiscal_years', 'fixed_assets', 'form_answers', 'form_instance_fields',
             'form_instance_files', 'form_instances', 'gallery_guests', 'gallery_list_items', 'gallery_lists',
             'gallery_prerelease_signups', 'internal_notes', 'payment_plans', 'project_fields',
             'service_suggestions', 'shot_list_items', 'tasks', 'thread_participants', 'timeline_entries',

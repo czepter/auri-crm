@@ -8,7 +8,7 @@ const AUFGABEN: App.Crm.Data.TaskTemplateData[] = [
 ]
 
 const FRAGEBOEGEN: App.Crm.Data.FormTemplateData[] = [
-  { id: 'ft1', name: 'Vor der Trauung', projectType: 'wedding', projectTypeLabel: 'Hochzeit', isActive: true, fieldCount: 12, updatedAt: '2026-08-14T10:00:00+02:00', fields: [] },
+  { id: 'ft1', name: 'Vor der Trauung', description: null, projectType: 'wedding', projectTypeLabel: 'Hochzeit', isActive: true, fieldCount: 12, updatedAt: '2026-08-14T10:00:00+02:00', fields: [] },
 ]
 
 const DOKUMENTE: App.Documents.Data.DocumentTemplateData[] = [

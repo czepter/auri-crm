@@ -5,6 +5,7 @@ namespace App\Payments\Support;
 use App\Models\StudioSettings;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\InvoiceItem;
+use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\VatLines;
@@ -105,6 +106,21 @@ final class InvoiceFigures
         $vat = array_sum(array_column($rates, 'vat'));
 
         return new self($net + $vat, $net, $vat, $rates[0]['rate'] ?? $defaultRate, $smallBusiness ? StudioSettings::current()->vat_note : null, $rates);
+    }
+
+    /**
+     * What a payment received on one rate was made of. A rate on an invoice
+     * splits at that invoice's rates; one outside any invoice at the accepted
+     * quote's rate, else the studio's. Callers that value many rates of the
+     * same invoice hand in its figures once.
+     */
+    public static function forInstallment(PaymentInstallment $installment, ?self $invoiceFigures = null): self
+    {
+        $gross = (int) $installment->paid_amount;
+
+        return $installment->invoice === null
+            ? self::forGross($gross, $installment->acceptedQuote())
+            : ($invoiceFigures ?? self::forInvoice($installment->invoice))->share($gross);
     }
 
     /** A part of an invoice — a Gutschrift, a deducted Anzahlung — at that invoice's rate. */

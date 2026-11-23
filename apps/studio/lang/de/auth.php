@@ -29,6 +29,10 @@ return [
     // which of the three it was is not something to tell the browser.
     'mfa_invalid' => 'Dieser Code ist nicht gültig.',
 
+    // One message for login and registration alike, so it says nothing about
+    // which check failed.
+    'passkey_failed' => 'Anmeldung mit Passkey fehlgeschlagen.',
+
     // Der Bestätigungslink aus der Profil-Mail — abgelaufen, verbraucht und
     // nie existiert sind dieselbe Antwort.
     'link_dead' => 'Dieser Link gilt nicht mehr. Bitte die Adresse erneut ändern.',

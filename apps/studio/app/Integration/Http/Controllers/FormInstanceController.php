@@ -94,6 +94,7 @@ class FormInstanceController extends Controller
     public function answer(Request $request, FormInstanceField $formInstanceField): JsonResponse
     {
         abort_if($formInstanceField->type === FormFieldType::File, 422, 'A file field cannot be answered over the api.');
+        abort_if($formInstanceField->type === FormFieldType::Section, 422, 'A section has no answer.');
 
         $validated = $request->validate(['value' => ['nullable', 'string', 'max:20000']]);
 

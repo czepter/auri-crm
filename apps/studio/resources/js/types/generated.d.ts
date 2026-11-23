@@ -318,6 +318,7 @@ uploadedAt: string,
 export type FormTemplateData = {
 id: string,
 name: string,
+description: string | null,
 projectType: string | null,
 projectTypeLabel: string | null,
 isActive: boolean,
@@ -463,7 +464,7 @@ export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'portal' | 'other';
 export type CaseContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
 export type DueAnchor = 'stage' | 'shoot';
-export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file';
+export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file' | 'section';
 export type LeadOutcome = 'lost' | 'declined' | 'closed';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'booked';
@@ -635,8 +636,131 @@ export type InboundMessageState = 'threaded' | 'triage' | 'quarantined';
 }
 namespace Enums {
 export type AbsenceCategory = 'unavailable' | 'holiday' | 'other';
-export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_cases' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates' | 'manage_dsgvo';
+export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_cases' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates' | 'manage_dsgvo' | 'manage_finances';
 export type StaffRole = 'admin' | 'manager' | 'contributor' | 'reader';
+}
+namespace Finance {
+namespace Data {
+export type EuerChecklistData = {
+withoutReceipt: number,
+drafts: number,
+openInvoices: number,
+openInvoicesRemaining: number,
+foreignWithoutEur: number,
+};
+export type EuerReportData = {
+year: number,
+vatMode: string,
+lockedAt: string | null,
+operatingIncome: number,
+creditNotes: number,
+collectedVat: number,
+assetSales: number,
+income: number,
+categories: {
+key: string,
+label: string,
+euerLine: string,
+amount: number,
+count: number,
+}[],
+depreciation: number,
+residualBookValue: number,
+paidInputVat: number,
+expenses: number,
+profit: number,
+checklist: App.Finance.Data.EuerChecklistData,
+};
+export type ExpenseCategoryData = {
+id: string,
+key: string,
+label: string,
+euerLine: string,
+skr04Account: string | null,
+};
+export type ExpenseDetailData = {
+id: string,
+vendor: string | null,
+description: string | null,
+invoiceNo: string | null,
+invoiceDate: string | null,
+paidAt: string | null,
+status: App.Finance.Enums.ExpenseStatus,
+categoryId: string | null,
+businessShare: number,
+currency: string,
+net: number,
+vatRate: number,
+vat: number,
+gross: number,
+grossEur: number | null,
+note: string | null,
+isSelfIssued: boolean,
+documents: App.Finance.Data.FinanceDocumentData[],
+asset: App.Finance.Data.FixedAssetData | null,
+};
+export type ExpenseRowData = {
+id: string,
+vendor: string | null,
+description: string | null,
+invoiceNo: string | null,
+invoiceDate: string | null,
+paidAt: string | null,
+status: App.Finance.Enums.ExpenseStatus,
+categoryId: string | null,
+categoryLabel: string | null,
+businessShare: number,
+currency: string,
+gross: number,
+grossEur: number | null,
+hasReceipt: boolean,
+isAsset: boolean,
+};
+export type ExpenseTotalsData = {
+sum: number,
+business: number,
+drafts: number,
+};
+export type FinanceDocumentData = {
+id: string,
+filename: string,
+mime: string,
+size: number | null,
+isSelfIssued: boolean,
+url: string,
+};
+export type FixedAssetData = {
+id: string,
+inventoryNo: string,
+name: string,
+acquiredAt: string,
+costNet: number,
+costGross: number,
+method: App.Finance.Enums.DepreciationMethod,
+usefulLifeMonths: number | null,
+afaCategory: string | null,
+disposedAt: string | null,
+disposalProceeds: number | null,
+};
+export type FixedAssetRowData = {
+id: string,
+inventoryNo: string,
+name: string,
+acquiredAt: string,
+method: App.Finance.Enums.DepreciationMethod,
+usefulLifeMonths: number | null,
+cost: number,
+bookValue: number,
+businessShare: number,
+disposedAt: string | null,
+disposalProceeds: number | null,
+expenseId: string | null,
+};
+}
+namespace Enums {
+export type DepreciationMethod = 'gwg' | 'linear';
+export type ExpenseStatus = 'draft' | 'booked' | 'ignored';
+}
 }
 namespace Gallery {
 namespace Data {

@@ -22,7 +22,7 @@ export async function submitLogin(
   await page.goto('/login')
   await page.getByLabel('E-Mail').fill(account.email)
   await page.getByLabel('Passwort', { exact: true }).fill(account.password)
-  await page.getByRole('button', { name: 'Anmelden' }).click()
+  await page.getByRole('button', { name: 'Anmelden', exact: true }).click()
 }
 
 /**

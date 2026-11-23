@@ -11,6 +11,7 @@ use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Support\NotificationPreferences;
 use App\Settings\Rules\ValidFormat;
+use App\Staff\Models\Passkey;
 use App\Staff\Notifications\StaffEmailChangeConfirmation;
 use App\Staff\Support\DeviceLabel;
 use App\Staff\Support\StudioEvents;
@@ -72,6 +73,12 @@ class ProfileController extends Controller
                 ? StudioSettings::current()->workingDays()
                 : null,
             'sessions' => $pane === 'sicherheit' ? $this->sessionGroups($user, $request->session()->getId()) : [],
+            'passkeys' => $pane === 'sicherheit' ? $user->passkeys()->orderBy('created_at')->get()->map(fn (Passkey $passkey) => [
+                'id' => $passkey->public_id,
+                'name' => $passkey->name,
+                'createdAt' => $passkey->created_at->toIso8601String(),
+                'lastUsedAt' => $passkey->last_used_at?->toIso8601String(),
+            ])->all() : [],
             'recoveryCodesLeft' => count($user->mfa_recovery_codes ?? []),
             'digestFrequency' => $user->digest_frequency,
             'events' => collect(StudioEvents::ALL)

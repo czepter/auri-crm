@@ -146,6 +146,21 @@ it('names staff on an answer the studio records', function () {
         ->and($field->fresh()->currentAnswer->contact_id)->toBeNull();
 });
 
+it('leaves a section out of the open question count', function () {
+    [$instance, $contact, $project] = sharedQuestionnaire();
+    $instance->fields()->create(['label' => 'Der Tag', 'type' => FormFieldType::Section, 'required' => true, 'sort_order' => 2]);
+
+    $questionnaire = test()->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}")
+        ->viewData('page')['props']['project']['questionnaires'][0];
+
+    expect($questionnaire['count'])->toBe(2)->and($questionnaire['openCount'])->toBe(2);
+
+    test()->patch("/projekte/{$project->public_id}/fragebogen/{$instance->public_id}", [
+        'answers' => [$instance->fields->first()->public_id => 'Walzer'],
+    ])->assertSessionDoesntHaveErrors();
+});
+
 it('lists a shared questionnaire on the booking screen and hides an unshared one', function () {
     [$instance, $contact, $project] = sharedQuestionnaire();
 

@@ -1,0 +1,41 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 295 >>
+stream
+BT /F2 20 Tf 72 760 Td (Rechnung) Tj ET
+BT /F1 11 Tf 72 730 Td (Nordhost Hosting GmbH) Tj ET
+BT /F1 11 Tf 72 700 Td (Webhosting Jahrespaket) Tj ET
+BT /F1 11 Tf 72 670 Td (Netto 100,00 EUR) Tj ET
+BT /F1 11 Tf 72 655 Td (USt. 19 % 19,00 EUR) Tj ET
+BT /F2 12 Tf 72 630 Td (Brutto 119,00 EUR) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000596 00000 n 
+0000000666 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+741
+%%EOF

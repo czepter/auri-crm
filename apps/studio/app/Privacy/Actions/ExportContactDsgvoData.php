@@ -3,6 +3,7 @@
 namespace App\Privacy\Actions;
 
 use App\Catalog\Models\ServiceSuggestion;
+use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormAnswer;
@@ -243,7 +244,7 @@ class ExportContactDsgvoData
             ])->all(),
             'form_instances' => $project->formInstances->map(fn ($instance) => [
                 'name' => $instance->name,
-                'fields' => $instance->fields->map(fn ($field) => [
+                'fields' => $instance->fields->where('type', '!=', FormFieldType::Section)->map(fn ($field) => [
                     'label' => $field->label,
                     'answer' => $field->currentAnswer?->value,
                 ])->all(),

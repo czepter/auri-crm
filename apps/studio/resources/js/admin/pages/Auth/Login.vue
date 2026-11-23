@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { Eye, EyeOff } from 'lucide-vue-next'
 import { Field } from '@/ui/field'
 import AuthLayout from '@/admin/layouts/AuthLayout.vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
+import { xsrfHeader } from '@/admin/lib/multipartUpload'
+import { ceremonyCancelled, passkeysSupported } from '@/admin/lib/passkey'
 
 // Only ever true in local. The server decides; the button cannot talk itself
 // into existence.
@@ -20,6 +23,41 @@ const form = useForm({ email: '', password: '', remember: false })
 // für den Passwortmanager, solange niemand es aufdeckt.
 const revealed = ref(false)
 
+const { t } = useI18n()
+const passkeyForm = useForm({ credential: '' })
+const passkeys = ref(false)
+const busy = ref(false)
+onMounted(() => { passkeys.value = passkeysSupported() })
+
+async function signInWithPasskey() {
+  busy.value = true
+  passkeyForm.clearErrors()
+
+  try {
+    const response = await fetch('/login/passkey/optionen', {
+      method: 'POST',
+      headers: { Accept: 'application/json', ...xsrfHeader() },
+      credentials: 'same-origin',
+    })
+
+    if (!response.ok) {
+      throw new Error(String(response.status))
+    }
+
+    const credential = (await navigator.credentials.get({
+      publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(await response.json()),
+    })) as PublicKeyCredential
+
+    passkeyForm.transform(() => ({ credential: JSON.stringify(credential.toJSON()) })).post('/login/passkey')
+  } catch (error) {
+    if (!ceremonyCancelled(error)) {
+      passkeyForm.setError('credential', t('auth.passkeyFailed'))
+    }
+  } finally {
+    busy.value = false
+  }
+}
+
 function submit() {
   form.post('/login', { onFinish: () => form.reset('password') })
 }
@@ -29,8 +67,8 @@ function submit() {
   <!-- No sidebar: there is no navigation available to someone not signed in. -->
   <AuthLayout :title="$t('auth.signInTitle')">
     <form @submit.prevent="submit">
-      <p v-if="form.errors.email" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-small leading-[1.3] font-medium text-destructive">
-        {{ form.errors.email }}
+      <p v-if="form.errors.email || passkeyForm.errors.credential" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-small leading-[1.3] font-medium text-destructive">
+        {{ form.errors.email || passkeyForm.errors.credential }}
       </p>
 
       <Field class="mb-6">
@@ -74,6 +112,10 @@ function submit() {
         {{ $t('auth.signIn') }}
       </Button>
     </form>
+
+    <Button v-if="passkeys" type="button" variant="outline" class="mt-3 w-full justify-center" :disabled="busy || passkeyForm.processing" @click="signInWithPasskey">
+      {{ $t('auth.passkeySignIn') }}
+    </Button>
 
     <p class="mt-4 text-center">
       <Button :as="Link" variant="ghost" href="/passwort/vergessen">{{ $t('auth.forgot') }}</Button>
