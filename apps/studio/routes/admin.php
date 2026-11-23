@@ -96,6 +96,7 @@ use App\Staff\Http\Controllers\InvitationController;
 use App\Staff\Http\Controllers\MfaChallengeController;
 use App\Staff\Http\Controllers\MfaEnrollmentController;
 use App\Staff\Http\Controllers\NotificationController;
+use App\Staff\Http\Controllers\OAuthConnectionController;
 use App\Staff\Http\Controllers\OwnershipController;
 use App\Staff\Http\Controllers\PasskeyController;
 use App\Staff\Http\Controllers\PasskeySessionController;
@@ -364,8 +365,16 @@ Route::middleware('audience:staff')->group(function () {
             ->name('api-tokens.index');
         Route::post('/profil/api-token', [ApiTokenController::class, 'store'])
             ->name('api-tokens.store');
+        Route::patch('/profil/api-token/{apiToken}', [ApiTokenController::class, 'update'])
+            ->name('api-tokens.update');
         Route::delete('/profil/api-token/{apiToken}', [ApiTokenController::class, 'destroy'])
             ->name('api-tokens.destroy');
+        Route::post('/profil/api-token/verbindungen', [OAuthConnectionController::class, 'store'])
+            ->name('oauth-connections.store');
+        Route::patch('/profil/api-token/verbindungen/{oauthClient}', [OAuthConnectionController::class, 'update'])
+            ->name('oauth-connections.update');
+        Route::delete('/profil/api-token/verbindungen/{oauthClient}', [OAuthConnectionController::class, 'destroy'])
+            ->name('oauth-connections.destroy');
 
         Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
