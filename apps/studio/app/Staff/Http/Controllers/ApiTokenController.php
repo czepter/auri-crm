@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Http\Controllers;
+namespace App\Staff\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Enums\Capability;
@@ -21,7 +21,7 @@ class ApiTokenController extends Controller
     {
         $this->authorizeSettings();
 
-        return Inertia::render('Settings/ApiTokens', [
+        return Inertia::render('Profile/ApiTokens', [
             'tokens' => ApiToken::query()->whereNull('revoked_at')->withMax('tokens', 'last_used_at')->latest()->get()
                 ->map(fn (ApiToken $token) => [
                     'id' => $token->public_id,
@@ -51,7 +51,7 @@ class ApiTokenController extends Controller
         $token = ApiToken::create($validated);
 
         // Sanctum stores only the hash; this flash is the one time the value is readable.
-        return redirect('/einstellungen/api-token')
+        return redirect('/profil/api-token')
             ->with('secret', $token->createToken($token->name)->plainTextToken);
     }
 
@@ -61,6 +61,6 @@ class ApiTokenController extends Controller
 
         $apiToken->revoke();
 
-        return redirect('/einstellungen/api-token');
+        return redirect('/profil/api-token');
     }
 }

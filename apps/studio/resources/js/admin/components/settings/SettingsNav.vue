@@ -49,7 +49,6 @@ const items: { group?: string; key?: string; href?: string; label?: string; exte
   // Schlüssel, Test- und Live-Umschaltung: eine Anbindung wie die beiden
   // darunter, keine Rechnungsangabe.
   { key: 'payments', href: '/einstellungen/zahlungen', label: 'paymentSettings.title' },
-  { key: 'api-tokens', href: '/einstellungen/api-token', label: 'apiTokens.title' },
   { key: 'export', href: '/einstellungen/export', label: 'settings.navExport' },
 
   // Ganz unten, abgesetzt von allen Gruppen und nur für den Inhaber.
