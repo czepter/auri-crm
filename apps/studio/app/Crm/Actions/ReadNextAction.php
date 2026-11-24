@@ -6,6 +6,8 @@ use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Support\CrmVocabulary;
+use App\Models\StudioSettings;
+use App\Settings\Enums\ContractMode;
 
 /**
  * The one thing a project asks for next, for the head every tab carries.
@@ -37,7 +39,7 @@ class ReadNextAction
 
         $base = "/auftraege/{$id}";
 
-        if (! $project->contracts()->where('state', '!=', 'superseded')->exists()) {
+        if (StudioSettings::current()->contractMode() === ContractMode::Always && ! $project->contracts()->where('state', '!=', 'superseded')->exists()) {
             return ['label' => 'project.contractSendStep', 'href' => "{$base}/vertrag", 'post' => null];
         }
 

@@ -324,7 +324,6 @@ class PortalSettingsController extends Controller
             'portal_maintenance_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_maintenance_message' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'portal_accept_quotes_enabled' => ['sometimes', 'required', 'boolean'],
-            'portal_sign_contracts_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_payment_status_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_offers_enabled' => ['sometimes', 'required', 'boolean'],
             // P-09 (#228): everything Sprint 25's seven portal screens do

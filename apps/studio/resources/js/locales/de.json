@@ -1452,6 +1452,7 @@
     "navNumbering": "Nummernkreise",
     "navStages": "Stufen & Projekttypen",
     "navTemplates": "Vorlagen",
+    "navContracts": "Verträge",
     "navDocuments": "Belege",
     "navMail": "E-Mail",
     "navPayments": "Zahlungen",
@@ -1776,6 +1777,11 @@
     "emailCode": "Code aus der E-Mail",
     "emailConfirm": "Bestätigen"
   },
+  "contractSettings": {
+    "title": "Verträge",
+    "mode": { "always": "Immer", "on_demand": "Bei Bedarf", "off": "Nie" },
+    "signOnline": "Online unterschreiben"
+  },
   "paymentSettings": {
     "title": "Stripe",
     "stripeSection": "Stripe",
@@ -1940,7 +1946,6 @@
     "legalAttach": "Dem Angebot beilegen",
     "capabilitiesSection": "Freigaben",
     "acceptQuotesEnabledLabel": "Angebote annehmen",
-    "signContractsEnabledLabel": "Verträge unterschreiben",
     "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",
     "offersEnabledLabel": "Weitere Leistungen anbieten",
     "contactTitle": "Kontakt",

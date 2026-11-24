@@ -507,6 +507,7 @@ portalVisible: boolean,
 canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
 canManageContracts: boolean,
+canGenerateContract: boolean,
 canManagePaymentPlan: boolean,
 primaryShootCancelled: boolean,
 canManageForms: boolean,
@@ -1286,6 +1287,10 @@ export type ReportPeriod = '12m' | '6m' | 'jahr';
 }
 namespace Settings {
 namespace Data {
+export type ContractSettingsData = {
+mode: App.Settings.Enums.ContractMode,
+signOnline: boolean,
+};
 export type GallerySettingsData = {
 id: string,
 expiryDays: number | null,
@@ -1326,7 +1331,6 @@ agbAttach: boolean,
 widerrufAttach: boolean,
 legalFamilies: Record<string, string | null>,
 acceptQuotesEnabled: boolean,
-signContractsEnabled: boolean,
 paymentStatusEnabled: boolean,
 offersEnabled: boolean,
 messagingMode: string,
@@ -1394,6 +1398,7 @@ mailFooterExtra: string | null,
 };
 }
 namespace Enums {
+export type ContractMode = 'always' | 'on_demand' | 'off';
 export type FontPair = 'hanken' | 'fraunces' | 'cormorant' | 'grotesk';
 export type StudioExportKind = 'daten' | 'galerie';
 }

@@ -12,6 +12,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Payments\Data\PaymentInstallmentData;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -20,6 +21,7 @@ use App\Portal\Actions\UpdateCaseDetails;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
+use App\Settings\Enums\ContractMode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -260,7 +262,7 @@ class CaseController extends Controller
             ];
         }
 
-        if ($found->latestContract !== null) {
+        if ($found->latestContract !== null && StudioSettings::current()->contractMode() !== ContractMode::Off) {
             $rows[] = [
                 'kind' => 'contract',
                 'href' => "/projekte/{$found->public_id}/vertrag",

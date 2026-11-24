@@ -17,6 +17,8 @@ use App\Enums\Capability;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
+use App\Settings\Enums\ContractMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -115,7 +117,8 @@ class TemplateHubController extends Controller
         $checks = [
             'aufgaben' => $gate->allows('viewAny', TaskTemplate::class),
             'fragebogen' => $gate->allows('viewAny', FormTemplate::class),
-            'dokumente' => $gate->allows('viewAny', DocumentTemplate::class),
+            'dokumente' => StudioSettings::current()->contractMode() !== ContractMode::Off
+                && $gate->allows('viewAny', DocumentTemplate::class),
             'galerien' => $staff?->can(Capability::ManageSettings->value) ?? false,
         ];
 
