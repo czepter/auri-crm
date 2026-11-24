@@ -13,6 +13,7 @@ use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceDocument;
 use App\Payments\Support\InvoiceMergeData;
+use App\Payments\Support\PaymentSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -78,13 +79,15 @@ class PaymentController extends Controller
         }
 
         $bank = StudioSettings::current()->profile();
+        $data = PaymentPlanData::forCase($found);
         $status = $request->query('status');
 
         return Inertia::render('Payments/Show', [
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
-            'plan' => PaymentPlanData::forCase($found),
+            'plan' => $data,
+            'payableIds' => collect($data?->installments)->filter(PaymentSettings::payableNow(...))->pluck('id')->values()->all(),
             'quote' => $found->latestQuote === null ? null : ['number' => $found->latestQuote->number],
             'stripeEnabled' => (bool) StudioSettings::current()->payments_stripe_enabled,
             'paymentStatus' => in_array($status, ['success', 'cancelled'], true) ? $status : null,

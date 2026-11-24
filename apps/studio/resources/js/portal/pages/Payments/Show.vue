@@ -41,6 +41,7 @@ const props = defineProps<{
   showSwitcher: boolean
   project: { id: string; name: string }
   plan: Plan
+  payableIds: string[]
   quote: { number: string | null } | null
   stripeEnabled: boolean
   paymentStatus: 'success' | 'cancelled' | null
@@ -73,11 +74,9 @@ function payNow(installmentId: string) {
 // DIN 5008: groups of four.
 const iban = computed(() => (props.bankDetails.iban ?? '').replace(/\s+/g, '').replace(/(.{4})(?=.)/g, '$1 '))
 
-const hasPayment = computed(() => props.stripeEnabled || !!props.bankDetails.iban)
-
 // Seven months before the due date "Bezahlen" is a question, not a task.
 const soon = (installment: Installment) => installment.isLate || daysUntil(installment.dueOn) <= 14
-const payable = (installment: Installment) => hasPayment.value && (soon(installment) || (!props.stripeEnabled && !!props.bankDetails.iban))
+const payable = (installment: Installment) => props.payableIds.includes(installment.id)
 const copied = ref<string | null>(null)
 
 async function copy(key: string, text: string) {

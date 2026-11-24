@@ -7,8 +7,10 @@ use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\MergeFieldResolver;
+use App\Enums\ContractMode;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Portal\Support\PortalSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -33,7 +35,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ContractController extends Controller
 {
-    public function show(string $case, DocumentMergeData $merge): Response|RedirectResponse
+    public function show(string $case, DocumentMergeData $merge, PortalSettings $settings): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -65,7 +67,7 @@ class ContractController extends Controller
             // contracts", the sign() route below is the authorisation half
             // via `portal.capability:sign_contracts`. Never hides an
             // existing signature — this only gates the form, not the record.
-            'canSign' => (bool) StudioSettings::current()->portal_sign_contracts_enabled,
+            'canSign' => $settings->signContractsEnabled($contact) && StudioSettings::current()->contractMode() !== ContractMode::Off,
             'contract' => [
                 'status' => $contract->status->value,
                 'downloadUrl' => $contract->status === ContractStatus::Rendered && $contract->hasArtifact()
@@ -96,6 +98,8 @@ class ContractController extends Controller
      */
     public function sign(Request $request, string $case, SignContract $sign, DocumentMergeData $merge): RedirectResponse
     {
+        abort_if(StudioSettings::current()->contractMode() === ContractMode::Off, 403);
+
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('cases.public_id', $case)->firstOrFail();

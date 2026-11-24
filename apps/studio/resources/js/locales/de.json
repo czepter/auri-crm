@@ -2083,9 +2083,6 @@
     "viewAllImages": "Alle {count} Bilder ansehen",
     "viewAll": "Alle ansehen",
     "imagesTitle": "Bilder",
-    "daysUntil": "Noch {days} Tage.",
-    "today": "Heute ist es so weit.",
-    "tomorrow": "Morgen ist es so weit.",
     "signedOn": "Unterschrieben am {date}",
     "notSignedYet": "Noch nicht unterschrieben",
     "quoteOpen": "Offen",
@@ -2117,6 +2114,8 @@
     "pending": {
       "installment": "Rate",
       "quote": "Angebot",
+      "contract": "Vertrag",
+      "questionnaire": "Fragebogen",
       "message": "Antwort vom Studio"
     },
     "contractTitle": "Vertrag",
@@ -2127,7 +2126,6 @@
     "contractDownload": "PDF herunterladen",
     "contractPending": "Der Vertrag wird erstellt.",
     "contractNone": "Kein Vertrag vorhanden.",
-    "signUnavailable": "Online-Unterschrift nicht freigeschaltet. Unterschrift beim Studio.",
     "signTitle": "Unterschreiben",
     "signName": "Ihr vollständiger Name",
     "signNameHint": "Wie im Vertrag",

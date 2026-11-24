@@ -3,11 +3,9 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Contracts\Models\Contract;
-use App\Crm\Enums\FormFieldType;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
-use App\Crm\Models\FormInstance;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Enums\ContractMode;
@@ -18,6 +16,7 @@ use App\Payments\Data\PaymentInstallmentData;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\Invoice;
+use App\Portal\Actions\ReadClientNextStep;
 use App\Portal\Actions\UpdateCaseDetails;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
@@ -50,7 +49,7 @@ use Inertia\Response;
  */
 class CaseController extends Controller
 {
-    public function __invoke(string $case, PortalSettings $settings, PortalOffers $offers): Response
+    public function __invoke(string $case, PortalSettings $settings, PortalOffers $offers, ReadClientNextStep $next): Response
     {
         $contact = auth('portal')->user();
 
@@ -70,10 +69,10 @@ class CaseController extends Controller
         ];
 
         return $editable
-            ? Inertia::render('Projects/Inquiry', [...$shared, 'project' => $this->inquiry($found)])
+            ? Inertia::render('Projects/Inquiry', [...$shared, 'project' => $this->inquiry($found, $next)])
             : Inertia::render('Projects/Show', [
                 ...$shared,
-                'project' => $this->booking($found, $settings),
+                'project' => $this->booking($found, $settings, $next),
                 // Die Übersicht überspringt, wer genau eine Buchung hat —
                 // ohne diese Stelle bliebe „Weitere Leistungen" für den
                 // häufigsten Fall unsichtbar.
@@ -103,31 +102,6 @@ class CaseController extends Controller
         return back();
     }
 
-    /**
-     * P-03 (#222): the questionnaires the studio actually shared. Absent
-     * until one is — a studio's own checklists live on the same table and
-     * are nobody else's business. openCount is what the row says instead of
-     * a progress bar: how many questions still have no answer.
-     */
-    private function questionnaires(ClientCase $found): array
-    {
-        return FormInstance::query()
-            ->shared()
-            ->where('case_id', $found->id)
-            ->with('fields.currentAnswer')
-            ->get()
-            ->map(fn (FormInstance $instance) => [
-                'id' => $instance->public_id,
-                'name' => $instance->name,
-                'count' => $instance->fields->where('type', '!=', FormFieldType::Section)->count(),
-                'openCount' => $instance->fields
-                    ->where('type', '!=', FormFieldType::Section)
-                    ->filter(fn ($field) => $field->currentAnswer?->value === null)
-                    ->count(),
-            ])
-            ->all();
-    }
-
     private function find(string $case): ClientCase
     {
         return auth('portal')->user()->visibleProjects()
@@ -136,7 +110,7 @@ class CaseController extends Controller
     }
 
     /** What the client told us, as they can still change it. */
-    private function inquiry(ClientCase $found): array
+    private function inquiry(ClientCase $found, ReadClientNextStep $next): array
     {
         $shoot = $found->primaryShoot ?? $found->shoots()->orderBy('sort_order')->first();
         $quote = $found->latestQuote;
@@ -155,7 +129,7 @@ class CaseController extends Controller
                 'validUntil' => $quote->valid_until?->format('Y-m-d'),
                 'acceptedOn' => $quote->accepted_at?->format('Y-m-d'),
             ] : null,
-            'questionnaires' => $this->questionnaires($found),
+            'questionnaires' => $next->questionnaires($found),
             'contact' => [
                 'email' => auth('portal')->user()->email,
                 'phone' => auth('portal')->user()->phone,
@@ -164,7 +138,7 @@ class CaseController extends Controller
     }
 
     /** The booked booking: cover, one sentence, pictures, dates, paperwork. */
-    private function booking(ClientCase $found, PortalSettings $settings): array
+    private function booking(ClientCase $found, PortalSettings $settings, ReadClientNextStep $next): array
     {
         $found->load([
             'shoots' => fn ($query) => $query->uncancelled()->orderByRaw('date is null, date'),
@@ -223,7 +197,9 @@ class CaseController extends Controller
             ],
             'documents' => $this->documents($found, $settings),
             'invoices' => $this->invoices($found, $settings),
-            'questionnaires' => $this->questionnaires($found),
+            'questionnaires' => $next->questionnaires($found),
+            'steps' => $next($found, auth('portal')->user()),
+            'appointment' => $next->appointment($found),
             'details' => [
                 'date' => $found->primaryShoot?->date?->format('Y-m-d'),
                 'callTime' => $found->primaryShoot?->call_time === null

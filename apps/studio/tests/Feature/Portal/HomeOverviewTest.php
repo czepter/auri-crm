@@ -54,6 +54,8 @@ function dueInstallment(ClientCase $project, int $amount, string $dueOn): Paymen
 }
 
 it('gathers what is open across every booking, each naming where it came from', function () {
+    StudioSettings::query()->update(['portal_accept_quotes_enabled' => true, 'bank_iban' => 'DE89370400440532013000']);
+    Cache::store('redis')->flush();
     $contact = Contact::factory()->create();
     $wedding = bookingFor($contact, ['name' => 'Hochzeitstag']);
     $portrait = bookingFor($contact, ['name' => 'Babybauchshooting']);

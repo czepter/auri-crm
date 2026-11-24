@@ -96,7 +96,6 @@ function sign() {
               ? $t('portal.signedOn', { date: dayDate(contract.signature.consentedAt) })
               : $t('portal.notSignedYet') }}
           </span>
-          <p v-if="!canSign && !contract.signature" class="w-full text-[13.5px] text-muted-foreground">{{ $t('portal.signUnavailable') }}</p>
           <a v-if="contract.downloadUrl" class="ml-auto inline-flex min-h-11 items-center text-[13.5px] text-muted-foreground underline underline-offset-4 hover:text-foreground" :href="contract.downloadUrl" download>
             {{ $t('portal.contractDownload') }}
           </a>

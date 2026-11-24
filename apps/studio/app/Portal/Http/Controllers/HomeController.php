@@ -8,10 +8,9 @@ use App\Engagement\Models\Thread;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Data\PaymentPlanData;
-use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Portal\Actions\ReadClientNextStep;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
-use App\Quotes\Enums\QuoteStatus;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,7 +35,7 @@ use Inertia\Response;
  */
 class HomeController extends Controller
 {
-    public function __invoke(PortalSettings $settings, PortalOffers $offers): Response|RedirectResponse
+    public function __invoke(PortalSettings $settings, PortalOffers $offers, ReadClientNextStep $next): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -44,6 +43,7 @@ class HomeController extends Controller
             ->with([
                 'primaryShoot',
                 'latestQuote',
+                'latestContract.signature',
                 'paymentPlan.installments',
                 'galleries.currentVersion',
             ])
@@ -63,7 +63,7 @@ class HomeController extends Controller
             'contact' => ['name' => $contact->name],
             'welcomeText' => $settings->welcomeText($contact, $this->welcomeState($bookings->all())),
             'welcomeState' => $this->welcomeState($bookings->all()),
-            'pending' => $this->pending($contact, $projects, $settings),
+            'pending' => $this->pending($contact, $projects, $settings, $next),
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),
             'galleries' => $this->galleries($projects),
@@ -153,41 +153,25 @@ class HomeController extends Controller
      * booking it came from, because the whole point is that the client does
      * not have to open three projects to find out whether anything is open.
      *
-     * Both money rows and the message row respect T-08's own switches: an
-     * item the client cannot open is not something to put in front of them.
+     * One step per booking, from the same action the project page reads, so
+     * nothing is listed that the client cannot do. The message row respects
+     * T-08's own switch.
      */
-    private function pending(Contact $contact, $projects, PortalSettings $settings): array
+    private function pending(Contact $contact, $projects, PortalSettings $settings, ReadClientNextStep $next): array
     {
         $rows = [];
 
         foreach ($projects as $project) {
-            if ($settings->paymentStatusEnabled($contact)) {
-                foreach (PaymentPlanData::forCase($project)?->installments ?? [] as $installment) {
-                    if (! in_array($installment->status, array_column(PaymentInstallmentStatus::open(), 'value'), true)) {
-                        continue;
-                    }
+            $step = ($next($project, $contact))[0] ?? null;
 
-                    $rows[] = [
-                        'kind' => 'installment',
-                        'amount' => $installment->remaining,
-                        'dueOn' => $installment->dueOn,
-                        'overdue' => $installment->isLate,
-                        'booking' => $project->name,
-                        'href' => "/projekte/{$project->public_id}/zahlungen",
-                    ];
-                }
-            }
-
-            $quote = $project->latestQuote;
-
-            if ($quote?->status === QuoteStatus::Sent) {
+            if ($step !== null) {
                 $rows[] = [
-                    'kind' => 'quote',
-                    'amount' => $quote->gross(),
-                    'dueOn' => $quote->valid_until?->format('Y-m-d'),
-                    'overdue' => false,
+                    'kind' => $step['kind'],
+                    'amount' => $step['amount'],
+                    'dueOn' => $step['dueOn'],
+                    'overdue' => $step['overdue'],
                     'booking' => $project->name,
-                    'href' => "/projekte/{$project->public_id}/angebot",
+                    'href' => $step['href'],
                 ];
             }
         }
