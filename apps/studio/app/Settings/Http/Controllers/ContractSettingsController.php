@@ -3,10 +3,10 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
+use App\Enums\ContractMode;
 use App\Http\Controllers\Controller;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\ContractSettingsData;
-use App\Settings\Enums\ContractMode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;

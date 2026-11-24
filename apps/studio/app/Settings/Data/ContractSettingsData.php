@@ -2,8 +2,8 @@
 
 namespace App\Settings\Data;
 
+use App\Enums\ContractMode;
 use App\Models\StudioSettings;
-use App\Settings\Enums\ContractMode;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 

@@ -12,10 +12,10 @@ use App\Crm\Data\CasePositionData;
 use App\Crm\Data\CaseQueueRowData;
 use App\Crm\Data\ThreadEntryData;
 use App\Crm\Models\ClientCase;
+use App\Enums\ContractMode;
 use App\Models\StudioSettings;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Enums\QuoteStatus;
-use App\Settings\Enums\ContractMode;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 

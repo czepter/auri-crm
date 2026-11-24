@@ -6,10 +6,9 @@ use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Support\CrmVocabulary;
+use App\Enums\ContractMode;
 use App\Models\StudioSettings;
-use App\Payments\Enums\PaymentInstallmentStatus;
-use App\Payments\Models\PaymentInstallment;
-use App\Settings\Enums\ContractMode;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 /**
@@ -86,7 +85,7 @@ class ReadNextAction
     private function dueInstallment(ClientCase $project): ?array
     {
         $live = $this->liveInstallments($project);
-        $installment = $live->first(fn ($row) => $row->invoice_id === null && $row->status !== PaymentInstallmentStatus::Paid);
+        $installment = $live->first(fn ($row) => $row->invoice_id === null && $row->status->value !== 'paid');
 
         if ($installment === null) {
             return null;
@@ -98,28 +97,33 @@ class ReadNextAction
             return null;
         }
 
-        $label = match (true) {
-            $index === 0 => 'project.depositIssueStep',
-            $index === $live->count() - 1 => 'project.restIssueStep',
-            default => 'project.rateIssueStep',
-        };
-
-        return ['label' => $label, 'href' => null, 'post' => "/raten/{$installment->public_id}/rechnung"];
+        return ['label' => $this->issueLabel($live, $index), 'href' => null, 'post' => "/raten/{$installment->public_id}/rechnung"];
     }
 
     /** @return Next|null */
     private function openPayment(ClientCase $project): ?array
     {
-        $installment = $this->liveInstallments($project)->first(fn ($row) => $row->status !== PaymentInstallmentStatus::Paid);
+        $live = $this->liveInstallments($project);
+        $installment = $live->first(fn ($row) => $row->status->value !== 'paid');
 
         return match (true) {
             $installment === null => null,
-            $installment->invoice_id === null => ['label' => 'project.restIssueStep', 'href' => null, 'post' => "/raten/{$installment->public_id}/rechnung"],
+            $installment->invoice_id === null => ['label' => $this->issueLabel($live, $live->search($installment)), 'href' => null, 'post' => "/raten/{$installment->public_id}/rechnung"],
             default => ['label' => 'project.paymentRecordStep', 'href' => "/rechnungen/{$installment->invoice->public_id}", 'post' => null],
         };
     }
 
-    /** @return Collection<int, PaymentInstallment> */
+    /** @param Collection<int, Model> $live */
+    private function issueLabel(Collection $live, int $index): string
+    {
+        return match (true) {
+            $index === 0 => 'project.depositIssueStep',
+            $index === $live->count() - 1 => 'project.restIssueStep',
+            default => 'project.rateIssueStep',
+        };
+    }
+
+    /** @return Collection<int, Model> */
     private function liveInstallments(ClientCase $project): Collection
     {
         $plan = $project->paymentPlan;

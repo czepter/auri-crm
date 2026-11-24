@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings\Enums;
+namespace App\Enums;
 
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 

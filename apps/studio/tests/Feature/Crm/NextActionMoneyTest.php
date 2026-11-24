@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Enums\SettledVia;
+use App\Payments\Models\PaymentInstallment;
 use App\Settings\Actions\UpdateStudioSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -52,4 +53,19 @@ it('names the open final payment once the work is delivered', function () {
 
     expect(app(ReadNextAction::class)($this->project->fresh()))
         ->toMatchArray(['label' => 'project.paymentRecordStep', 'href' => "/rechnungen/{$invoice->public_id}"]);
+});
+
+it('names a middle rate as a rate, not as the final payment', function () {
+    FormInstance::factory()->for($this->project, 'case')->create();
+    Shoot::factory()->for($this->project, 'case')->primary()->atStatus(ShootStatus::Delivered)->on(now()->subMonth()->toDateString())->create();
+    Gallery::factory()->for($this->project, 'case')->create();
+    $deposit = $this->first->fresh();
+    app(IssueInvoice::class)($deposit);
+    app(MarkInstallmentPaid::class)($deposit->fresh(), SettledVia::Transfer, '2026-09-02', null);
+    $plan = $this->project->paymentPlan;
+    $plan->installments()->orderBy('sort_order')->get()->last()->update(['sort_order' => 2]);
+    $middle = PaymentInstallment::factory()->for($plan, 'plan')->create(['sort_order' => 1, 'amount' => 10000]);
+
+    expect(app(ReadNextAction::class)($this->project->fresh()))
+        ->toMatchArray(['label' => 'project.rateIssueStep', 'post' => "/raten/{$middle->public_id}/rechnung"]);
 });
