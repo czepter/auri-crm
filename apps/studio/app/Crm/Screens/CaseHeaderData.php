@@ -12,6 +12,7 @@ use App\Crm\Data\CasePositionData;
 use App\Crm\Data\CaseQueueRowData;
 use App\Crm\Data\ThreadEntryData;
 use App\Crm\Models\ClientCase;
+use App\Crm\Support\CrmVocabulary;
 use App\Enums\ContractMode;
 use App\Models\StudioSettings;
 use App\Payments\Data\PaymentPlanData;
@@ -31,7 +32,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 class CaseHeaderData extends Data
 {
-    /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, children: list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>}>  $tabs
+    /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, narrowOnly: bool}>  $tabs
      * @param  list<array{key: string, label: string, pipeline: string, state: string}>  $track
      * @param  list<array{key: string, rows: list<CaseQueueRowData>}>  $queue
      * @param  list<CasePersonData>  $people
@@ -120,18 +121,8 @@ class CaseHeaderData extends Data
             canComplete: $project->isBooked() && ($user?->can('manageShoots', $project) ?? false),
             canDelete: ($user?->can('delete', $project) ?? false) && $project->deletionBlockers()->isEmpty(),
             // Anfrage is no tab of a project: the overview is the inquiry's own
-            // page carried on. Aufgaben has its own screen and tab. Angebot,
-            // Vertrag and Fragebögen are one tab, Dokumente, with the three as
-            // its children.
-            tabs: ! $project->isBooked() && $project->lead !== null ? self::leadTabs($project) : [
-                ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null, 'countTo' => null, 'children' => []],
-                ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null, 'countTo' => null, 'children' => []],
-                ['key' => 'tasks', 'label' => 'project.tasks', 'href' => "/auftraege/{$project->public_id}/aufgaben", 'count' => $project->tasks()->whereNull('completed_at')->count() ?: null, 'countTo' => null, 'children' => []],
-                ['key' => 'messages', 'label' => 'project.messages', 'href' => "/auftraege/{$project->public_id}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
-                ['key' => 'galleries', 'label' => 'contacts.galleries', 'href' => "/auftraege/{$project->public_id}/galerien", 'count' => $project->galleries()->count(), 'countTo' => null, 'children' => []],
-                self::documentsTab($project),
-                self::infoTab("/auftraege/{$project->public_id}"),
-            ],
+            // page carried on. Aufgaben has its own screen and tab.
+            tabs: ! $project->isBooked() && $project->lead !== null ? self::leadTabs($project) : self::projectTabs($project),
             track: app(ReadStageTrack::class)($position),
             queue: $user === null || ! $queue ? [] : app(OpenCases::class)->queue($user, $project),
             people: $project->contacts->map(CasePersonData::fromContact(...))->all(),
@@ -149,42 +140,35 @@ class CaseHeaderData extends Data
     }
 
     /**
-     * Angebot, Vertrag and Fragebögen under one tab. The tab carries how many
-     * documents the project holds; each child carries what it still owes.
+     * A tab appears once there is something behind it: a gallery or a
+     * delivered shoot, a questionnaire, the contract as the mode allows.
      */
-    private static function documentsTab(ClientCase $project): array
+    private static function projectTabs(ClientCase $project): array
     {
         $base = "/auftraege/{$project->public_id}";
-        $children = [
-            ['key' => 'quotes', 'label' => 'project.quotes', 'translate' => true, 'href' => "{$base}/angebote", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'reorderable' => false],
-            ['key' => 'forms', 'label' => 'project.forms', 'translate' => true, 'href' => "{$base}/frageboegen", 'count' => self::unansweredForms($project), 'reorderable' => false],
-        ];
+        $tab = fn (string $key, string $label, string $path, ?int $count = null) => ['key' => $key, 'label' => $label, 'href' => $base.$path, 'count' => $count, 'countTo' => null, 'narrowOnly' => false];
 
+        $vocabulary = app(CrmVocabulary::class);
+        $delivered = $project->shoots->reject->isCancelled()
+            ->contains(fn ($shoot) => $vocabulary->phase($shoot->status) === 'delivered');
         $mode = StudioSettings::current()->contractMode();
 
-        if ($mode === ContractMode::Always || ($mode === ContractMode::OnDemand && self::hasContract($project))) {
-            array_splice($children, 1, 0, [
-                ['key' => 'contract', 'label' => 'project.contract', 'translate' => true, 'href' => "{$base}/vertrag", 'count' => self::unsignedContracts($project), 'reorderable' => false],
-            ]);
-        }
-
-        $invoices = collect();
-        if (auth('staff')->user()?->can('managePaymentPlan', $project)) {
-            $invoices = $project->invoices()->with('installments')->get();
-            $children[] = ['key' => 'invoices', 'label' => 'project.invoices', 'translate' => true, 'href' => "{$base}/rechnungen", 'count' => $invoices->filter(fn ($invoice) => in_array($invoice->status(), ['open', 'partial', 'overdue'], true))->count(), 'reorderable' => false];
-        }
-
-        return [
-            'key' => 'documents',
-            'label' => 'project.documents',
-            'href' => $children[0]['href'],
-            'count' => ($project->quotes()->count()
-                + ($mode === ContractMode::Off ? 0 : $project->contracts()->where('state', '!=', ContractState::Superseded)->count())
-                + $project->formInstances()->count()
-                + $invoices->count()) ?: null,
-            'countTo' => null,
-            'children' => $children,
-        ];
+        return array_values(array_filter([
+            $tab('overview', 'project.overview', ''),
+            $tab('shoots', 'project.shoots', '/shootings'),
+            $tab('tasks', 'project.tasks', '/aufgaben', $project->tasks()->whereNull('completed_at')->count() ?: null),
+            $tab('messages', 'project.messages', '/nachrichten', self::waitingThreads($project)),
+            $delivered || $project->galleries()->exists() ? $tab('galleries', 'contacts.galleries', '/galerien', $project->galleries()->count()) : null,
+            $tab('quotes', 'project.quotes', '/angebote', $project->quotes()->where('status', QuoteStatus::Sent)->count()),
+            $mode === ContractMode::Always || ($mode === ContractMode::OnDemand && self::hasContract($project))
+                ? $tab('contract', 'project.contract', '/vertrag', self::unsignedContracts($project))
+                : null,
+            $project->formInstances()->exists() ? $tab('forms', 'project.forms', '/frageboegen', self::unansweredForms($project)) : null,
+            auth('staff')->user()?->can('managePaymentPlan', $project)
+                ? $tab('invoices', 'project.invoices', '/rechnungen', $project->invoices()->with('installments')->get()->filter(fn ($invoice) => in_array($invoice->status(), ['open', 'partial', 'overdue'], true))->count())
+                : null,
+            self::infoTab($base),
+        ]));
     }
 
     /**
@@ -197,9 +181,9 @@ class CaseHeaderData extends Data
         $case = "/anfragen/{$project->public_id}";
 
         return [
-            ['key' => 'overview', 'label' => 'project.overview', 'href' => $case, 'count' => null, 'countTo' => null, 'children' => []],
-            ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "{$case}/angebot", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'children' => []],
-            ['key' => 'messages', 'label' => 'project.messages', 'href' => "{$case}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
+            ['key' => 'overview', 'label' => 'project.overview', 'href' => $case, 'count' => null, 'countTo' => null, 'narrowOnly' => false],
+            ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "{$case}/angebot", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'narrowOnly' => false],
+            ['key' => 'messages', 'label' => 'project.messages', 'href' => "{$case}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'narrowOnly' => false],
             self::infoTab($case),
         ];
     }
@@ -207,7 +191,7 @@ class CaseHeaderData extends Data
     /** The rail, for the widths that have no room for it. */
     private static function infoTab(string $base): array
     {
-        return ['key' => 'info', 'label' => 'lead.info', 'href' => "{$base}/info", 'count' => null, 'countTo' => null, 'children' => []];
+        return ['key' => 'info', 'label' => 'lead.info', 'href' => "{$base}/info", 'count' => null, 'countTo' => null, 'narrowOnly' => true];
     }
 
     /**

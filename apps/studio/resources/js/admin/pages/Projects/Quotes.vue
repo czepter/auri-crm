@@ -14,7 +14,7 @@ useLiveProps(['header', 'quotes', 'payments'])
 
 <template>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
-    <ProjectShell :header="header" active="documents" child="quotes">
+    <ProjectShell :header="header" active="quotes">
       <QuoteList
         :project-id="header.id"
         :can-manage-quotes="header.canManageQuotes"

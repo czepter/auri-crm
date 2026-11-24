@@ -265,7 +265,7 @@ function saveKontakte() {
 }
 
 const hasContract = computed(() => props.header.canManageContracts && !!contractTab.value);
-const contractTab = computed(() => props.header.tabs.find((tab) => tab.key === "documents")?.children.find((child) => child.key === "contract"));
+const contractTab = computed(() => props.header.tabs.find((tab) => tab.key === "contract"));
 
 // What the case came from and became. The inquiry has no page of its own once
 // booked, so its row names it and links nowhere.

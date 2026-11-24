@@ -734,7 +734,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                 :thread="thread"
             />
 
-            <Card v-else :title="$t('project.history')">
+            <Card v-else :title="$t('project.messages')">
                 <MessageThread
                     :project-id="lead.projectId"
                     :thread="conversation"

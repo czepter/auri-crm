@@ -28,15 +28,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, Ale
  * stand still while the tabs change. Which tool is open is the tab that is
  * lit, so the heading never has to say it twice.
  */
-const props = defineProps<{ header: App.Crm.Screens.CaseHeaderData; active: string; child?: string }>()
+const props = defineProps<{ header: App.Crm.Screens.CaseHeaderData; active: string }>()
 
 const tabNav = useTemplateRef<HTMLElement>('tabNav')
 // Fonts change the tab widths; centering before they load clips the last tab.
 onMounted(() => document.fonts.ready.then(() => tabNav.value?.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'instant' })))
 
-const { rect: tabRect, animate: tabAnimate } = useSlidingIndicator(tabNav, () => props.active, { selector: '[aria-current]', key: 'project-tabs' })
+// An inquiry has no tab of its own for shoots, tasks or notes; they sit under Übersicht.
+const lit = computed(() => (props.header.tabs.some((tab) => tab.key === props.active) ? props.active : 'overview'))
 
-const subTabs = computed(() => props.header.tabs.find((tab) => tab.key === props.active)?.children ?? [])
+const { rect: tabRect, animate: tabAnimate } = useSlidingIndicator(tabNav, () => lit.value, { selector: '[aria-current]', key: 'project-tabs' })
 
 const booking = ref(false)
 
@@ -199,33 +200,18 @@ usePageCommands(() => {
             :key="tab.key"
             :href="tab.href"
             class="relative inline-flex min-h-10 flex-none items-center px-3 whitespace-nowrap no-underline"
-            :class="
-              tab.key === active
+            :class="[
+              tab.narrowOnly && 'min-[1081px]:hidden',
+              tab.key === lit
                 ? ['font-semibold text-foreground', !tabRect && '[background:linear-gradient(var(--ink),var(--ink))_bottom/100%_2px_no-repeat]']
-                : 'text-ink-2 hover:text-foreground'
-            "
-            :aria-current="tab.key === active ? 'page' : undefined"
+                : 'text-ink-2 hover:text-foreground',
+            ]"
+            :aria-current="tab.key === lit ? 'page' : undefined"
           >
             {{ $t(tab.label) }}<span v-if="tab.count" class="ml-1 text-small">{{ tab.count }}</span>
           </Link>
         </nav>
         </div>
-
-        <nav
-          v-if="subTabs.length"
-          class="mt-1 flex text-small font-medium shadow-[inset_0_-1px_0_var(--rule)]"
-        >
-          <Link
-            v-for="entry in subTabs"
-            :key="entry.key"
-            :href="entry.href"
-            class="inline-flex min-h-10 items-center px-3 whitespace-nowrap no-underline"
-            :class="entry.key === child ? 'font-semibold text-foreground [background:linear-gradient(var(--ink),var(--ink))_bottom/100%_2px_no-repeat]' : 'text-ink-2 hover:text-foreground'"
-            :aria-current="entry.key === child ? 'page' : undefined"
-          >
-            {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 font-medium text-faint">{{ entry.count }}</span>
-          </Link>
-        </nav>
       </div>
 
       <div
