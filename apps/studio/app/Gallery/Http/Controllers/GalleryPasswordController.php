@@ -76,6 +76,8 @@ class GalleryPasswordController extends Controller
             ->when($set !== null, fn ($assets) => $assets->where('set', $set->name))
             ->when($gallery->view_mode === 'locked', fn ($assets) => collect());
 
+        $unbilled = $isClient ? GalleryDownloadGate::unbilled($gallery) : null;
+
         return Inertia::render('Gallery/Show', [
             'gallery' => [
                 'id' => $gallery->public_id,
@@ -105,6 +107,7 @@ class GalleryPasswordController extends Controller
             'locked' => $gallery->view_mode === 'locked',
             'downloadAfterPayment' => $gallery->download_rule === 'after_payment' && ! GalleryDownloadGate::allows($gallery),
             'payUrl' => $isClient ? GalleryDownloadGate::payUrl($gallery) : null,
+            'unbilled' => $unbilled === null ? null : ['amount' => $unbilled->remaining(), 'dueOn' => $unbilled->due_on->format('Y-m-d')],
             'setName' => $set?->name,
             'shareUrl' => $gallery->publicUrl().($set?->isForGuests() ? '?set='.$set->public_id : ''),
             // Null while locked, and null for a gallery nobody has published

@@ -25,6 +25,7 @@ const props = withDefaults(defineProps<{
   /** Nur an einer Galerie mit Projekt; eine Vorlage kennt keine Rechnung. */
   invoices?: { id: string; number: string; status: string }[]
   invoiceId?: string | null
+  followsPlan?: boolean
   /** Eine Vorlage hat keinen eigenen Text: das Wasserzeichen nimmt den Studionamen. */
   watermarkField?: boolean
 }>(), { watermarkField: true })
@@ -89,7 +90,7 @@ function setPermission(audience: Audience, action: Action, on: boolean | 'indete
       >
         <SelectTrigger id="download-invoice"><SelectValue /></SelectTrigger>
         <SelectContent>
-          <SelectItem :value="ALL_INVOICES">{{ $t('galleryRecord.invoiceAll') }}</SelectItem>
+          <SelectItem :value="ALL_INVOICES">{{ $t(followsPlan ? 'galleryRecord.invoicePlan' : 'galleryRecord.invoiceAll') }}</SelectItem>
           <SelectItem v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
             {{ invoice.number }} · {{ $t(`galleryRecord.invoiceStatus.${invoice.status}`) }}
           </SelectItem>

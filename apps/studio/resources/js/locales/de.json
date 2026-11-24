@@ -2663,6 +2663,7 @@
     "watermarkText": "Text",
     "invoice": "Rechnung",
     "invoiceAll": "Alle Rechnungen des Projekts",
+    "invoicePlan": "Zahlungsplan",
     "invoiceStatus": {
       "open": "Offen",
       "partial": "Teilweise bezahlt",

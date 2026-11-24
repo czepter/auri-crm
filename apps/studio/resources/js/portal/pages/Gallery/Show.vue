@@ -7,6 +7,7 @@ import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
 import PortalBack from '@/portal/components/PortalBack.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import { dayDate, daysUntil } from '@/portal/lib/dates'
+import { formatEuros } from '@/lib/money'
 import { introPending, introRows, markIntroSeen } from '@/portal/lib/galleryIntro'
 import { ALL, countOf, HIDDEN, selections, visible, withHidden } from '@/portal/lib/gallerySelections'
 import { shareLink } from '@/portal/lib/share'
@@ -53,6 +54,8 @@ const props = defineProps<{
   downloadAfterPayment: boolean
   // Nur für den Kunden: die Rechnung, die den Download freigibt.
   payUrl: string | null
+  // Die offene Rate, für die es noch keine Rechnung gibt.
+  unbilled: { amount: number; dueOn: string } | null
   setName: string | null
   shareUrl: string
   assets: Asset[] | null
@@ -476,7 +479,9 @@ const COVER_INPUT = [
         <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal" :class="[overlaid || expiring ? 'inline-block rounded-full px-3.5 py-1.5' : '', expiring ? 'bg-due-bg font-semibold text-due' : overlaid ? 'bg-[rgba(12,10,9,.72)] text-inherit' : 'text-inherit opacity-80']">
           {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
         </p>
-        <p v-if="downloadAfterPayment" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit opacity-80">{{ $t('gallery.downloadAfterPayment') }}</p>
+        <p v-if="downloadAfterPayment" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit opacity-80">
+          {{ unbilled ? `${$t('gallery.downloadAfterPayment')} · ${formatEuros(unbilled.amount)} · ${$t('portal.dueOn', { date: dayDate(unbilled.dueOn) })}` : $t('gallery.downloadAfterPayment') }}
+        </p>
 
         <template v-if="!unlocked">
           <div class="mx-auto mt-11 mb-8 h-px w-12 bg-[rgba(242,237,233,.45)]" />

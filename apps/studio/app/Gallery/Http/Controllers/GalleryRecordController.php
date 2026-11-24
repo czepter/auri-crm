@@ -22,6 +22,7 @@ use App\Gallery\Models\GalleryView;
 use App\Gallery\Support\DraftDeviation;
 use App\Gallery\Support\GalleryActivity;
 use App\Gallery\Support\GalleryDesign;
+use App\Gallery\Support\GalleryDownloadGate;
 use App\Gallery\Support\GalleryPermissions;
 use App\Gallery\Support\GallerySlug;
 use App\Http\Controllers\Controller;
@@ -213,6 +214,7 @@ class GalleryRecordController extends Controller
                 'downloadInvoiceId' => $gallery->downloadInvoice?->public_id,
                 'downloadSizes' => $gallery->download_sizes,
                 'expiryReminder' => $gallery->expiry_reminder,
+                'followsPlan' => GalleryDownloadGate::followsPlan($gallery),
                 'invoices' => $gallery->case_id === null ? [] : Invoice::query()
                     ->where('case_id', $gallery->case_id)
                     ->with('installments')
