@@ -14,6 +14,8 @@ import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { dayDate } from '@/portal/lib/dates'
+import { formatEuros } from '@/lib/money'
 import { Button } from '@/ui/button'
 
 const props = defineProps<{
@@ -26,7 +28,7 @@ const props = defineProps<{
     status: string
     statusLabel: string
     hasDocument: boolean
-    creditNotes: { id: string; number: string }[]
+    creditNotes: { id: string; number: string; amount: number; issuedOn: string; hasDocument: boolean }[]
   }
   payInstallmentId: string | null
 }>()
@@ -57,7 +59,7 @@ function payNow() {
       <div class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 max-w-[680px] border-t border-border pt-8">
         <div class="flex flex-wrap items-baseline justify-between gap-4">
           <span class="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
-            <PortalDot :state="invoice.status === 'paid' ? 'done' : 'open'" />{{ invoice.statusLabel }}
+            <PortalDot :state="invoice.status === 'paid' ? 'done' : invoice.status === 'cancelled' ? 'neutral' : 'open'" />{{ invoice.statusLabel }}
           </span>
         </div>
         <p v-if="invoice.summaryRows.length" class="mt-4 font-serif text-[clamp(32px,5vw,40px)] leading-[1.1] tabular-nums">
@@ -66,6 +68,23 @@ function payNow() {
 
         <InvoiceSheet :invoice="invoice" />
 
+        <div v-if="invoice.creditNotes.length" class="mt-8">
+          <p
+            v-for="note in invoice.creditNotes"
+            :key="note.id"
+            class="flex items-baseline justify-between gap-4 border-b border-border py-3 text-[14px] tabular-nums"
+          >
+            <component
+              :is="note.hasDocument ? 'a' : 'span'"
+              :href="note.hasDocument ? `/projekte/${project.id}/zahlungen/${invoice.id}/gutschrift/${note.id}` : undefined"
+              :target="note.hasDocument ? '_blank' : undefined"
+              class="text-muted-foreground"
+              :class="note.hasDocument && 'hover:text-foreground'"
+            >{{ $t('portal.creditNote', { number: note.number }) }} · {{ dayDate(note.issuedOn) }}</component>
+            <span>−{{ formatEuros(note.amount) }}</span>
+          </p>
+        </div>
+
         <div class="mt-8 flex flex-wrap items-center gap-4">
           <a
             v-if="invoice.hasDocument"
@@ -73,14 +92,6 @@ function payNow() {
             :href="`/projekte/${project.id}/zahlungen/${invoice.id}/rechnung`"
             target="_blank"
           >{{ $t('portal.invoiceDownload', { number: invoice.number }) }}</a>
-
-          <a
-            v-for="note in invoice.creditNotes"
-            :key="note.id"
-            class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
-            :href="`/projekte/${project.id}/zahlungen/${invoice.id}/gutschrift/${note.id}`"
-            target="_blank"
-          >{{ $t('portal.creditNoteDownload', { number: note.number }) }}</a>
 
           <Button v-if="payInstallmentId" variant="portal" type="button" :state="paying ? 'loading' : 'idle'" :disabled="paying" @click="payNow">
             {{ $t('portal.payNowButton') }}

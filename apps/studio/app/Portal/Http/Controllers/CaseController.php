@@ -12,10 +12,7 @@ use App\Enums\ContractMode;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
-use App\Payments\Data\PaymentInstallmentData;
 use App\Payments\Data\PaymentPlanData;
-use App\Payments\Enums\PaymentInstallmentStatus;
-use App\Payments\Models\Invoice;
 use App\Portal\Actions\ReadClientNextStep;
 use App\Portal\Actions\UpdateCaseDetails;
 use App\Portal\Support\PortalOffers;
@@ -196,7 +193,7 @@ class CaseController extends Controller
                     ->values()->all(),
             ],
             'documents' => $this->documents($found, $settings),
-            'invoices' => $this->invoices($found, $settings),
+            'payments' => $this->payments($found, $settings),
             'questionnaires' => $next->questionnaires($found),
             'steps' => $next($found, auth('portal')->user()),
             'appointment' => $next->appointment($found),
@@ -220,23 +217,6 @@ class CaseController extends Controller
     private function documents(ClientCase $found, PortalSettings $settings): array
     {
         $rows = [];
-        $plan = PaymentPlanData::forCase($found);
-
-        if ($plan !== null && $settings->paymentStatusEnabled(auth('portal')->user())) {
-            $next = collect($plan->installments)
-                ->first(fn (PaymentInstallmentData $one) => in_array($one->status, array_column(PaymentInstallmentStatus::open(), 'value'), true));
-
-            $rows[] = [
-                'kind' => 'payments',
-                'href' => "/projekte/{$found->public_id}/zahlungen",
-                'label' => $next?->label,
-                'dueOn' => $next?->dueOn,
-                'overdue' => $next?->isLate ?? false,
-                'amount' => $next?->remaining,
-                'openTotal' => $plan->openTotal,
-                'settled' => $next === null,
-            ];
-        }
 
         if ($found->latestContract !== null && StudioSettings::current()->contractMode() !== ContractMode::Off) {
             $rows[] = [
@@ -283,31 +263,19 @@ class CaseController extends Controller
     }
 
     /**
-     * #415: every invoice this project has issued, newest number last — the
-     * client's own copy of the sequence. Behind the same switch the Zahlungen
-     * row is, because both lead into the payment screens.
+     * One list for the money: a row per rate with its invoice number, and
+     * under it what happened to that invoice. Behind the switch the payment
+     * screens are behind.
      */
-    private function invoices(ClientCase $found, PortalSettings $settings): array
+    private function payments(ClientCase $found, PortalSettings $settings): ?array
     {
-        if (! $settings->paymentStatusEnabled(auth('portal')->user())) {
-            return [];
+        $plan = PaymentPlanData::forCase($found);
+
+        if ($plan === null || ! $settings->paymentStatusEnabled(auth('portal')->user())) {
+            return null;
         }
 
-        return Invoice::query()
-            ->where('case_id', $found->id)
-            ->with('installments')
-            ->orderBy('number')
-            ->get()
-            ->map(fn (Invoice $one) => [
-                'id' => $one->public_id,
-                'number' => $one->number,
-                'issuedOn' => $one->issued_at->format('Y-m-d'),
-                'amount' => $one->amount(),
-                'status' => __("payments.invoiceStatus.{$one->status()}"),
-                'settled' => $one->isPaid(),
-            ])
-            ->values()
-            ->all();
+        return ['openTotal' => $plan->openTotal, 'rows' => $plan->installments];
     }
 
     private function signedOn(Contract $contract): ?string

@@ -134,7 +134,7 @@ it('never puts the Stripe secret key anywhere in the portal payments response bo
     expect($response->getContent())->not->toContain('sk_test_portalLeakCheck');
 });
 
-it('lists payments among the booking\'s documents once a plan exists', function () {
+it('lists the plan\'s rates as the booking\'s payments once a plan exists', function () {
     [$project, $contact] = t07PortalProjectWithPlan();
 
     $props = $this->actingAs($contact, 'portal')
@@ -142,7 +142,7 @@ it('lists payments among the booking\'s documents once a plan exists', function 
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect(collect($props['project']['documents'])->pluck('kind')->all())->toContain('payments');
+    expect($props['project']['payments']['rows'])->not->toBeEmpty();
 });
 
 it('counts a rate invoiced outside the plan, and calls only a past due date overdue', function () {

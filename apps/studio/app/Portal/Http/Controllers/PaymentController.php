@@ -132,8 +132,13 @@ class PaymentController extends Controller
                 'hasDocument' => $row->pdf_path !== null,
                 ...$document->page(),
                 'creditNotes' => $row->creditNotes
-                    ->filter(fn ($note) => $note->pdf_path !== null)
-                    ->map(fn ($note) => ['id' => $note->public_id, 'number' => $note->number])
+                    ->map(fn ($note) => [
+                        'id' => $note->public_id,
+                        'number' => $note->number,
+                        'amount' => $note->amount,
+                        'issuedOn' => $note->issued_at->format('Y-m-d'),
+                        'hasDocument' => $note->pdf_path !== null,
+                    ])
                     ->values()
                     ->all(),
             ],

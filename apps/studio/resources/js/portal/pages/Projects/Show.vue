@@ -29,15 +29,12 @@ type Shoot = {
 }
 
 type Document = {
-  kind: 'payments' | 'contract' | 'quote' | 'messages'
+  kind: 'contract' | 'quote' | 'messages'
   href: string
-  label?: string
   dueOn: string | null
-  overdue?: boolean
   signedOn?: string | null
   acceptedOn?: string | null
   amount: number | null
-  openTotal?: number
   unread?: number
   settled: boolean
 }
@@ -50,15 +47,6 @@ type Step = {
   dueOn: string | null
   overdue: boolean
   href: string
-}
-
-type Invoice = {
-  id: string
-  number: string
-  issuedOn: string | null
-  amount: number
-  status: string
-  settled: boolean
 }
 
 type Offers = {
@@ -81,7 +69,7 @@ const props = defineProps<{
     shoots: Shoot[]
     gallery: { id: string; title: string | null; count: number; expiresAt: string | null; strip: string[] } | null
     documents: Document[]
-    invoices: Invoice[]
+    payments: { openTotal: number; rows: App.Payments.Data.PaymentInstallmentData[] } | null
     steps: Step[]
     appointment: { title: string; date: string; callTime: string | null; venue: string | null } | null
     questionnaires: { id: string; name: string; count: number; openCount: number }[]
@@ -125,7 +113,7 @@ const galleryExpiring = computed(() => {
 const step = computed(() => steps.value[0] ?? null)
 
 // What stands in the card and the list above is not listed twice.
-const documents = computed(() => props.project.documents.filter(document => !steps.value.some(one => one.kind === (document.kind === 'payments' ? 'installment' : document.kind))))
+const documents = computed(() => props.project.documents.filter(document => !steps.value.some(one => one.kind === document.kind)))
 
 const sheets = computed(() => props.project.questionnaires.filter(sheet => sheet.openCount === 0))
 
@@ -133,11 +121,22 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
 const BAND = 'mt-10 border-t border-border pt-8'
 
-function documentNote(document: Document) {
-  if (document.kind === 'payments') {
-    return document.settled ? 'settled' : 'due'
-  }
+function paymentState(row: App.Payments.Data.PaymentInstallmentData) {
+  if (row.status === 'cancelled') return 'neutral'
+  if (row.status === 'paid') return 'done'
 
+  return row.isLate ? 'late' : daysUntil(row.dueOn) <= 14 ? 'due' : 'open'
+}
+
+function paymentNote(row: App.Payments.Data.PaymentInstallmentData) {
+  const state = row.status === 'paid'
+    ? row.statusLabel
+    : row.status === 'cancelled' ? null : t(row.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: dayDate(row.dueOn) })
+
+  return [state, row.invoiceNumber].filter(Boolean).join(' · ') || null
+}
+
+function documentNote(document: Document) {
   if (document.kind === 'contract') {
     return document.signedOn ? 'signed' : 'unsigned'
   }
@@ -256,15 +255,13 @@ function documentNote(document: Document) {
           :title="$t(`portal.document.${document.kind}`)"
           :state="document.kind === 'messages' ? (document.unread ? 'open' : 'neutral') : document.settled ? 'done' : 'open'"
           :note="{
-            settled: $t('portal.allSettled'),
-            due: $t('portal.quoteOpen'),
             signed: document.signedOn ? $t('portal.signedOn', { date: dayDate(document.signedOn) }) : null,
             unsigned: $t('portal.notSignedYet'),
             accepted: document.acceptedOn ? $t('portal.quoteAccepted', { date: dayDate(document.acceptedOn) }) : null,
             open: $t('portal.quoteOpen'),
             messages: document.unread ? $t('portal.unreadCount', { count: document.unread }) : null,
           }[documentNote(document)]"
-          :aside="document.kind === 'payments' ? (document.openTotal ? formatEuros(document.openTotal) : null) : document.amount ? formatEuros(document.amount) : null"
+          :aside="document.amount ? formatEuros(document.amount) : null"
           :aside-open="!document.settled"
         />
       </section>
@@ -295,20 +292,29 @@ function documentNote(document: Document) {
         </component>
       </section>
 
-      <!-- #415: die eigene Kopie der Rechnungsfolge, eine Zeile je
-           ausgestellte Rate. -->
-      <section v-if="project.invoices.length" :class="BAND">
-        <PortalLabel class="mb-2">{{ $t('portal.invoicesTitle') }}</PortalLabel>
-        <PortalRow
-          v-for="invoice in project.invoices"
-          :key="invoice.id"
-          :href="`/projekte/${project.id}/zahlungen/${invoice.id}`"
-          :title="invoice.number"
-          :state="invoice.settled ? 'done' : 'open'"
-          :note="invoice.issuedOn ? `${invoice.status} · ${dayDate(invoice.issuedOn)}` : invoice.status"
-          :aside="formatEuros(invoice.amount)"
-          :aside-open="!invoice.settled"
-        />
+      <section v-if="project.payments" :class="BAND">
+        <PortalLabel class="mb-2">{{ $t('portal.paymentsTitle') }}</PortalLabel>
+        <template v-for="row in project.payments.rows" :key="row.id">
+          <PortalRow
+            :href="row.invoiceId ? `/projekte/${project.id}/zahlungen/${row.invoiceId}` : `/projekte/${project.id}/zahlungen`"
+            :title="row.label"
+            :state="paymentState(row)"
+            :note="paymentNote(row)"
+            :aside="formatEuros(row.status === 'paid' || row.status === 'cancelled' ? row.amount : row.remaining)"
+            :aside-open="row.status !== 'paid' && row.status !== 'cancelled'"
+          />
+          <p v-if="row.cancelledOn" class="flex items-baseline justify-between gap-4 border-b border-border py-3 pl-4 text-[13.5px] text-muted-foreground tabular-nums">
+            {{ $t('portal.cancelledOn', { date: dayDate(row.cancelledOn) }) }}
+          </p>
+          <p
+            v-for="note in row.creditNotes"
+            :key="note.id"
+            class="flex items-baseline justify-between gap-4 border-b border-border py-3 pl-4 text-[13.5px] text-muted-foreground tabular-nums"
+          >
+            <span>{{ $t('portal.creditNote', { number: note.number }) }} · {{ dayDate(note.issuedOn) }}</span>
+            <span>−{{ formatEuros(note.amount) }}</span>
+          </p>
+        </template>
       </section>
 
       <!-- P-03 (#222): absent until the studio shares a questionnaire. -->

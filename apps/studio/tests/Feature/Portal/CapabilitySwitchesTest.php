@@ -61,7 +61,7 @@ it('hides the payments link on the project overview while the switch is off, eve
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect(collect($props['project']['documents'])->pluck('kind')->all())->not->toContain('payments');
+    expect($props['project']['payments'])->toBeNull();
 });
 
 it('shows the payments route and link once the studio switches payment-status on', function () {

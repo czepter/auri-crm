@@ -5,8 +5,10 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Models\StudioSettings;
 use App\Payments\Actions\CancelInvoice;
+use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Enums\CancellationKind;
+use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\Invoice;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -112,7 +114,7 @@ it('404s the page while the payment-status switch is off', function () {
 
 // --- #415: die Rechnungsliste am Projekt und der erste Blick ------------
 
-it('lists only invoices on the project page', function () {
+it('names the invoice number on the rate it belongs to and leaves the others without', function () {
     [$project, $contact, $invoice] = portalIssuedInvoice();
 
     PaymentInstallment::factory()->for($invoice->plan(), 'plan')->create([
@@ -126,9 +128,7 @@ it('lists only invoices on the project page', function () {
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['project']['invoices'])->toHaveCount(1)
-        ->and($props['project']['invoices'][0]['number'])->toBe($invoice->number)
-        ->and($props['project']['invoices'][0]['amount'])->toBe(100_000);
+    expect(collect($props['project']['payments']['rows'])->pluck('invoiceNumber')->all())->toBe([$invoice->number, null]);
 });
 
 it('records every look at the invoice', function () {
@@ -143,4 +143,45 @@ it('records every look at the invoice', function () {
     }
 
     expect($invoice->views()->where('via', 'portal')->count())->toBe(2);
+});
+
+it('shows a cancelled invoice as cancelled with its date and a credit note with amount and date', function () {
+    [$project, $contact, $invoice] = portalIssuedInvoice();
+
+    $cancelled = PaymentInstallment::query()->where('invoice_id', $invoice->id)->first();
+    app(CancelInvoice::class)($invoice, CancellationKind::Void, 'Termin abgesagt');
+
+    $rows = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}")
+        ->assertOk()
+        ->viewData('page')['props']['project']['payments'];
+
+    $row = collect($rows['rows'])->firstWhere('id', $cancelled->public_id);
+
+    expect($row['status'])->toBe('cancelled')
+        ->and($row['cancelledOn'])->toBe(today()->toDateString())
+        ->and($row['invoiceNumber'])->toBe($invoice->number)
+        ->and($rows['openTotal'])->toBe(0);
+});
+
+it('carries amount and date on the credit notes of a paid invoice', function () {
+    [$project, $contact, $invoice] = portalIssuedInvoice();
+    $invoice->installments()->update(['status' => PaymentInstallmentStatus::Paid, 'paid_amount' => 100_000]);
+    $note = app(IssueCreditNote::class)($invoice->fresh(), 20_000, 'Teilerstattung');
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}")
+        ->assertOk()
+        ->viewData('page')['props']['project'];
+
+    $shown = collect($props['payments']['rows'])->flatMap(fn ($row) => $row['creditNotes'])->firstWhere('id', $note->public_id);
+
+    expect($shown['amount'])->toBe(20_000)
+        ->and($shown['issuedOn'])->toBe($note->issued_at->format('Y-m-d'));
+
+    $page = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/zahlungen/{$invoice->public_id}")
+        ->viewData('page')['props']['invoice']['creditNotes'];
+
+    expect($page[0]['amount'])->toBe(20_000)->and($page[0]['hasDocument'])->toBeFalse();
 });

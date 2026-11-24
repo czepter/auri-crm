@@ -20,6 +20,7 @@ type Installment = {
   dueOn: string
   status: string
   isLate: boolean
+  cancelledOn: string | null
   statusLabel: string
   label: string
   invoiceId: string | null
@@ -144,8 +145,17 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
               <p class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
                 <PortalDot :state="['paid', 'cancelled'].includes(installment.status) ? 'done' : installment.isLate ? 'late' : soon(installment) ? 'due' : 'open'" />
                 {{ ['paid', 'cancelled'].includes(installment.status)
-                  ? installment.statusLabel
+                  ? [installment.statusLabel, installment.cancelledOn && dayDate(installment.cancelledOn)].filter(Boolean).join(' · ')
                   : $t(installment.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: dayDate(installment.dueOn) }) }}
+              </p>
+
+              <p
+                v-for="note in installment.creditNotes"
+                :key="note.id"
+                class="mt-1.5 flex items-baseline justify-between gap-4 text-[13.5px] text-muted-foreground tabular-nums"
+              >
+                <span>{{ $t('portal.creditNote', { number: note.number }) }} · {{ dayDate(note.issuedOn) }}</span>
+                <span>−{{ formatEuros(note.amount) }}</span>
               </p>
 
               <div v-if="!['paid', 'cancelled'].includes(installment.status) && payable(installment)" class="mt-4">
