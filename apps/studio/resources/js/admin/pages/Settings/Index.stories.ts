@@ -64,6 +64,8 @@ const meta = {
     mailSenderFromEnv: { name: false, address: false },
     mailTemplates: [{ id: 'mt1', name: 'Angebot verschickt' }],
     settings,
+    stripe: null,
+    stripeStatus: null,
   },
 } satisfies Meta<typeof Index>
 
@@ -80,9 +82,13 @@ export const EMail: Story = {
   parameters: { url: '/einstellungen/email' },
 }
 
-/** Bankverbindung, Zahlungsziel, Anzahlung und Mahnungen. */
+/** Bankverbindung, Zahlungsziel, Anzahlung, Mahnungen und Stripe. */
 export const Zahlung: Story = {
-  args: { pane: 'payment' },
+  args: {
+    pane: 'payment',
+    stripe: { id: 'ps1', stripeEnabled: true, stripeMode: 'live', hasStripeTestKeys: true, hasStripeLiveKeys: true },
+    stripeStatus: { lastWebhookAt: '2026-09-20T18:12:00+02:00', lastPaidOn: '2026-09-18' },
+  },
   parameters: { url: '/einstellungen/zahlung' },
 }
 

@@ -15,14 +15,20 @@ beforeEach(fn () => Cache::store('redis')->flush());
 
 it('defaults Stripe to off', function () {
     $props = $this->actingAs(staffMember(StaffRole::Admin), 'staff')
-        ->get('/einstellungen/zahlungen')
+        ->get('/einstellungen/zahlung')
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['settings']['stripeEnabled'])->toBeFalse()
-        ->and($props['settings']['stripeMode'])->toBe('test')
-        ->and($props['settings']['hasStripeTestKeys'])->toBeFalse()
-        ->and($props['settings']['hasStripeLiveKeys'])->toBeFalse();
+    expect($props['stripe']['stripeEnabled'])->toBeFalse()
+        ->and($props['stripe']['stripeMode'])->toBe('test')
+        ->and($props['stripe']['hasStripeTestKeys'])->toBeFalse()
+        ->and($props['stripe']['hasStripeLiveKeys'])->toBeFalse();
+});
+
+it('sends the former Stripe address to the one payment page', function () {
+    $this->actingAs(staffMember(StaffRole::Admin), 'staff')
+        ->get('/einstellungen/zahlungen')
+        ->assertRedirect('/einstellungen/zahlung');
 });
 
 // Die Mahnstufe steht bei Zahlung: sie hängt an der Frist, nicht an
@@ -39,13 +45,13 @@ it('switches Stripe on and stores a test key pair, encrypted at rest', function 
     $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen/zahlungen', [
+        ->patch('/einstellungen/zahlung/stripe', [
             'payments_stripe_enabled' => true,
             'payments_stripe_mode' => 'test',
             'payments_stripe_test_publishable_key' => 'pk_test_abc123',
             'payments_stripe_test_secret_key' => 'sk_test_verySecretValue',
         ])
-        ->assertRedirect('/einstellungen/zahlungen');
+        ->assertRedirect();
 
     $row = StudioSettings::query()->sole();
     expect($row->payments_stripe_enabled)->toBeTrue()
@@ -62,7 +68,7 @@ it('switches Stripe on and stores a test key pair, encrypted at rest', function 
 it('leaves an existing key pair untouched when the write-only fields are submitted blank', function () {
     $owner = staffMember(StaffRole::Admin);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
+    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung/stripe', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
         'payments_stripe_test_publishable_key' => 'pk_test_abc123',
@@ -71,7 +77,7 @@ it('leaves an existing key pair untouched when the write-only fields are submitt
 
     // A second save — reminders changes, the key fields arrive blank exactly
     // as a write-only form would send them when nobody touched that field.
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
+    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung/stripe', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
         'payments_stripe_test_publishable_key' => '',
@@ -85,14 +91,14 @@ it('leaves an existing key pair untouched when the write-only fields are submitt
 it('keeps both mode key pairs independently — switching modes never requires re-entering keys', function () {
     $owner = staffMember(StaffRole::Admin);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
+    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung/stripe', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
         'payments_stripe_test_publishable_key' => 'pk_test_abc123',
         'payments_stripe_test_secret_key' => 'sk_test_abc123',
     ]);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
+    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung/stripe', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'live',
         'payments_stripe_live_publishable_key' => 'pk_live_xyz789',
@@ -109,7 +115,7 @@ it('keeps both mode key pairs independently — switching modes never requires r
 it('never puts the Stripe secret key in any response body — the edit screen or the update redirect', function () {
     $owner = staffMember(StaffRole::Admin);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
+    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung/stripe', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
         'payments_stripe_test_publishable_key' => 'pk_test_abc123',
@@ -118,13 +124,13 @@ it('never puts the Stripe secret key in any response body — the edit screen or
 
     $secret = 'sk_test_topSecretValue';
 
-    $updateResponse = $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
+    $updateResponse = $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung/stripe', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
     ]);
     expect($updateResponse->getContent())->not->toContain($secret);
 
-    $showResponse = $this->actingAs($owner, 'staff')->get('/einstellungen/zahlungen')->assertOk();
+    $showResponse = $this->actingAs($owner, 'staff')->get('/einstellungen/zahlung')->assertOk();
     expect($showResponse->getContent())->not->toContain($secret);
 
     // Belt and suspenders: the whole decoded props tree, not just a
@@ -136,7 +142,7 @@ it('never puts the Stripe secret key in any response body — the edit screen or
 it('leaves an audit row naming the changed keys by name only, never by value', function () {
     $owner = staffMember(StaffRole::Admin);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlungen', [
+    $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung/stripe', [
         'payments_stripe_enabled' => true,
         'payments_stripe_mode' => 'test',
         'payments_stripe_test_publishable_key' => 'pk_test_abc123',
@@ -150,7 +156,7 @@ it('leaves an audit row naming the changed keys by name only, never by value', f
 
 it('opens the payments settings screen to the owner, and gives every other role the same response as a route that does not exist', function (StaffRole $role, int $status) {
     $missing = $this->actingAs(staffMember($role), 'staff')->get('/this-route-does-not-exist-xyz');
-    $response = $this->actingAs(staffMember($role), 'staff')->get('/einstellungen/zahlungen');
+    $response = $this->actingAs(staffMember($role), 'staff')->get('/einstellungen/zahlung');
 
     $response->assertStatus($status);
 

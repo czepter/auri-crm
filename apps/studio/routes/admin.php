@@ -517,9 +517,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'destroy'])
             ->name('automations.destroy');
 
-        Route::get('/einstellungen/zahlungen', [PaymentSettingsController::class, 'edit'])
-            ->name('settings.payments.edit');
-        Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
+        Route::redirect('/einstellungen/zahlungen', '/einstellungen/zahlung');
+        Route::patch('/einstellungen/zahlung/stripe', [PaymentSettingsController::class, 'update'])
             ->name('settings.payments.update');
 
         // The studio's own funnel and the kinds of work it does. No page of

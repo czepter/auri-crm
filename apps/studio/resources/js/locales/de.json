@@ -1792,7 +1792,6 @@
     "signOnline": "Online unterschreiben"
   },
   "paymentSettings": {
-    "title": "Stripe",
     "stripeSection": "Stripe",
     "stripeEnabled": "Online-Zahlung per Karte (Stripe)",
     "stripeEnabledHint": "Kunden wählen dann je Zahlung zwischen Überweisung und Karte.",

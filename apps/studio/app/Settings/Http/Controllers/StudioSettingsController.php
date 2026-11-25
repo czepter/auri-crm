@@ -11,6 +11,9 @@ use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
 use App\Payments\Actions\RenderInvoicePdf;
+use App\Payments\Enums\SettledVia;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\StripeEvent;
 use App\Payments\Support\SampleInvoiceData;
 use App\Portal\Notifications\PortalAccessInvitation;
 use App\Quotes\Actions\RenderQuotePdf;
@@ -19,6 +22,7 @@ use App\Quotes\Support\SampleQuoteData;
 use App\Settings\Actions\AdaptClientRegister;
 use App\Settings\Actions\StoreStudioLogo;
 use App\Settings\Actions\UpdateStudioSetting;
+use App\Settings\Data\PaymentSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Rules\ValidFormat;
@@ -74,6 +78,11 @@ class StudioSettingsController extends Controller
                 'address' => $row->mail_from_address === null,
             ],
             'settings' => StudioSettingsData::current(),
+            'stripe' => $pane === 'payment' ? PaymentSettingsData::current() : null,
+            'stripeStatus' => $pane === 'payment' ? [
+                'lastWebhookAt' => StripeEvent::query()->max('created_at'),
+                'lastPaidOn' => PaymentInstallment::query()->where('settled_via', SettledVia::Stripe)->max('paid_on'),
+            ] : null,
             'mailTemplates' => $pane === 'email'
                 ? DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Mail)->orderBy('name')->get()
                     ->map(fn (DocumentTemplate $template) => ['id' => $template->family_id, 'name' => $template->name])->all()

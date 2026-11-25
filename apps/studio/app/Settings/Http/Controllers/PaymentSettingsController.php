@@ -4,48 +4,14 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
-use App\Payments\Enums\SettledVia;
-use App\Payments\Models\PaymentInstallment;
-use App\Payments\Models\StripeEvent;
 use App\Settings\Actions\UpdatePaymentSettings;
-use App\Settings\Data\PaymentSettingsData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
-/**
- * T-07's "Zahlungen" pane — Stripe as an optional capability plus the
- * reminders default. Deposit percentage and Zahlungsziel, the other two
- * provider-independent defaults T-07's own issue named, are edited on T-05's
- * Dokumente pane instead (studio_settings.deposit_percentage and
- * .payment_term_days) — T-05 landed first, so this pane reads them there
- * rather than growing a second, conflicting editable copy; see
- * PaymentSettingsData. Sits beside StudioSettingsController and
- * NumberRangeController under the same /einstellungen shell and the same
- * ManageSettings gate (see AuthorizesStaffSettings for why that gate is a
- * 404, not a 403).
- *
- * One form, one save — like Studio-Profil (T-02), unlike Zahlungsdaten &
- * USt's own split endpoint: nothing on this pane needs a fieldset-level save
- * boundary the way two mockup-drawn forms on one screen do.
- */
+/** Saves the Stripe section of the Zahlung page; the page itself is StudioSettingsController's. */
 class PaymentSettingsController extends Controller
 {
     use AuthorizesStaffSettings;
-
-    public function edit(): Response
-    {
-        $this->authorizeSettings();
-
-        return Inertia::render('Settings/Payments', [
-            'settings' => PaymentSettingsData::current(),
-            'status' => [
-                'lastWebhookAt' => StripeEvent::query()->max('created_at'),
-                'lastPaidOn' => PaymentInstallment::query()->where('settled_via', SettledVia::Stripe)->max('paid_on'),
-            ],
-        ]);
-    }
 
     public function update(Request $request): RedirectResponse
     {
@@ -64,6 +30,6 @@ class PaymentSettingsController extends Controller
 
         app(UpdatePaymentSettings::class)($validated, auth('staff')->user());
 
-        return redirect('/einstellungen/zahlungen');
+        return back();
     }
 }
