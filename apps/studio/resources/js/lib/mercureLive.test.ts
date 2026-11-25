@@ -46,7 +46,7 @@ it('shares one source per channel and routes by event type', async () => {
   await flush()
 
   expect(FakeEventSource.opened).toHaveLength(1)
-  expect(FakeEventSource.opened[0].url).toBe('/hub?topic=crm%2F1')
+  expect(FakeEventSource.opened[0].url).toBe('/hub?match=crm%2F1')
   expect(FakeEventSource.opened[0].init).toEqual({ withCredentials: true })
 
   FakeEventSource.opened[0].emit('changed', '{"a":1}')

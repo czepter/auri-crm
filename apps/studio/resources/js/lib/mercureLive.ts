@@ -47,7 +47,7 @@ export function mercure(hub: () => string | null): LiveTransport {
 
       if (url === null) return
 
-      record.source = new EventSource(`${url}?topic=${encodeURIComponent(name)}`, { withCredentials: true })
+      record.source = new EventSource(`${url}?match=${encodeURIComponent(name)}`, { withCredentials: true })
       record.source.addEventListener('open', () => notify(true))
       record.source.addEventListener('error', () => notify(false))
     }
