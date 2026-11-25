@@ -13,7 +13,7 @@ import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
 import { Textarea } from '@/ui/textarea'
 import { formatEuros } from '@/lib/money'
-import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+import { dayWithWeekday, isoDate, shortDate } from '@/admin/lib/dates'
 
 type Draft = { taken?: boolean[]; issued_on?: string | null; reason?: string | null; intro?: string | null; outro?: string | null; send?: boolean }
 
@@ -66,7 +66,7 @@ function saveDraft() {
             <div>
               <div class="text-small text-ink-2">{{ $t('invoiceDetail.recipient') }}</div>
               <div class="font-semibold">{{ invoice.recipient }}</div>
-              <div class="text-small text-ink-2">{{ $t('creditNoteBuilder.reference', { number: row.number, date: new Date(`${row.issuedOn}T12:00`).toLocaleDateString('de-DE') }) }}</div>
+              <div class="text-small text-ink-2">{{ $t('creditNoteBuilder.reference', { number: row.number, date: shortDate(`${row.issuedOn}T12:00`) }) }}</div>
             </div>
 
             <Field v-slot="{ id }" :label="$t('creditNoteBuilder.date')" :error="form.errors.issued_on">

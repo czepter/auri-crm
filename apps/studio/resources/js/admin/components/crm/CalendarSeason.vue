@@ -2,7 +2,7 @@
 import { computed, ref, watchEffect } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
-import { isoDate } from '@/admin/lib/dates'
+import { isoDate, shortDate } from '@/admin/lib/dates'
 import { addDays, seasonYears, weekMondays } from '@/admin/lib/season'
 
 type Phase = 'upcoming' | 'editing' | 'delivered'
@@ -37,7 +37,7 @@ const TONE: Record<Phase, string> = { upcoming: 'bg-foreground', editing: 'bg-du
 const HATCH = 'repeating-linear-gradient(135deg, var(--mark) 0 2px, var(--bg) 2px 5px)'
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 function cell(start: string, end: string) {

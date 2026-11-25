@@ -9,6 +9,7 @@ import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import Empty from '@/ui/page/Empty.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { shortDate } from '@/admin/lib/dates'
 
 type Archive = { id: string; status: 'building' | 'ready' | 'failed'; size: number | null; createdAt: string; expiresAt: string | null; url: string | null }
 
@@ -35,7 +36,7 @@ function size(bytes: number) {
 }
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 function create(gallery: string | null) {

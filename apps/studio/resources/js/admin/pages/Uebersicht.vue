@@ -14,6 +14,7 @@ import { formatEurosRounded } from "@/lib/money";
 import { groupEntries } from "@/admin/lib/groupEntries";
 import { NOTICEABLE_DAYS, since } from "@/admin/lib/leadQueue";
 import { useLiveProps } from "@/admin/lib/liveReload";
+import { dayMonth, longDate, monthLabel } from '@/admin/lib/dates'
 
 type Entry = {
     date: string;
@@ -56,18 +57,13 @@ useLiveProps(["today", "entries", "pipeline", "payments", "quotes", "shoots", "a
 const { t } = useI18n();
 
 const heading = computed(() =>
-    new Date(props.today).toLocaleDateString("de-DE", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-    }),
+    longDate(props.today),
 );
 
 // Das Jahr steht nur, wo es nicht das laufende ist.
 function dayOf(date: string) {
     const other = date.slice(0, 4) !== props.today.slice(0, 4);
-    return new Date(date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", ...(other && { year: "numeric" as const }) });
+    return dayMonth(date, other);
 }
 
 const activityGroups = computed(() =>
@@ -83,7 +79,7 @@ const upcoming = computed(() =>
         return {
             ...entry,
             num: day.getDate(),
-            month: day.toLocaleDateString("de-DE", { month: "short" }),
+            month: monthLabel(day),
         };
     }),
 );

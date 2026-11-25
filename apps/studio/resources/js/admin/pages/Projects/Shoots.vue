@@ -7,7 +7,7 @@ import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import ShootAdvance from '@/admin/components/crm/ShootAdvance.vue'
 import ShootTimeline from '@/admin/components/crm/ShootTimeline.vue'
 import { chipClass, filterShoots, shootDays, type ShootFilter } from '@/admin/lib/shoots'
-import { dayWithWeekday } from '@/admin/lib/dates'
+import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
 import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -43,7 +43,7 @@ const form = useForm({
 })
 
 
-const today = new Date().toISOString().slice(0, 10)
+const today = isoDate(new Date())
 
 function metrics(shoot: App.Crm.Data.ShootData) {
   return [

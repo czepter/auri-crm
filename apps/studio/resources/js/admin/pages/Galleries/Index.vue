@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChoiceGroup } from '@/ui/choice-group'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import { filterGalleries, loadView, saveView, type GalleryFilter } from '@/admin/lib/galleryFilter'
+import { shortDate } from '@/admin/lib/dates'
 
 const props = defineProps<{
   galleries: App.Gallery.Data.GalleryRowData[]
@@ -60,7 +61,7 @@ function close() {
 }
 
 function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+  return iso ? shortDate(iso) : '—'
 }
 </script>
 

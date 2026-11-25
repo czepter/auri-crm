@@ -10,6 +10,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import { ceremonyCancelled, passkeysSupported } from '@/admin/lib/passkey'
+import { shortDate } from '@/admin/lib/dates'
 
 type Passkey = { id: string; name: string; createdAt: string; lastUsedAt: string | null }
 
@@ -42,7 +43,7 @@ function closeDelete() {
 }
 
 function date(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE')
+  return shortDate(iso)
 }
 
 async function add() {

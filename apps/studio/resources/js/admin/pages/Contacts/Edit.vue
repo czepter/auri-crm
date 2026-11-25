@@ -26,6 +26,7 @@ import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import { filledProfiles, withOpenRow } from '@/admin/lib/socialProfile'
 import { Mail, Phone } from 'lucide-vue-next'
+import { shortDate } from '@/admin/lib/dates'
 
 const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
 
@@ -169,7 +170,7 @@ function savePortal() {
 }
 
 function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+  return iso ? shortDate(iso) : '—'
 }
 
 function time(iso: string) {

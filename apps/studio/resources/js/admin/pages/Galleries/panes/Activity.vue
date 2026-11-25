@@ -6,6 +6,7 @@ import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { FILTERS, filterEvents, groupByDay, type ActivityEvent, type ActivityFilter, type Photo } from '@/admin/lib/galleryActivity'
+import { shortDate } from '@/admin/lib/dates'
 
 export interface ActivityData {
   counts: { favorites: number; comments: number; hidden: number; downloads: number }
@@ -35,7 +36,7 @@ const options = computed(() => FILTERS.map((value) => ({
 })))
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 function megabytes(bytes: number) {

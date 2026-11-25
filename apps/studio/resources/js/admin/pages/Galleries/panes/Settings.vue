@@ -19,6 +19,7 @@ import GalleryReleaseFields, { type ReleasePatch, type ReleaseValues } from '@/a
 import { ACTIONS, AUDIENCES, type Audience, type Permissions } from '@/admin/lib/galleryPermissions'
 import { Switch } from '@/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { shortDate } from '@/admin/lib/dates'
 
 const props = defineProps<{
   gallery: {
@@ -180,7 +181,7 @@ const rights = computed(() => AUDIENCES.map((audience: Audience) => {
 }).join(' · '))
 
 function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+  return iso ? shortDate(iso) : '—'
 }
 </script>
 

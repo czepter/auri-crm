@@ -14,6 +14,7 @@ import { formatEurosRounded } from '@/lib/money'
 import { barHeight, ratePoints as ratePointsFor } from '@/admin/lib/chart'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
+import { monthLabel } from '@/admin/lib/dates'
 
 const props = defineProps<{
   window: { from: string; to: string }
@@ -70,7 +71,7 @@ const bare = computed(() =>
 
 function monthShort(month: string) {
   const [year, index] = month.split('-')
-  return new Date(Number(year), Number(index) - 1, 1).toLocaleDateString('de-DE', { month: 'short' })
+  return monthLabel(new Date(Number(year), Number(index) - 1, 1))
 }
 
 // Neben den Monatsnamen ist auf einer Achse von 220px kein Platz für zwölf
@@ -90,7 +91,7 @@ function monthShown(month: string, index: number) {
 
 function monthLong(month: string) {
   const [year, index] = month.split('-')
-  return new Date(Number(year), Number(index) - 1, 1).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
+  return monthLabel(new Date(Number(year), Number(index) - 1, 1), true)
 }
 
 // Trägt eine Reihe in weniger als drei Monaten einen Wert, sind zwölf
@@ -183,7 +184,7 @@ function barWidth(value: number, peak: number) {
 
 const windowLabel = computed(() => {
   const format = (date: string) =>
-    new Date(date).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' })
+    monthLabel(new Date(date), true)
 
   return `${format(props.window.from)} – ${format(props.window.to)}`
 })

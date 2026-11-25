@@ -15,7 +15,7 @@ import { Input } from '@/ui/input'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
 import { Textarea } from '@/ui/textarea'
-import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+import { dayWithWeekday, isoDate, shortDate } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Option = { value: string; label: string }
@@ -365,7 +365,7 @@ function submit() {
             { label: $t('leads.contact'), value: contact?.name ?? form.contact_name },
             { label: $t('projects.title'), value: form.project_name },
             { label: $t('leads.type'), value: types.find((t) => t.value === form.type)?.label },
-            { label: $t('project.shootDate'), value: form.date ? new Date(form.date).toLocaleDateString('de-DE') : null },
+            { label: $t('project.shootDate'), value: form.date ? shortDate(form.date) : null },
             { label: $t('project.venueName'), value: [form.venue_name, form.venue_city].filter(Boolean).join(', ') },
           ]"
         />

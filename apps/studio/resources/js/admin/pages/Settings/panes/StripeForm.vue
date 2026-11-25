@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
+import { shortDate } from '@/admin/lib/dates'
 
 const props = defineProps<{
   stripe: App.Settings.Data.PaymentSettingsData
@@ -14,7 +15,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ saved: [] }>()
 
-const day = (value: string | null) => (value ? new Date(value.replace(' ', 'T')).toLocaleDateString('de-DE') : '–')
+const day = (value: string | null) => (value ? shortDate(value.replace(' ', 'T')) : '–')
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the

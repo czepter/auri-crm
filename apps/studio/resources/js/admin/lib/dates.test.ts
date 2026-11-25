@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayWithWeekday, daysUntil, isoDate, monthDate, relativeDate, shiftDate, weekFrom } from './dates'
+import { dayMonth, dayWithWeekday, daysUntil, isoDate, longDate, monthDate, monthLabel, relativeDate, shiftDate, shortDate, weekFrom } from './dates'
 
 describe('shiftDate', () => {
   it('adds weeks as days', () => {
@@ -78,5 +78,22 @@ describe('weekFrom', () => {
     expect(weekFrom('2026-10-28')).toEqual(['2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02', '2026-11-03'])
     expect(weekFrom('2026-10-24')[1]).toBe('2026-10-25')
     expect(weekFrom('2026-10-24')[2]).toBe('2026-10-26')
+  })
+})
+
+describe('display formats', () => {
+  it('pads day and month', () => {
+    expect(shortDate('2026-07-05')).toBe('05.07.2026')
+    expect(shortDate(new Date(2026, 6, 5))).toBe('05.07.2026')
+  })
+
+  it('leaves the year off unless asked', () => {
+    expect(dayMonth('2026-07-05')).toBe('05.07.')
+    expect(dayMonth('2026-07-05', true)).toBe('05.07.2026')
+  })
+
+  it('names the weekday and the month', () => {
+    expect(longDate('2026-06-14')).toBe('Sonntag, 14. Juni 2026')
+    expect(monthLabel(new Date(2026, 5, 1), true)).toBe('Juni 2026')
   })
 })

@@ -13,6 +13,7 @@ import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { shortDate } from '@/admin/lib/dates'
 
 type Policy = App.Privacy.Data.RetentionPolicyData
 type Part = keyof Policy
@@ -300,7 +301,7 @@ function submit() {
           >
             <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.candidate.name }}</span>
             <span class="text-small text-ink-2">{{ row.candidate.type }}</span>
-            <span class="w-24 text-right text-small tabular-nums">{{ row.on.toLocaleDateString('de-DE') }}</span>
+            <span class="w-24 text-right text-small tabular-nums">{{ shortDate(row.on) }}</span>
           </div>
         </aside>
       </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { shortDate as formatDate } from "@/admin/lib/dates";
 import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { Clock } from "lucide-vue-next";
@@ -84,11 +85,7 @@ const DONE_STAGES = ["booked"];
 
 function shortDate(date: string | null) {
     return date
-        ? new Date(date).toLocaleDateString("de-DE", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-          })
+        ? formatDate(date)
         : null;
 }
 

@@ -24,6 +24,7 @@ import { Link } from '@inertiajs/vue3'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
+import { shortDate } from '@/admin/lib/dates'
 
 type Request = {
   id: string
@@ -45,7 +46,7 @@ const props = defineProps<{
 useLiveProps(['package', 'projectTypes', 'galleryPresets', 'requests', 'catalogItems', 'vatRate'])
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 const NO_PRESET = 'none'

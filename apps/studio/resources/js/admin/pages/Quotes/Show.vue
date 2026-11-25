@@ -42,7 +42,7 @@ const previewing = ref(false)
 const workspace = ref<InstanceType<typeof QuoteWorkspace>>()
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 const address = computed(() => {

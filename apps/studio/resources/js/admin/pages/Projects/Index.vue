@@ -11,7 +11,7 @@ import { Button } from '@/ui/button'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/ui/context-menu'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
-import { isoDate } from '@/admin/lib/dates'
+import { isoDate, shortDate } from '@/admin/lib/dates'
 import { formatEurosRounded } from '@/lib/money'
 import { relative, TYPE_DOT } from '@/admin/lib/boardCard'
 import { useLiveProps } from '@/admin/lib/liveReload'
@@ -129,7 +129,7 @@ function onKey(event: KeyboardEvent, project: App.Crm.Data.CaseRowData, column: 
 }
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 // The date passed and nobody has shot it: the one row on this screen that
