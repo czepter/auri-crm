@@ -301,7 +301,7 @@ class StudioSettingsController extends Controller
     {
         $this->authorizeSettings();
 
-        if ($page = $this->framed($request, '/einstellungen/belege')) {
+        if ($page = $this->framed($request, '/einstellungen/layout')) {
             return $page;
         }
 

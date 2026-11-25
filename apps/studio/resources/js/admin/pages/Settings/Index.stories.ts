@@ -87,9 +87,9 @@ export const Zahlung: Story = {
 }
 
 /** Layout für Angebot, Rechnung, Gutschrift und Storno, dazu die Gültigkeit des Angebots. */
-export const Belege: Story = {
+export const Layout: Story = {
   args: { pane: 'receipts' },
-  parameters: { url: '/einstellungen/belege' },
+  parameters: { url: '/einstellungen/layout' },
 }
 
 /** Ein gerade angelegtes Studio: nur der Name steht, der Absender kommt aus der Umgebung. */

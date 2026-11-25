@@ -9,7 +9,7 @@ uses(RefreshDatabase::class);
 it('previews a chosen layout without persisting anything', function () {
     [$user, $project] = studioWithProject();
 
-    $response = $this->actingAs($user, 'staff')->get('/einstellungen/belege/angebot-vorschau?layout=header_band');
+    $response = $this->actingAs($user, 'staff')->get('/einstellungen/layout/angebot-vorschau?layout=header_band');
 
     $response->assertOk();
     expect($response->getContent())
@@ -23,7 +23,7 @@ it('falls back to the saved layout when none is requested', function () {
     [$user, $project] = studioWithProject();
     app(UpdateStudioSetting::class)('document_layout', 'minimal');
 
-    $response = $this->actingAs($user, 'staff')->get('/einstellungen/belege/angebot-vorschau');
+    $response = $this->actingAs($user, 'staff')->get('/einstellungen/layout/angebot-vorschau');
 
     $response->assertOk();
     expect($response->getContent())->toContain('doc-layout-minimal');

@@ -445,16 +445,17 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen/allgemein', [StudioSettingsController::class, 'edit'])->defaults('pane', 'general')->name('settings.general');
         Route::get('/einstellungen/email', [StudioSettingsController::class, 'edit'])->defaults('pane', 'email');
         Route::redirect('/einstellungen/rechnungsdaten', '/einstellungen/zahlung');
-        Route::redirect('/einstellungen/dokumente', '/einstellungen/belege');
+        Route::redirect('/einstellungen/dokumente', '/einstellungen/layout');
+        Route::redirect('/einstellungen/belege', '/einstellungen/layout');
         Route::get('/einstellungen/zahlung', [StudioSettingsController::class, 'edit'])->defaults('pane', 'payment')->name('settings.payment');
-        Route::get('/einstellungen/belege', [StudioSettingsController::class, 'edit'])->defaults('pane', 'receipts');
+        Route::get('/einstellungen/layout', [StudioSettingsController::class, 'edit'])->defaults('pane', 'receipts');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/anrede-vorschau', [StudioSettingsController::class, 'registerPreview'])->name('settings.register-preview');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
         Route::patch('/einstellungen/zahlung', [StudioSettingsController::class, 'updatePayment'])->name('settings.payment.update');
-        Route::patch('/einstellungen/belege', [StudioSettingsController::class, 'updateReceipts'])->name('settings.receipts.update');
-        Route::get('/einstellungen/belege/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
+        Route::patch('/einstellungen/layout', [StudioSettingsController::class, 'updateReceipts'])->name('settings.receipts.update');
+        Route::get('/einstellungen/layout/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
             ->name('settings.receipts.quote-layout-preview');
         Route::get('/einstellungen/zahlung/rechnung-vorschau', [StudioSettingsController::class, 'previewInvoice'])
             ->name('settings.payment.invoice-preview');

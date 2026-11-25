@@ -30,7 +30,7 @@ const items: { group?: string; key?: string; href?: string; label?: string; exte
 
   { group: 'settings.groupBilling' },
   { key: 'payment', href: '/einstellungen/zahlung', label: 'settings.navPayment' },
-  { key: 'receipts', href: '/einstellungen/belege', label: 'settings.navDocuments' },
+  { key: 'receipts', href: '/einstellungen/layout', label: 'settings.navDocuments' },
   { key: 'numbering', href: '/einstellungen/nummernkreise', label: 'settings.navNumbering' },
 
   { group: 'settings.groupWork' },

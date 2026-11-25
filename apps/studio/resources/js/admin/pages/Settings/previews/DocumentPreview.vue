@@ -36,7 +36,7 @@ const scale = computed(() => (available.value > 0 ? Math.min(1, available.value 
 const url = computed(() => {
   const layout = props.doc.documentLayout ?? ''
 
-  if (!props.doc.invoice) return `/einstellungen/belege/angebot-vorschau?layout=${encodeURIComponent(layout)}`
+  if (!props.doc.invoice) return `/einstellungen/layout/angebot-vorschau?layout=${encodeURIComponent(layout)}`
 
   return `/einstellungen/zahlung/rechnung-vorschau?${new URLSearchParams({ ...props.doc.invoice, layout })}`
 })
