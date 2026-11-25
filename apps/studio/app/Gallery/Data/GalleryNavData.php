@@ -60,7 +60,7 @@ class GalleryNavData extends Data
                     'children' => self::sets($gallery, $sets),
                 ],
                 ['key' => 'gestaltung', 'label' => 'galleryRecord.tab.gestaltung', 'href' => "{$base}/gestaltung", 'count' => null, 'countTo' => null, 'children' => []],
-                ['key' => 'einstellungen', 'label' => 'galleryRecord.tab.einstellungen', 'href' => "{$base}/einstellungen/allgemein", 'count' => null, 'countTo' => null, 'children' => []],
+                ['key' => 'einstellungen', 'label' => 'galleryRecord.tab.einstellungen', 'href' => "{$base}/einstellungen/zugang", 'count' => null, 'countTo' => null, 'children' => []],
                 [
                     'key' => 'aktivitaet',
                     'label' => 'galleryRecord.tab.aktivitaet',

@@ -3,6 +3,7 @@
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryPreset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -17,17 +18,14 @@ it('opens the mode named in the url, internal otherwise', function () {
         ->and(props('/galerien/neu?art=fremd')['mode'])->toBe('internal');
 });
 
-it('creates a gallery and sends the user to its record', function () {
+it('creates a gallery from title and project alone and takes the default preset', function () {
     $project = ClientCase::factory()->create();
+    GalleryPreset::factory()->create(['is_default' => true, 'download_rule' => 'after_payment', 'expiry_mode' => 'days', 'expiry_days' => 30]);
 
     $response = $this->post('/galerien', [
         'case_id' => $project->public_id,
         'title' => 'Trauung',
         'is_external' => false,
-        'expires_at' => '2027-01-31',
-        'download_rule' => 'open',
-        'lists_enabled' => false,
-        'comments_enabled' => true,
     ]);
 
     $gallery = Gallery::sole();
@@ -36,8 +34,8 @@ it('creates a gallery and sends the user to its record', function () {
 
     expect($gallery->title)->toBe('Trauung')
         ->and($gallery->case_id)->toBe($project->id)
-        ->and($gallery->lists_enabled)->toBeFalse()
-        ->and($gallery->expires_at->toDateString())->toBe('2027-01-31');
+        ->and($gallery->download_rule)->toBe('after_payment')
+        ->and($gallery->expires_at->toDateString())->toBe(now()->addDays(30)->toDateString());
 });
 
 it('carries the project and shoot from the project page into the gallery', function () {
@@ -64,9 +62,6 @@ it('creates one without a project', function () {
         'case_id' => null,
         'title' => 'Studioportraits',
         'is_external' => false,
-        'download_rule' => 'open',
-        'lists_enabled' => true,
-        'comments_enabled' => true,
     ])->assertRedirect();
 
     expect(Gallery::sole()->case_id)->toBeNull();

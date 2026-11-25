@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { router, useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
@@ -8,7 +9,10 @@ import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 import { Link } from '@inertiajs/vue3'
+import Chip from '@/ui/page/Chip.vue'
+import { Checkbox } from '@/ui/checkbox'
 import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
+import GalleryFold from '@/admin/components/gallery/GalleryFold.vue'
 import { addressPrefix } from '@/admin/lib/galleryAddress'
 import { decideExpiryOnBlur } from '@/admin/lib/galleryExpiry'
 import GalleryReleaseFields, { type ReleasePatch, type ReleaseValues } from '@/admin/components/gallery/GalleryReleaseFields.vue'
@@ -51,24 +55,22 @@ const props = defineProps<{
     categories: { id: string; name: string }[]
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
-  versions: { version: number; publishedAt: string | null; assetCount: number }[]
-  lists: { id: string; name: string | null; owner: string | null; count: number }[]
-  settingsSection: 'allgemein' | 'zugang' | 'freigabe' | 'download' | 'listen'
+  settingsSection: 'zugang' | 'download' | 'darstellung'
 }>()
 
-const SECTIONS = ['allgemein', 'zugang', 'freigabe', 'download', 'listen'] as const
+const { t } = useI18n()
 
-// Zwei der fünf Abschnitte sind Schalter — ihr Zustand steht in der Zeile,
-// die zu ihnen führt, statt erst dahinter.
+const SECTIONS = ['zugang', 'download', 'darstellung'] as const
+
+// Der Download ist der eine Schalter unter den Abschnitten — sein Zustand
+// steht in der Zeile, die zu ihm führt, statt erst dahinter.
 const pill = computed<Record<string, boolean | null>>(() => ({
-  allgemein: null,
   zugang: null,
   download: props.gallery.downloadRule !== 'off',
-  freigabe: null,
-  listen: props.gallery.offers.lists,
+  darstellung: null,
 }))
 
-// Allgemein: the address and the expiry, the two facts a studio actually
+// The address and the expiry, the two facts a studio actually
 // changes after a gallery already exists.
 const general = useForm({ slug: props.gallery.slug, expires_at: props.gallery.expiresAt ?? '' })
 
@@ -108,6 +110,12 @@ const category = useForm({ project_type_id: props.gallery.categoryId ?? NO_CATEG
 function saveCategory() {
   category.transform((data) => ({ project_type_id: data.project_type_id === NO_CATEGORY ? null : data.project_type_id }))
     .patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
+
+const home = useForm({ listed_on_home: props.gallery.listedOnHome, home_pinned: props.gallery.homePinned })
+
+function saveHome() {
+  home.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
 const addressPrefixText = computed(() => addressPrefix(props.gallery.url))
@@ -161,15 +169,15 @@ function setReminder(on: boolean) {
   reminder.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
-const summary = computed(() => {
-  const allowed = (audience: Audience) => ACTIONS.filter((action) => release.permissions[audience][action]).map((action) => `galleryRecord.permission.${action}`)
+const onOff = (value: boolean) => t(value ? 'galleryPresets.on' : 'galleryPresets.off')
 
-  return [
-    { label: 'galleryRecord.view', value: `galleryRecord.viewMode.${view.view_mode}`, list: false },
-    { label: 'galleryRecord.downloadsHeading', value: `galleries.download.${download.download_rule}`, list: false },
-    ...AUDIENCES.map((audience) => ({ label: `galleryRecord.permission.${audience}`, value: allowed(audience), list: true })),
-  ]
-})
+const categoryName = computed(() => props.gallery.categories.find((row) => row.id === category.project_type_id)?.name ?? t('galleryRecord.categoryNone'))
+
+const rights = computed(() => AUDIENCES.map((audience: Audience) => {
+  const allowed = ACTIONS.filter((action) => release.permissions[audience][action]).map((action) => t(`galleryRecord.permission.${action}`))
+
+  return `${t(`galleryRecord.permission.${audience}`)}: ${allowed.join(', ') || '—'}`
+}).join(' · '))
 
 function day(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
@@ -200,10 +208,10 @@ function day(iso: string | null) {
     </nav>
 
     <div class="min-w-0 flex-1">
-  <template v-if="settingsSection === 'allgemein'">
-    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.allgemein') }}</h2>
+  <template v-if="settingsSection === 'zugang'">
+    <GalleryAccess :gallery="gallery" :siblings="siblings" />
 
-    <div v-if="gallery.isExternal" class="mb-5 flex max-w-[440px] flex-col gap-4 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+    <div v-if="gallery.isExternal" class="mt-5 flex max-w-[440px] flex-col gap-4">
       <div class="flex flex-col gap-1.5">
         <Label for="gallery-url">{{ $t('galleries.urlField') }}</Label>
         <Input id="gallery-url" v-model="external.external_url" type="url" @blur="saveExternal" />
@@ -219,22 +227,7 @@ function day(iso: string | null) {
       </div>
     </div>
 
-    <div class="mb-5 flex flex-col gap-2 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
-      <div class="text-small text-ink-2">{{ $t('galleryRecord.slugLabel') }}</div>
-      <!-- Ein Feld, nicht zwei Dinge nebeneinander: der feste Teil der
-           Adresse ist nichts zum Tippen, und kopiert wird die ganze. -->
-      <InputGroup class="max-w-[440px]">
-        <InputGroupAddon>{{ addressPrefixText }}</InputGroupAddon>
-        <InputGroupInput :id="SLUG_FIELD" v-model="general.slug" type="text" maxlength="60" :aria-label="$t('galleryRecord.slugLabel')" @blur="saveGeneral" />
-        <CopyButton :value="addressPrefixText + general.slug" variant="ghost" class="flex-none px-3" />
-      </InputGroup>
-      <p v-if="general.errors.slug" class="text-small leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
-      <!-- The one fact nobody could derive from a text field: there is no
-           slug history, so a link already in an inbox stops resolving. -->
-      <p class="text-small leading-[1.45] text-faint">{{ $t('galleryRecord.slugHint') }}</p>
-    </div>
-
-    <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+    <div class="my-5 flex items-start gap-[26px]">
       <div v-if="gallery.eventDate" class="flex min-w-0 flex-col gap-2">
         <div class="text-small text-ink-2">{{ $t('galleryRecord.eventDate') }}</div>
         <div class="mt-[5px] text-body leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ day(gallery.eventDate) }}</div>
@@ -246,7 +239,7 @@ function day(iso: string | null) {
              settled value — see saveGeneral()'s own doc, and the note on
              saveExpiryOnBlur() above. update:modelValue would otherwise write
              every keystroke's partial parse into it, and a later blur on the
-             address field above would PATCH that half-typed date's null
+             address field below would PATCH that half-typed date's null
              straight through as this gallery's new expiry. -->
         <DatePicker :model-value="general.expires_at" class="w-[150px]" @blur="saveExpiryOnBlur" />
       </div>
@@ -259,75 +252,91 @@ function day(iso: string | null) {
       </div>
     </div>
 
-    <div v-if="!gallery.isExternal" class="mb-5 flex flex-col gap-2 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
-      <Label for="gallery-category">{{ $t('galleryRecord.category') }}</Label>
-      <Select v-model="category.project_type_id" @update:model-value="saveCategory">
-        <SelectTrigger id="gallery-category" class="w-[220px]"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem :value="NO_CATEGORY">{{ $t('galleryRecord.categoryNone') }}</SelectItem>
-          <SelectItem v-for="type in gallery.categories" :key="type.id" :value="type.id">{{ type.name }}</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
+    <div class="mt-8 flex flex-col">
+      <GalleryFold :label="$t('galleryRecord.slugLabel')" :value="general.slug" :error="!!general.errors.slug">
+        <!-- Ein Feld, nicht zwei Dinge nebeneinander: der feste Teil der
+             Adresse ist nichts zum Tippen, und kopiert wird die ganze. -->
+        <InputGroup class="max-w-[440px]">
+          <InputGroupAddon>{{ addressPrefixText }}</InputGroupAddon>
+          <InputGroupInput :id="SLUG_FIELD" v-model="general.slug" type="text" maxlength="60" :aria-label="$t('galleryRecord.slugLabel')" @blur="saveGeneral" />
+          <CopyButton :value="addressPrefixText + general.slug" variant="ghost" class="flex-none px-3" />
+        </InputGroup>
+        <p v-if="general.errors.slug" class="mt-2 text-small leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
+        <!-- The one fact nobody could derive from a text field: there is no
+             slug history, so a link already in an inbox stops resolving. -->
+        <p class="mt-2 text-small leading-[1.45] text-faint">{{ $t('galleryRecord.slugHint') }}</p>
+      </GalleryFold>
 
-    <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
-    <div class="mb-9">
-      <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
-        <span class="w-[62px] flex-none text-small font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
-        <span class="text-small font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
-        <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
-      </div>
+      <GalleryFold v-if="!gallery.isExternal" :label="$t('galleryRecord.category')" :value="categoryName" :error="!!category.errors.project_type_id">
+        <Select v-model="category.project_type_id" @update:model-value="saveCategory">
+          <SelectTrigger id="gallery-category" class="w-[220px]" :aria-label="$t('galleryRecord.category')"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem :value="NO_CATEGORY">{{ $t('galleryRecord.categoryNone') }}</SelectItem>
+            <SelectItem v-for="type in gallery.categories" :key="type.id" :value="type.id">{{ type.name }}</SelectItem>
+          </SelectContent>
+        </Select>
+        <p v-if="category.errors.project_type_id" class="mt-2 text-small leading-[1.45] text-destructive">{{ category.errors.project_type_id }}</p>
+      </GalleryFold>
+
+      <template v-if="!gallery.isExternal">
+        <GalleryFold :label="$t('galleryRecord.home')" :value="onOff(home.listed_on_home)" :error="!!home.errors.listed_on_home">
+          <div class="flex items-center gap-2.5">
+            <Checkbox id="cb-home-listed" v-model="home.listed_on_home" @update:model-value="saveHome" />
+            <Label variant="inline" for="cb-home-listed">{{ $t('galleryRecord.listedOnHome') }}</Label>
+            <template v-if="home.listed_on_home">
+              <Link
+                v-if="gallery.homeMode !== 'overview'"
+                class="text-small text-ink-2 no-underline hover:underline"
+                href="/galerien?einstellungen=startseite"
+              >{{ $t('galleryRecord.homeOff') }} →</Link>
+              <Chip v-else-if="gallery.homeBlocker" tone="warn">
+                {{ $t('galleryRecord.homeHidden', { reason: $t(`galleryRecord.homeBlocker.${gallery.homeBlocker}`) }) }}
+              </Chip>
+              <Chip v-else tone="success">{{ $t('galleryRecord.homeListed') }}</Chip>
+            </template>
+          </div>
+          <p v-if="home.errors.listed_on_home" class="mt-2 text-small leading-[1.45] text-destructive">{{ home.errors.listed_on_home }}</p>
+        </GalleryFold>
+
+        <GalleryFold :label="$t('galleryRecord.homePinned')" :value="onOff(home.home_pinned)" :error="!!home.errors.home_pinned">
+          <div class="flex items-center gap-2.5">
+            <Checkbox id="cb-home-pinned" v-model="home.home_pinned" :disabled="!home.listed_on_home" @update:model-value="saveHome" />
+            <Label variant="inline" for="cb-home-pinned">{{ $t('galleryRecord.homePinned') }}</Label>
+          </div>
+          <p v-if="home.errors.home_pinned" class="mt-2 text-small leading-[1.45] text-destructive">{{ home.errors.home_pinned }}</p>
+        </GalleryFold>
+      </template>
+
+      <GalleryFold :label="$t('galleryRecord.rights')" :value="rights">
+        <GalleryReleaseFields :model-value="releaseValues" :parts="['permissions']" @change="applyRelease" />
+      </GalleryFold>
     </div>
   </template>
 
-  <GalleryAccess v-else-if="settingsSection === 'zugang'" :gallery="gallery" :siblings="siblings" />
-
   <template v-else-if="settingsSection === 'download'">
     <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.download') }}</h2>
+    <GalleryReleaseFields
+      :model-value="releaseValues"
+      :parts="['download']"
+      :invoices="gallery.invoices"
+      :invoice-id="download.download_invoice_id"
+      :follows-plan="gallery.followsPlan"
+      @change="applyRelease"
+    />
     <div class="flex flex-col gap-2">
       <div class="text-small text-ink-2">{{ $t('gallery.gateDownload') }}</div>
       <Input v-model="downloadPin.download_pin" class="w-[110px]" type="text" @blur="saveDownloadPin" />
     </div>
   </template>
 
-  <template v-else-if="settingsSection === 'listen'">
-    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.listen') }}</h2>
-
-    <div>
-      <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
-        <span class="text-small font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
-        <span class="w-14 flex-none text-small text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
-        <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>
-      </div>
-      <p v-if="!lists.length" class="text-small leading-[1.45] text-faint">{{ $t('gallery.listEmpty') }}</p>
-    </div>
-  </template>
-
-  <template v-else-if="settingsSection === 'freigabe'">
-    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.freigabe') }}</h2>
-
-    <div class="flex items-start gap-8 max-[1100px]:flex-col">
-    <div class="min-w-0 flex-1">
+  <template v-else-if="settingsSection === 'darstellung'">
+    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.darstellung') }}</h2>
     <GalleryReleaseFields
       :model-value="releaseValues"
       :placeholder="gallery.studioName"
-      :invoices="gallery.invoices"
-      :invoice-id="download.download_invoice_id"
-      :follows-plan="gallery.followsPlan"
+      :parts="['view', 'intro']"
       @change="applyRelease"
     />
-    </div>
-
-    <aside class="w-[220px] flex-none rounded-lg bg-sunk px-4 py-3.5 max-[1100px]:w-full">
-      <div class="mb-2 text-small font-semibold">{{ $t('galleryRecord.inPortal') }}</div>
-      <dl class="m-0 flex flex-col gap-2 text-small">
-        <div v-for="row in summary" :key="row.label" class="flex flex-col gap-0.5">
-          <dt class="text-ink-2">{{ $t(row.label) }}</dt>
-          <dd class="m-0 font-medium">{{ Array.isArray(row.value) ? row.value.map((key) => $t(key)).join(', ') || '—' : $t(row.value) }}</dd>
-        </div>
-      </dl>
-    </aside>
-    </div>
   </template>
   </div>
   </div>

@@ -116,7 +116,7 @@ function rotatePassword() {
           <Button class="ml-auto" type="button" :state="processing ? 'loading' : 'idle'" @click="sendMail">
             {{ publishable ? $t('galleryRecord.sendAndPublish') : $t('sendMail.submit') }}
           </Button>
-          <Button v-if="publishable" type="button" variant="secondary" :disabled="processing" @click="post({})">{{ $t('galleryRecord.publishOnly') }}</Button>
+          <Button v-if="publishable" type="button" variant="secondary" :disabled="processing" @click="post({})">{{ $t('galleryRecord.publishSilently') }}</Button>
         </template>
         <template v-else>
           <CopyButton :value="pasteText" :label="$t('galleryRecord.copyAll')" variant="default" />

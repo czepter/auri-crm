@@ -17,6 +17,8 @@ export type ReleaseValues = {
   intro_enabled: boolean
 }
 
+export type ReleasePart = 'view' | 'download' | 'permissions' | 'intro'
+
 export type ReleasePatch = Partial<ReleaseValues> & { download_invoice_id?: string | null }
 
 const props = withDefaults(defineProps<{
@@ -28,7 +30,8 @@ const props = withDefaults(defineProps<{
   followsPlan?: boolean
   /** Eine Vorlage hat keinen eigenen Text: das Wasserzeichen nimmt den Studionamen. */
   watermarkField?: boolean
-}>(), { watermarkField: true })
+  parts?: ReleasePart[]
+}>(), { watermarkField: true, parts: () => ['view', 'download', 'permissions', 'intro'] })
 
 const emit = defineEmits<{ change: [patch: ReleasePatch] }>()
 
@@ -57,7 +60,7 @@ function setPermission(audience: Audience, action: Action, on: boolean | 'indete
 </script>
 
 <template>
-  <div class="mb-6 flex max-w-[440px] flex-col gap-2.5">
+  <div v-if="parts.includes('view')" class="mb-6 flex max-w-[440px] flex-col gap-2.5">
     <ChoiceGroup
       :model-value="modelValue.view_mode"
       :label="$t('galleryRecord.view')"
@@ -75,7 +78,7 @@ function setPermission(audience: Audience, action: Action, on: boolean | 'indete
     />
   </div>
 
-  <div class="mb-6 flex max-w-[440px] flex-col gap-3">
+  <div v-if="parts.includes('download')" class="mb-6 flex max-w-[440px] flex-col gap-3">
     <ChoiceGroup
       :model-value="modelValue.download_rule"
       :label="$t('galleryRecord.downloadsHeading')"
@@ -109,7 +112,7 @@ function setPermission(audience: Audience, action: Action, on: boolean | 'indete
     </div>
   </div>
 
-  <table class="mb-6 w-full max-w-[440px] border-collapse text-small">
+  <table v-if="parts.includes('permissions')" class="mb-6 w-full max-w-[440px] border-collapse text-small">
     <thead>
       <tr class="text-left text-ink-2">
         <th class="py-2 font-normal" />
@@ -133,7 +136,7 @@ function setPermission(audience: Audience, action: Action, on: boolean | 'indete
     </tbody>
   </table>
 
-  <div class="flex items-center gap-2.5">
+  <div v-if="parts.includes('intro')" class="flex items-center gap-2.5">
     <Switch id="sw-intro" :model-value="modelValue.intro_enabled" @update:model-value="(on) => emit('change', { intro_enabled: on })" />
     <Label variant="inline" for="sw-intro">{{ $t('galleryRecord.intro') }}</Label>
   </div>

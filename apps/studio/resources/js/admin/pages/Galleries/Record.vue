@@ -108,7 +108,7 @@ const props = withDefaults(defineProps<{
   nav: App.Gallery.Data.GalleryNavData
   area: 'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'
   activeSetId: string | null
-  settingsSection: 'allgemein' | 'zugang' | 'freigabe' | 'download' | 'listen'
+  settingsSection: 'zugang' | 'download' | 'darstellung'
 }>(), {
   siblings: () => [],
   assets: () => [],
@@ -150,15 +150,8 @@ const publishLabel = computed(() => publishLabelKey(publishState.value))
 const showPublish = computed(() => props.gallery.canPublish && showPublishRule(publishState.value))
 const showWithdraw = computed(() => props.gallery.canPublish && showWithdrawRule(publishState.value))
 
-const publishing = ref(false)
-
 function publish() {
-  if (props.gallery.canMail) {
-    openSend('mail')
-    return
-  }
-
-  publishSilently()
+  openSend(props.gallery.canMail ? 'mail' : 'link')
 }
 
 const sharing = ref(false)
@@ -170,18 +163,8 @@ function openSend(target: 'mail' | 'link') {
   sharing.value = true
 }
 
-const isFirstPublish = computed(() => showPublish.value && props.figures.published === null)
 const showResend = computed(() => props.gallery.canPublish && props.gallery.canMail && showWithdraw.value && !props.gallery.deviates)
 const previewForm = ref<HTMLFormElement | null>(null)
-
-function publishSilently() {
-  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, {
-    preserveScroll: true,
-    onStart: () => (publishing.value = true),
-    onFinish: () => (publishing.value = false),
-    onSuccess: () => openSend('link'),
-  })
-}
 
 function duplicate() {
   router.post(`/galerien/${props.gallery.id}/duplizieren`)
@@ -425,7 +408,6 @@ function saveFocal(focal: { x: number; y: number }) {
               <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="presets.length" @select="applyingPreset = true">{{ $t('galleryRecord.applyPreset') }}</DropdownMenuItem>
               <DropdownMenuItem class="min-[641px]:hidden" @select="previewForm?.submit()">{{ $t('galleryRecord.preview') }}</DropdownMenuItem>
-              <DropdownMenuItem v-if="showPublish && gallery.canMail" @select="publishSilently">{{ $t('galleryRecord.publishSilently') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showWithdraw" @select="withdrawing = true">{{ $t('galleryRecord.withdraw') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStartPrerelease" @select="choosingPrerelease = true">{{ $t('galleryRecord.prerelease') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStopPrerelease" @select="stopPrerelease">{{ $t('galleryRecord.prereleaseStop') }}</DropdownMenuItem>
@@ -443,17 +425,7 @@ function saveFocal(focal: { x: number; y: number }) {
             <input type="hidden" name="_token" :value="csrf">
             <Button type="submit" variant="secondary">{{ $t('galleryRecord.preview') }}</Button>
           </form>
-          <DropdownMenu v-if="isFirstPublish" :modal="false">
-            <DropdownMenuTrigger as-child>
-              <Button class="ml-auto" type="button" :state="publishing ? 'loading' : 'idle'">{{ $t(publishLabel) }}</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" force-mount class="data-[state=closed]:hidden">
-              <DropdownMenuItem v-if="gallery.canMail" @select="openSend('mail')">{{ $t('galleryRecord.publishAndSend') }}</DropdownMenuItem>
-              <DropdownMenuItem @select="publishSilently">{{ $t('galleryRecord.publishOnly') }}</DropdownMenuItem>
-              <DropdownMenuItem @select="openSend('link')">{{ $t('galleryRecord.copyLinkAndPassword') }}</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button class="ml-auto" v-else-if="showPublish" type="button" :state="publishing ? 'loading' : 'idle'" @click="publish">{{ $t(publishLabel) }}</Button>
+          <Button class="ml-auto" v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
           <Button class="ml-auto" v-else-if="showWithdraw" type="button" @click="openSend('link')">{{ $t('galleryRecord.share') }}</Button>
         </span>
       </PageHead>
@@ -661,11 +633,11 @@ function saveFocal(focal: { x: number; y: number }) {
         <!-- Einstellungen: Pixieset's General Settings shape — a
              sub-navigation in the rail, one labelled section at a time here. -->
         <div v-else-if="tab === 'einstellungen'" class="flex min-w-0 flex-1 px-6 pt-7 pb-8">
-          <Settings :gallery="gallery" :siblings="siblings" :versions="versions" :lists="lists" :settings-section="settingsSection" />
+          <Settings :gallery="gallery" :siblings="siblings" :settings-section="settingsSection" />
         </div>
 
         <div v-else class="flex min-w-0 flex-1 px-6 pt-7 pb-8">
-          <Activity :gallery-id="gallery.id" :activity="activity" :builds="builds" />
+          <Activity :gallery-id="gallery.id" :activity="activity" :builds="builds" :lists="lists" :versions="versions" />
         </div>
       </div>
     </div>

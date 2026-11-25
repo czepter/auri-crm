@@ -84,7 +84,7 @@ const nav: App.Gallery.Data.GalleryNavData = {
       })),
     },
     { key: 'gestaltung', label: 'galleryRecord.tab.gestaltung', href: '/galerien/g-rahn/gestaltung', count: null, countTo: null, children: [] },
-    { key: 'einstellungen', label: 'galleryRecord.tab.einstellungen', href: '/galerien/g-rahn/einstellungen/allgemein', count: null, countTo: null, children: [] },
+    { key: 'einstellungen', label: 'galleryRecord.tab.einstellungen', href: '/galerien/g-rahn/einstellungen/zugang', count: null, countTo: null, children: [] },
     { key: 'aktivitaet', label: 'galleryRecord.tab.aktivitaet', href: '/galerien/g-rahn/aktivitaet', count: 96, countTo: null, children: [] },
   ],
 }
@@ -125,7 +125,7 @@ const meta = {
     nav,
     area: 'bilder',
     activeSetId: 's-trauung',
-    settingsSection: 'allgemein',
+    settingsSection: 'zugang',
   },
 } satisfies Meta<typeof Record>
 
@@ -159,16 +159,16 @@ export const Gestaltung: Story = {
   parameters: { url: '/galerien/g-rahn/gestaltung' },
 }
 
-/** Der Bereich Einstellungen, Abschnitt Allgemein. */
-export const EinstellungenAllgemein: Story = {
-  args: { area: 'einstellungen' },
-  parameters: { url: '/galerien/g-rahn/einstellungen/allgemein' },
-}
-
-/** Derselbe Bereich beim Zugang: Kennwort, PIN und Frist. */
+/** Der Bereich Einstellungen beim Zugang: Kennwort und Frist, Seltenes eingeklappt. */
 export const EinstellungenZugang: Story = {
   args: { area: 'einstellungen', settingsSection: 'zugang' },
   parameters: { url: '/galerien/g-rahn/einstellungen/zugang' },
+}
+
+/** Der Abschnitt Download: Regel, Größen und PIN. */
+export const EinstellungenDownload: Story = {
+  args: { area: 'einstellungen', settingsSection: 'download' },
+  parameters: { url: '/galerien/g-rahn/einstellungen/download' },
 }
 
 /** Der Bereich Aktivität: Verlauf links, Favoriten und Ausgeblendetes rechts. */

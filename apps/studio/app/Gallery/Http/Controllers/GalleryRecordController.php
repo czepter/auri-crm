@@ -65,7 +65,7 @@ use Inertia\Response;
 class GalleryRecordController extends Controller
 {
     /** Die Abschnitte der Einstellungen. Kein Modell, nur fünf Wörter. */
-    private const SECTIONS = ['allgemein', 'zugang', 'freigabe', 'download', 'listen'];
+    private const SECTIONS = ['zugang', 'download', 'darstellung'];
 
     public function __construct(private readonly DocumentMergeData $mergeData) {}
 
@@ -91,7 +91,7 @@ class GalleryRecordController extends Controller
         // Ein Lesezeichen auf einen umbenannten Abschnitt landet im Bereich,
         // nicht auf einer Fehlerseite — der Bereich existiert ja weiter.
         if (! in_array($abschnitt, self::SECTIONS, true)) {
-            return redirect()->route('galleries.show.section', [$gallery, 'allgemein']);
+            return redirect()->route('galleries.show.section', [$gallery, 'zugang']);
         }
 
         return $this->render($gallery, 'einstellungen', null, $abschnitt);
@@ -168,7 +168,7 @@ class GalleryRecordController extends Controller
             // gibt es dann nicht, und ohne aktives Set wäre die Dropzone
             // ohne Ziel — das war R22.
             'activeSetId' => $set?->public_id ?? ($sets->count() === 1 ? $sets->first()->public_id : null),
-            'settingsSection' => $abschnitt ?? 'allgemein',
+            'settingsSection' => $abschnitt ?? 'zugang',
             'nav' => GalleryNavData::build($gallery->loadMissing('coverAsset'), $sets, $version),
             'gallery' => [
                 'id' => $gallery->public_id,

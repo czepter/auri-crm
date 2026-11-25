@@ -104,13 +104,13 @@ const base = {
   figures: { published: null, assets: 0, expiresAt: null, marked: 0, downloaded: 0, viewed: 0 },
   area: 'bilder',
   activeSetId: 's1',
-  settingsSection: 'allgemein',
+  settingsSection: 'zugang',
   nav: {
     cover: null,
     tabs: [
       { key: 'bilder', label: 'galleryRecord.tab.bilder', href: '/galerien/g1/bilder', count: null, countTo: null, children: [] },
       { key: 'gestaltung', label: 'galleryRecord.tab.gestaltung', href: '/galerien/g1/gestaltung', count: null, countTo: null, children: [] },
-      { key: 'einstellungen', label: 'galleryRecord.tab.einstellungen', href: '/galerien/g1/einstellungen/allgemein', count: null, countTo: null, children: [] },
+      { key: 'einstellungen', label: 'galleryRecord.tab.einstellungen', href: '/galerien/g1/einstellungen/zugang', count: null, countTo: null, children: [] },
       { key: 'aktivitaet', label: 'galleryRecord.tab.aktivitaet', href: '/galerien/g1/aktivitaet', count: null, countTo: null, children: [] },
     ],
   },
@@ -227,12 +227,11 @@ describe('Record', () => {
     expect(html).toContain(de.galleryRecord.more)
   })
 
-  it('offers the three ways out of a draft in the Veröffentlichen menu', async () => {
+  it('has one Veröffentlichen button and no second route past the send dialog', async () => {
     const html = await render({ ...base, gallery: { ...gallery, canMail: true }, figures: { ...base.figures, assets: 2 } })
 
-    expect(html).toContain(de.galleryRecord.publishAndSend)
-    expect(html).toContain(de.galleryRecord.publishOnly)
-    expect(html).toContain(de.galleryRecord.copyLinkAndPassword)
+    expect(html).toContain(de.galleryRecord.publish)
+    expect(html).not.toContain(de.galleryRecord.publishSilently)
   })
 
   it('offers Erneut senden only for a standing, unchanged version', async () => {
