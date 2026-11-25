@@ -9,6 +9,7 @@ use App\Finance\Actions\RenderEuerPdf;
 use App\Finance\Models\FiscalYear;
 use App\Finance\Support\EuerReport;
 use App\Http\Controllers\Controller;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -27,9 +28,9 @@ class EuerController extends Controller
         $data = $report->forYear($year);
 
         return Inertia::render('Finance/Euer/Show', [
-            'report' => $data,
+            'report' => LiveUpdate::live($data),
             'years' => FiscalYear::known($year),
-            'lockable' => $data->lockedAt === null && $year < now()->year,
+            'lockable' => LiveUpdate::live($data->lockedAt === null && $year < now()->year),
         ]);
     }
 

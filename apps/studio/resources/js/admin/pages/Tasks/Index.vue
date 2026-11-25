@@ -26,14 +26,12 @@ import Empty from '@/ui/page/Empty.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { daysUntil, dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   tasks: App.Crm.Data.TaskRowData[]
   staffOptions: { value: string; label: string }[]
 }>()
-useLiveProps(['tasks', 'staffOptions'])
 
 const solo = usePage().props.soloStudio
 const TABS = solo ? (['all', 'done'] as const) : (['mine', 'all', 'done'] as const)

@@ -9,6 +9,7 @@ use App\Privacy\Actions\ApplyRetention;
 use App\Privacy\Data\RetentionPolicyData;
 use App\Privacy\Support\RetentionCandidates;
 use App\Settings\Actions\UpdateStudioSetting;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,10 +25,10 @@ class RetentionController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Retention', [
-            'months' => StudioSettings::current()->retention_months,
-            'policy' => RetentionPolicyData::current(),
-            'candidates' => RetentionCandidates::preview(),
-            'funnel' => RetentionCandidates::funnel(),
+            'months' => LiveUpdate::live(StudioSettings::current()->retention_months),
+            'policy' => LiveUpdate::live(RetentionPolicyData::current()),
+            'candidates' => LiveUpdate::live(RetentionCandidates::preview()),
+            'funnel' => LiveUpdate::live(RetentionCandidates::funnel()),
         ]);
     }
 

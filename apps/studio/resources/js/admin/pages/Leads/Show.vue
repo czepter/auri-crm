@@ -38,7 +38,6 @@ import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day, daysUntil } from "@/admin/lib/dates";
 import { bandMetrics, isBare } from "@/admin/lib/projectOverview";
 import { dayAndMonth } from "@/admin/lib/shoots";
-import { useLiveProps } from "@/admin/lib/liveReload";
 
 const props = defineProps<{
     queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[];
@@ -78,7 +77,6 @@ const props = defineProps<{
     quotes: App.Quotes.Data.QuoteData[];
     payments: { number: string | null; rows: { label: string; amount: number }[] } | null;
 }>();
-useLiveProps(["header", "conversation", "quotes", "payments", "queue", "lead", "people", "shoots", "quote", "supersededQuotes", "tasks", "thread", "week", "conflicts", "stages", "types"]);
 
 const quoteTab = computed(() => `/anfragen/${props.lead.id}/angebot`);
 const newQuote = computed(() => `/angebote/neu?projekt=${props.lead.projectId}`);

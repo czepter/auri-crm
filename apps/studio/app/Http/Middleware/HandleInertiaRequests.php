@@ -57,7 +57,7 @@ class HandleInertiaRequests extends Middleware
                 'templates' => app(TemplateHubController::class)->allowedKinds() !== [],
             ],
             // #490: der Löschtag, solange das Studio zum Löschen vorgemerkt ist.
-            'studioDeletion' => fn () => $user === null ? null : StudioSettings::current()->deletionDate()?->format('d.m.Y'),
+            'studioDeletion' => $user === null ? null : $this->live(fn () => StudioSettings::current()->deletionDate()?->format('d.m.Y')),
             // The studio's own name. Shared on every surface rather than only
             // in the portal's branding block: the admin wordmark and the
             // sign-in screens wear it with nobody signed in yet. Falls back
@@ -68,7 +68,7 @@ class HandleInertiaRequests extends Middleware
             // shared rather than passed per page.
             'portalPreview' => $request->session()->get('portal_preview') === true,
             // Crew, assignees and bylines name the only person there is.
-            'soloStudio' => fn () => $user !== null && User::soloStudio(),
+            'soloStudio' => $user === null ? false : $this->live(fn () => User::soloStudio()),
             // #480: what the letter fields of quotes and invoices offer —
             // DocumentBlockCatalog's text blocks and every merge field.
             'letterEditor' => fn () => $user === null ? null : [
@@ -185,7 +185,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /** The admin hub's cookie is minted on the admin surface only, so only there does an event reach the tab. */
-    private function live(array $props): mixed
+    private function live(mixed $props): mixed
     {
         return Surface::current() === Surface::ADMIN ? LiveUpdate::live($props) : $props;
     }

@@ -9,14 +9,12 @@ import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { filledProfiles, withOpenRow } from '@/admin/lib/socialProfile'
 
 defineProps<{
   portalDefaults: Record<string, string | boolean | null>
   socialPlatforms: { value: string; label: string }[]
 }>()
-useLiveProps([])
 
 // P-09 (#228): '' is Standard, and the sheet's own encoding — the transform
 // below drops it, so a contact is born with only the keys that depart.

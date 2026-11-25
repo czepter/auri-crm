@@ -11,11 +11,9 @@ import FormShell from '@/ui/page/FormShell.vue'
 import Empty from '@/ui/page/Empty.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{ rules: App.Automation.Data.AutomationRuleData[]; timezone: string }>()
-useLiveProps(['rules', 'timezone'])
 
 const groups = computed(() => {
   const byGroup = new Map<string, App.Automation.Data.AutomationRuleData[]>()

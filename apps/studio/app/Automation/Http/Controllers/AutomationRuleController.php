@@ -26,6 +26,7 @@ use App\Notifications\Support\MailPreview;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Support\InvoiceMergeData;
 use App\Portal\Support\ClientAudience;
+use App\Support\LiveUpdate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,12 +52,12 @@ class AutomationRuleController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Automations', [
-            'rules' => AutomationRuleData::collect(
+            'rules' => LiveUpdate::live(AutomationRuleData::collect(
                 AutomationRule::query()->withCount(['runs as drafts_count' => fn ($runs) => $runs->where('status', AutomationRunStatus::AwaitingApproval)])->orderBy('name')->get()->map(AutomationRuleData::fromModel(...))
-            ),
+            )),
             // Der Sweep laeuft in Studiozeit, nicht in Containerzeit. Wer
             // die Spalte "letzter Lauf" liest, liest sie auf dieser Uhr.
-            'timezone' => StudioSettings::current()->localTimezone(),
+            'timezone' => LiveUpdate::live(StudioSettings::current()->localTimezone()),
         ]);
     }
 
@@ -66,34 +67,34 @@ class AutomationRuleController extends Controller
         $automationRule->loadCount(['runs as drafts_count' => fn ($runs) => $runs->where('status', AutomationRunStatus::AwaitingApproval)]);
 
         return Inertia::render('Settings/AutomationRule', [
-            'rule' => AutomationRuleData::fromModel($automationRule),
+            'rule' => LiveUpdate::live(AutomationRuleData::fromModel($automationRule)),
             'eventClause' => $automationRule->event_class === null ? null : __('settings.event_clauses.'.class_basename($automationRule->event_class)),
             'anchors' => array_map(
                 fn (AutomationAnchor $anchor) => [...$this->options([$anchor])[0], 'noun' => $anchor->noun(), 'at' => $anchor->at(), 'canBefore' => $anchor->canBefore()],
                 AutomationAnchor::cases(),
             ),
-            'recipients' => $this->options(array_values(array_filter(
+            'recipients' => LiveUpdate::live($this->options(array_values(array_filter(
                 AutomationRecipient::cases(),
                 fn (AutomationRecipient $case) => $case !== AutomationRecipient::Crew || ! User::soloStudio(),
-            ))),
+            )))),
             'conditions' => array_map(
                 fn (AutomationCondition $condition) => [...$this->options([$condition])[0], 'clause' => $condition->clause()],
                 AutomationCondition::cases(),
             ),
             // A client rule is always a draft; only the studio side has a choice.
             'actions' => $this->options([AutomationAction::Notice, AutomationAction::Task]),
-            'projectTypes' => ProjectType::query()->active()->orderBy('sort_order')->get()
+            'projectTypes' => LiveUpdate::live(ProjectType::query()->active()->orderBy('sort_order')->get()
                 ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
-                ->all(),
+                ->all()),
             // The same vocabulary and the same sample values the document
             // templates show, so a field means one thing in both places.
             'mergeFields' => self::mergeFields(),
             'previewProjects' => $this->previewProjects($automationRule->project_type, $automationRule->anchor === AutomationAnchor::InstallmentDue),
             'testRecipient' => auth('staff')->user()->email,
-            'runs' => AutomationRunData::collect(
+            'runs' => LiveUpdate::live(AutomationRunData::collect(
                 $automationRule->runs()->with('anchorable')->latest('fired_at')->limit(20)->get()
                     ->map(AutomationRunData::fromModel(...))
-            ),
+            )),
         ]);
     }
 

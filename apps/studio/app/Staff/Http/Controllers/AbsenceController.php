@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\User;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -38,13 +39,13 @@ class AbsenceController extends Controller
             ->get();
 
         return Inertia::render('Staff/Absences', [
-            'absences' => $absences->map(fn (Absence $absence) => AbsenceData::fromModel($absence, $viewer))->all(),
-            'canManageCrew' => $canManageCrew,
+            'absences' => LiveUpdate::live($absences->map(fn (Absence $absence) => AbsenceData::fromModel($absence, $viewer))->all()),
+            'canManageCrew' => LiveUpdate::live($canManageCrew),
             // Only ManageCrew gets to pick who a row is for — everyone else's
             // only choice is themselves, so the picker is pointless to send.
-            'staff' => $canManageCrew
+            'staff' => LiveUpdate::live($canManageCrew
                 ? StaffProfileData::collect(User::query()->orderBy('name')->get())
-                : [],
+                : []),
         ]);
     }
 

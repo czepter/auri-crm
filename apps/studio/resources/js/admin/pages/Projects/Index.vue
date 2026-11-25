@@ -14,7 +14,6 @@ import { Input } from '@/ui/input'
 import { isoDate, shortDate } from '@/admin/lib/dates'
 import { formatEurosRounded } from '@/lib/money'
 import { relative, TYPE_DOT } from '@/admin/lib/boardCard'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Phase = App.Crm.Data.CaseRowData['phase']
 
@@ -27,7 +26,6 @@ const props = defineProps<{
   settingsSelection: InstanceType<typeof ProjectSettings>['$props']['selection'] | null
   returnTo: string | null
 }>()
-useLiveProps(['projects', 'stages', 'stageSettings'])
 
 const workflowAllowed = computed(() => (usePage().props.auth.can ?? []).includes('manage_tasks'))
 

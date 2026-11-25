@@ -18,7 +18,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Switch } from '@/ui/switch'
 import MessageField from '@/admin/components/automation/MessageField.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 type Option = { value: string; label: string }
@@ -38,7 +37,6 @@ const props = defineProps<{
   testRecipient: string
   runs: App.Automation.Data.AutomationRunData[]
 }>()
-useLiveProps(['rule', 'recipients', 'projectTypes', 'runs'])
 
 const { t } = useI18n()
 const EXAMPLE = 'example'

@@ -8,11 +8,9 @@ import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
 import { saveState } from '@/admin/lib/autosave'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{ ranges: App.Settings.Data.NumberRangeData[] }>()
-useLiveProps(['ranges'])
 
 // One form per range, keyed by its id — three independent drafts rather than
 // one save button that would need to reason about which range changed.

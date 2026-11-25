@@ -9,6 +9,7 @@ use App\Crm\Models\ProjectType;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -58,8 +59,8 @@ class FormTemplateController extends Controller
         $this->authorize('update', $formTemplate);
 
         return Inertia::render('Settings/FormTemplates/Edit', [
-            'template' => FormTemplateData::fromModel($formTemplate),
-            'projectTypes' => $this->projectTypeOptions(),
+            'template' => LiveUpdate::live(FormTemplateData::fromModel($formTemplate)),
+            'projectTypes' => LiveUpdate::live($this->projectTypeOptions()),
             'fieldTypes' => collect(FormFieldType::cases())
                 ->map(fn (FormFieldType $type) => ['value' => $type->value, 'label' => $type->label()])
                 ->all(),

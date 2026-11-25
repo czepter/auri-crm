@@ -9,7 +9,6 @@ import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
 import { relativeDate } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   notifications: {
@@ -21,7 +20,6 @@ const props = defineProps<{
     createdAt: string
   }[]
 }>()
-useLiveProps(['notifications'])
 
 const { locale } = useI18n()
 

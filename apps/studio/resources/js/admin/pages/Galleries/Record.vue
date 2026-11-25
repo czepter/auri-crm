@@ -31,7 +31,6 @@ import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 import Activity, { type ActivityData } from '@/admin/pages/Galleries/panes/Activity.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
 import { shortDate } from '@/admin/lib/dates'
 
@@ -121,8 +120,6 @@ const props = withDefaults(defineProps<{
   failedAssets: () => [],
   pendingUploads: () => [],
 })
-
-useLiveProps(['gallery', 'siblings', 'figures', 'sets', 'assets', 'versions', 'builds', 'lists', 'activity', 'favoriteKeys', 'failedAssets', 'pendingUploads'])
 
 const tab = computed(() => props.area)
 

@@ -3,6 +3,7 @@
 namespace App\Staff\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,7 +22,7 @@ class NotificationController extends Controller
     public function index(Request $request): Response
     {
         return Inertia::render('Notifications/Index', [
-            'notifications' => $request->user('staff')->inAppNotifications()
+            'notifications' => LiveUpdate::live($request->user('staff')->inAppNotifications()
                 ->limit(100)
                 ->get()
                 ->map(fn ($row) => [
@@ -32,7 +33,7 @@ class NotificationController extends Controller
                     'readAt' => $row->read_at?->toIso8601String(),
                     'createdAt' => $row->created_at->toIso8601String(),
                 ])
-                ->all(),
+                ->all()),
         ]);
     }
 

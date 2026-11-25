@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
 use App\Models\User;
+use App\Support\LiveUpdate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -66,7 +67,7 @@ class AuditLogController extends Controller
         $contacts = Contact::query()->whereIn('public_id', $logs->pluck('subject')->filter())->get()->keyBy('public_id');
 
         return Inertia::render('Settings/AuditLog', [
-            'entries' => $logs->map(fn (AuditLog $log) => [
+            'entries' => LiveUpdate::live($logs->map(fn (AuditLog $log) => [
                 'id' => $log->public_id,
                 'at' => $log->created_at->toIso8601String(),
                 'actor' => $log->actor?->name,
@@ -84,8 +85,8 @@ class AuditLogController extends Controller
                     ],
                     default => null,
                 },
-            ])->all(),
-            'nextCursor' => $logs->nextCursor()?->encode(),
+            ])->all()),
+            'nextCursor' => LiveUpdate::live($logs->nextCursor()?->encode()),
             'filters' => [
                 'ereignis' => $filters['ereignis'] ?? '',
                 'person' => $filters['person'] ?? '',
@@ -93,14 +94,14 @@ class AuditLogController extends Controller
                 'bis' => $filters['bis'] ?? '',
                 'anmeldungen' => $request->boolean('anmeldungen'),
             ],
-            'events' => AuditLog::query()->distinct()->pluck('event')
+            'events' => LiveUpdate::live(AuditLog::query()->distinct()->pluck('event')
                 ->map(fn (string $event) => ['value' => $event, 'label' => self::label($event)])
                 ->sortBy('label')
                 ->values()
-                ->all(),
-            'people' => User::query()->orderBy('name')->get(['public_id', 'name'])
+                ->all()),
+            'people' => LiveUpdate::live(User::query()->orderBy('name')->get(['public_id', 'name'])
                 ->map(fn (User $user) => ['value' => $user->public_id, 'label' => $user->name])
-                ->all(),
+                ->all()),
         ]);
     }
 

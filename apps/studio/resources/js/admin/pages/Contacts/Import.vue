@@ -9,12 +9,10 @@ import { Button } from '@/ui/button'
 import { DropArea } from '@/ui/drop-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Row = { line: number; name: string; email: string | null; status: 'create' | 'existing' | 'repeated' | 'invalid'; reason: string | null }
 
 const props = defineProps<{ socialPlatforms: { value: string; label: string }[] }>()
-useLiveProps([])
 
 const { t } = useI18n()
 

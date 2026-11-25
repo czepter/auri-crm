@@ -12,6 +12,7 @@ use App\Reporting\Support\FunnelTimes;
 use App\Reporting\Support\QuoteAcceptanceRate;
 use App\Reporting\Support\RevenueReport;
 use App\Reporting\Support\ShootReport;
+use App\Support\LiveUpdate;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -59,28 +60,28 @@ class ReportController extends Controller
                 ProjectType::cases(),
             ),
 
-            'funnelByMonth' => BookingFunnel::byMonth($from, $to, $type),
-            'sources' => BookingFunnel::bySource($from, $to, $type),
-            'referrers' => BookingFunnel::referrers($from, $to, $type),
-            'lostReasons' => BookingFunnel::lostReasons($from, $to, $type),
+            'funnelByMonth' => LiveUpdate::live(BookingFunnel::byMonth($from, $to, $type)),
+            'sources' => LiveUpdate::live(BookingFunnel::bySource($from, $to, $type)),
+            'referrers' => LiveUpdate::live(BookingFunnel::referrers($from, $to, $type)),
+            'lostReasons' => LiveUpdate::live(BookingFunnel::lostReasons($from, $to, $type)),
 
-            'acceptanceRate' => QuoteAcceptanceRate::between($from, $to, $type),
-            'acceptanceRatePrior' => QuoteAcceptanceRate::between($priorFrom, $priorTo, $type),
+            'acceptanceRate' => LiveUpdate::live(QuoteAcceptanceRate::between($from, $to, $type)),
+            'acceptanceRatePrior' => LiveUpdate::live(QuoteAcceptanceRate::between($priorFrom, $priorTo, $type)),
 
-            'revenue' => RevenueReport::forWindow($from, $to, $type),
-            'revenuePrior' => RevenueReport::forWindow($priorFrom, $priorTo, $type),
-            'perContact' => RevenueReport::perContact($from, $to, $type),
-            'revenueByType' => RevenueReport::perProjectType($from, $to),
+            'revenue' => LiveUpdate::live(RevenueReport::forWindow($from, $to, $type)),
+            'revenuePrior' => LiveUpdate::live(RevenueReport::forWindow($priorFrom, $priorTo, $type)),
+            'perContact' => LiveUpdate::live(RevenueReport::perContact($from, $to, $type)),
+            'revenueByType' => LiveUpdate::live(RevenueReport::perProjectType($from, $to)),
 
-            'cashFlow' => CashFlowForecast::build(type: $type),
-            'cashFlowPast' => CashFlowForecast::past($type),
+            'cashFlow' => LiveUpdate::live(CashFlowForecast::build(type: $type)),
+            'cashFlowPast' => LiveUpdate::live(CashFlowForecast::past($type)),
 
-            'steps' => FunnelTimes::steps($from, $to, $type),
-            'dwell' => FunnelTimes::dwell($from, $to, $type),
-            'responseTimes' => FunnelTimes::responseTimes($from, $to, $type),
+            'steps' => LiveUpdate::live(FunnelTimes::steps($from, $to, $type)),
+            'dwell' => LiveUpdate::live(FunnelTimes::dwell($from, $to, $type)),
+            'responseTimes' => LiveUpdate::live(FunnelTimes::responseTimes($from, $to, $type)),
 
-            'shootsByMonth' => ShootReport::byMonth($from, $to, $type),
-            'leadTimes' => ShootReport::leadTimes($from, $to, $type),
+            'shootsByMonth' => LiveUpdate::live(ShootReport::byMonth($from, $to, $type)),
+            'leadTimes' => LiveUpdate::live(ShootReport::leadTimes($from, $to, $type)),
         ]);
     }
 }

@@ -5,7 +5,6 @@ import SendByMailView from '@/admin/components/templates/SendByMailView.vue'
 import { toast } from 'vue-sonner'
 import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument } from '@/admin/documents/blocks/types'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   projectId: string
@@ -22,7 +21,6 @@ const props = defineProps<{
   shootKinds?: string[]
   occasion?: string
 }>()
-useLiveProps([])
 
 const fallback: EditorDocument = {
   blocks: [

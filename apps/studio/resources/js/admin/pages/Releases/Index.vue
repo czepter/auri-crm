@@ -13,7 +13,6 @@ import {
     sectionCounts,
     type FeedItem,
 } from "@/admin/lib/releases"
-import { useLiveProps } from "@/admin/lib/liveReload"
 
 /*
  * Der Feed. Die Einträge selbst liegen hinter der Zeile — release-log gibt
@@ -30,7 +29,6 @@ const source = props.mediaBase ? new URL(props.mediaBase).host : null
 const checked = props.checkedAt
     ? new Date(props.checkedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
     : null
-useLiveProps([])
 
 const current = computed(() => props.releases.find((row) => row.version === props.installed) ?? props.releases[0] ?? null)
 const open = ref(new Set<string>())

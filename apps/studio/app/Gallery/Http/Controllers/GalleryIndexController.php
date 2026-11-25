@@ -15,6 +15,7 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\GallerySettingsData;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -53,12 +54,12 @@ class GalleryIndexController extends Controller
             ->get();
 
         return Inertia::render('Galleries/Index', [
-            'galleries' => GalleryRowData::collect($galleries),
-            'settings' => $mayManage ? GallerySettingsData::current() : null,
-            'presets' => $mayManage
+            'galleries' => LiveUpdate::live(GalleryRowData::collect($galleries)),
+            'settings' => LiveUpdate::live($mayManage ? GallerySettingsData::current() : null),
+            'presets' => LiveUpdate::live($mayManage
                 ? GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get())
-                : [],
-            'mailTemplates' => $mayManage ? self::mailTemplates() : [],
+                : []),
+            'mailTemplates' => LiveUpdate::live($mayManage ? self::mailTemplates() : []),
             // Die Adresszeile der Vorschau. Ohne Slug — welche Galerie das
             // spaeter wird, entscheidet sich beim Anlegen.
             'galleryHost' => preg_replace('#^https?://#', '', rtrim((string) config('services.gallery.url'), '/')),

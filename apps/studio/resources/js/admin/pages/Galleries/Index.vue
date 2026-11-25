@@ -11,7 +11,6 @@ import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 import { Button } from '@/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { ChoiceGroup } from '@/ui/choice-group'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { filterGalleries, loadView, saveView, type GalleryFilter } from '@/admin/lib/galleryFilter'
 import { shortDate } from '@/admin/lib/dates'
 
@@ -22,8 +21,6 @@ const props = defineProps<{
   mailTemplates: { id: string; name: string }[]
   galleryHost: string
 }>()
-
-useLiveProps(['galleries', 'settings', 'presets', 'mailTemplates'])
 
 const { t } = useI18n()
 

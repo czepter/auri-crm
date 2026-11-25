@@ -20,7 +20,6 @@ import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   tokens: { id: string; name: string; scopes: string[]; createdAt: string; lastUsedAt: string | null }[]
@@ -28,7 +27,6 @@ const props = defineProps<{
   connections: { id: string; clientId: string; name: string | null; redirectUris: string[]; lastUsedAt: string | null }[]
   mcpUrl: string
 }>()
-useLiveProps(['tokens', 'connections'])
 
 const secret = computed(() => usePage().props.flash?.secret as string | undefined)
 // The connection signs in through the studio's own OAuth approval
