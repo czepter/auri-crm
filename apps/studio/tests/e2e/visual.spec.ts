@@ -37,7 +37,7 @@ test('Auftrag', async ({ page }) => {
 test('Angebot', async ({ page }) => {
   await booking(page)
   await page.locator('a[href^="/auftraege/"][href$="/angebote"]').click()
-  await page.locator('section a[href^="/angebote/"]').first().click()
+  await page.locator('section a[href^="/angebote/"]', { hasText: 'Versendet' }).click()
   await page.waitForURL(/\/angebote\//)
   await screen(page, 'angebot')
 })
