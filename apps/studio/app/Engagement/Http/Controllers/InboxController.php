@@ -14,6 +14,7 @@ use App\Engagement\Support\InboundAddress;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Models\User;
 use App\Settings\Actions\RotateInboundSecret;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -70,6 +71,9 @@ class InboxController extends Controller
                     ->all(),
             ])->all(),
             'open' => $open === null ? null : $this->conversation($open),
+            'staffOptions' => User::query()->orderBy('name')->get()
+                ->map(fn (User $user) => ['value' => $user->public_id, 'label' => $user->name])
+                ->all(),
             'configured' => InboundAddress::configured(),
             // The studio's own name in the address, not a generic handle:
             // this is the one inbound address a studio prints on a website
@@ -196,6 +200,7 @@ class InboxController extends Controller
             'id' => $thread->public_id,
             'subject' => $thread->subject,
             'state' => $thread->workState(),
+            'task' => $this->task($thread),
             'projectId' => $thread->case?->public_id,
             'projectName' => $thread->case?->name,
             'shootDate' => $thread->case?->primaryShoot?->date?->format('Y-m-d'),
@@ -213,6 +218,14 @@ class InboxController extends Controller
                 'at' => $message->created_at->toIso8601String(),
             ])->all(),
         ];
+    }
+
+    /** The earliest open task made from this conversation. */
+    private function task(Thread $thread): ?array
+    {
+        $task = $thread->tasks()->open()->byDueDate()->first();
+
+        return $task === null ? null : ['dueOn' => $task->due_on?->format('Y-m-d')];
     }
 
     /**

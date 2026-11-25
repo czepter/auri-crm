@@ -57,6 +57,7 @@ class CreateTask
                 : null,
             'depends_on_task_id' => $predecessor?->id,
             'assignee_id' => AssignTask::userId($validated['assignee'] ?? null),
+            'thread_id' => $validated['thread_id'] ?? null,
         ]);
     }
 
@@ -76,6 +77,7 @@ class CreateTask
             'contact_id' => isset($validated['contact'])
                 ? Contact::query()->where('public_id', $validated['contact'])->value('id')
                 : null,
+            'thread_id' => $validated['thread_id'] ?? null,
         ]);
     }
 }

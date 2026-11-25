@@ -44,6 +44,8 @@ class TaskRowData extends Data
         // Studio-Aufgaben haben kein Projekt; ihr Kontakt steht an dessen Stelle.
         public ?string $contactId = null,
         public ?string $contactName = null,
+        // Die Unterhaltung, aus der sie entstand.
+        public ?string $threadId = null,
     ) {}
 
     public static function fromTask(Task $task): self
@@ -75,6 +77,7 @@ class TaskRowData extends Data
             assigneeName: $task->assignee?->name,
             contactId: $task->contact?->public_id,
             contactName: $task->contact?->name,
+            threadId: $task->thread?->public_id,
         );
     }
 }

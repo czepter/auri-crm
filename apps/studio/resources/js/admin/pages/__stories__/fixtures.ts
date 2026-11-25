@@ -156,6 +156,7 @@ function task(row: Partial<App.Crm.Data.TaskRowData> & Pick<App.Crm.Data.TaskRow
         assigneeName: null,
         contactId: null,
         contactName: null,
+        threadId: null,
         ...row,
     }
 }

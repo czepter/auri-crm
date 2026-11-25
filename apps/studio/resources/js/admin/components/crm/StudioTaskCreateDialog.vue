@@ -21,12 +21,19 @@ import { dayWithWeekday } from '@/admin/lib/dates'
 import Chip from '@/ui/page/Chip.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
-defineProps<{ staffOptions: { value: string; label: string }[]; label?: string }>()
+const props = defineProps<{
+  staffOptions: { value: string; label: string }[]
+  label?: string
+  variant?: 'default' | 'secondary'
+  title?: string
+  project?: string | null
+  thread?: string
+}>()
 
 const open = ref(false)
 const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
 
-const form = useForm({ title: '', due_on: '', assignee: 'none' })
+const form = useForm({ title: props.title ?? '', due_on: '', assignee: 'none' })
 
 const quick = computed(() => parseQuickAdd(form.title))
 const parsedDue = computed(() => (form.due_on === '' ? quick.value.dueOn : null))
@@ -39,8 +46,10 @@ function submit() {
       due_on: parsedDue.value ?? (data.due_on === '' ? null : data.due_on),
       assignee: data.assignee === 'none' ? null : data.assignee,
       contact: contact.value?.id ?? null,
+      thread: props.thread,
+      ...(props.project ? { audience: 'internal' } : {}),
     }))
-    .post('/aufgaben', {
+    .post(props.project ? `/auftraege/${props.project}/aufgaben` : '/aufgaben', {
       preserveScroll: true,
       onSuccess: () => {
         form.reset()
@@ -54,7 +63,7 @@ function submit() {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button class="ml-auto" variant="default" type="button">
+      <Button class="ml-auto" :variant="variant ?? 'default'" type="button">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ label ?? $t('project.taskAdd') }}
       </Button>

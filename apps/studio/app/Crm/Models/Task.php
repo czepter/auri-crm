@@ -6,6 +6,7 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Support\TaskAnchors;
+use App\Engagement\Models\Thread;
 use App\Models\User;
 use Database\Factories\Crm\TaskFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,6 +40,7 @@ class Task extends Model
         'reminders_sent',
         'client_reminders_sent',
         'task_template_id',
+        'thread_id',
         'depends_on_task_id',
     ];
 
@@ -97,6 +99,11 @@ class Task extends Model
     public function contact(): BelongsTo
     {
         return $this->belongsTo(Contact::class);
+    }
+
+    public function thread(): BelongsTo
+    {
+        return $this->belongsTo(Thread::class);
     }
 
     public function shoot(): BelongsTo

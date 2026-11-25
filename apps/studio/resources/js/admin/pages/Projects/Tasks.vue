@@ -10,7 +10,7 @@ import { Input } from '@/ui/input'
  * überfällig, weil eine Frist ohne Tag keine ist.
  */
 import { computed, ref } from 'vue'
-import { router, useForm, usePage } from '@inertiajs/vue3'
+import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { completeTask } from '@/admin/lib/undoable'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
@@ -180,6 +180,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 @update:model-value="complete(row)"
               />
               <span class="text-ui leading-[1.47]">{{ row.title }}</span>
+              <Link v-if="row.threadId" class="text-small" :href="`/posteingang?unterhaltung=${row.threadId}`">{{ $t('tasks.thread') }}</Link>
               <span class="text-small text-ink-2">{{ row.audienceLabel }}</span>
               <span v-if="row.shootLabel" class="text-small text-faint">{{ row.shootLabel }}</span>
               <span v-if="row.isBlocked" class="text-small text-faint">{{

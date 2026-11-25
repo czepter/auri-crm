@@ -202,6 +202,10 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
               <dt class="text-ink-2">{{ $t('tasks.project') }}</dt>
               <dd><Link :href="`/auftraege/${selected.projectId}`">{{ selected.projectName }}</Link></dd>
             </template>
+            <template v-if="selected.threadId">
+              <dt class="text-ink-2">{{ $t('tasks.thread') }}</dt>
+              <dd><Link :href="`/posteingang?unterhaltung=${selected.threadId}`">{{ selected.title }}</Link></dd>
+            </template>
             <template v-if="selected.contactId">
               <dt class="text-ink-2">{{ $t('leads.contact') }}</dt>
               <dd><Link :href="`/kontakte/${selected.contactId}`">{{ selected.contactName }}</Link></dd>
