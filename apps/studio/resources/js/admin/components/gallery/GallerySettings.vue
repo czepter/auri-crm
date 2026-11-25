@@ -403,8 +403,8 @@ const studioOffers = computed(() => ({
                 </button>
               </div>
               <form class="flex items-center gap-2 py-2" @submit.prevent="appendSet">
-                <Input v-model="newSet" :aria-label="$t('galleryPresets.nameField')" class="min-w-0 flex-1" maxlength="120" type="text" />
-                <Button type="submit" variant="ghost" :disabled="newSet.trim() === ''">{{ $t('galleryPresets.addSet') }}</Button>
+                <Input v-model="newSet" :aria-label="$t('galleryPresets.nameField')" class="min-w-0 flex-1" maxlength="120" type="text" required />
+                <Button type="submit" variant="ghost">{{ $t('galleryPresets.addSet') }}</Button>
               </form>
 
               <h3 :class="HEADING">{{ $t('galleryPresets.design') }}</h3>

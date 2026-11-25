@@ -190,7 +190,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
         <DialogBody>
           <form id="task-edit-form" class="mb-5 grid grid-cols-2 gap-x-6 gap-y-4" @submit.prevent="save(selected)">
             <Field v-slot="{ id }" wide :label="$t('project.taskTitle')" :error="form.errors.title">
-              <Input :id="id" v-model="form.title" type="text" />
+              <Input :id="id" v-model="form.title" type="text" required />
             </Field>
             <Field wide :label="$t('project.taskDue')" :error="form.errors.due_on">
               <DatePicker v-model="form.due_on" />
@@ -244,7 +244,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
         </DialogBody>
 
         <DialogFooter>
-          <Button class="ml-auto" type="submit" form="task-edit-form" :disabled="!form.isDirty || !form.title || form.processing">
+          <Button class="ml-auto" type="submit" form="task-edit-form" :disabled="!form.isDirty || form.processing">
             {{ $t('common.save') }}
           </Button>
           <Button variant="outline" type="button" :disabled="selected.isBlocked && !selected.isDone" @click="complete(selected)">

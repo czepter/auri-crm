@@ -10,6 +10,7 @@
  */
 import { computed, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { DatePicker } from '@/ui/date-picker'
@@ -37,6 +38,7 @@ const props = defineProps<{
   anchors: Anchor[]
 }>()
 
+const { t } = useI18n()
 const open = ref(false)
 const mode = ref('fixed')
 const direction = ref('after')
@@ -64,6 +66,12 @@ const groups = computed(() =>
 )
 
 function submit() {
+  if (mode.value === 'anchor' && !form.anchor) {
+    form.setError('anchor', t('common.invalid.valueMissing'))
+    document.getElementById('task-anchor')?.focus()
+    return
+  }
+
   form
     .transform((data) => ({
       ...data,
@@ -107,7 +115,7 @@ function submit() {
           @submit.prevent="submit"
         >
           <Field v-slot="{ id }" wide :label="$t('project.taskTitle')" :error="form.errors.title">
-            <Input :id="id" v-model="form.title" type="text" />
+            <Input :id="id" v-model="form.title" type="text" required />
           </Field>
 
           <Field v-slot="{ id }" :label="$t('project.taskAudience')">
@@ -166,7 +174,7 @@ function submit() {
               </Select>
 
               <Select v-model="form.anchor">
-                <SelectTrigger class="min-w-52 flex-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="task-anchor" class="min-w-52 flex-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectGroup v-for="entry in groups" :key="entry.group">
                     <SelectLabel>{{ $t(groupLabels[entry.group]) }}</SelectLabel>
@@ -186,7 +194,7 @@ function submit() {
         <Button class="ml-auto"
           type="submit"
           form="task-create-form"
-          :disabled="!form.title || form.processing || (mode === 'anchor' && !form.anchor)"
+          :disabled="form.processing"
         >
           {{ $t('common.save') }}
         </Button>

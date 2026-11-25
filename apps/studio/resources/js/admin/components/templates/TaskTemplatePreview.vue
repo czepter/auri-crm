@@ -35,7 +35,7 @@ function run() {
     <form class="flex flex-wrap items-end gap-4" @submit.prevent="run">
       <div class="flex min-w-0 flex-col gap-1.5">
         <Label for="preview-date">{{ $t('taskTemplates.previewDateField') }}</Label>
-        <DatePicker id="preview-date" v-model="form.preview_date" />
+        <DatePicker id="preview-date" v-model="form.preview_date" required />
       </div>
 
       <div class="flex min-w-0 flex-col gap-1.5">
@@ -46,7 +46,7 @@ function run() {
         </datalist>
       </div>
 
-      <Button class="[&[data-slot=button][data-variant=default]]:ml-0" type="submit" variant="outline" :disabled="!form.preview_date">
+      <Button class="[&[data-slot=button][data-variant=default]]:ml-0" type="submit" variant="outline">
         {{ $t('taskTemplates.previewButton') }}
       </Button>
     </form>

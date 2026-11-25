@@ -142,11 +142,11 @@ function cancelScheduled(messageId: string) {
 
       <template v-else>
         <Field v-slot="{ id }" dense :error="record.errors.body">
-          <Textarea :id="id" v-model="record.body" rows="4" />
+          <Textarea :id="id" v-model="record.body" rows="4" required />
         </Field>
         <div class="mt-2.5 flex items-center gap-2.5">
           <DateTimeField v-model="record.sent_at" :label="$t('project.messagesSentAt')" />
-          <Button variant="default" class="ml-auto" type="submit" :disabled="!record.body.trim() || record.processing">
+          <Button variant="default" class="ml-auto" type="submit" :disabled="record.processing">
             {{ $t('project.messagesRecordSave') }}
           </Button>
         </div>

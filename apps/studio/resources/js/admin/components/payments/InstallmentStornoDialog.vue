@@ -69,7 +69,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button class="ml-auto" type="submit" form="installment-storno-form" :disabled="!form.reason || form.processing">
+        <Button class="ml-auto" type="submit" form="installment-storno-form" :disabled="form.processing">
           {{ $t('payments.stornoSubmit') }}
         </Button>
         <DialogClose as-child>

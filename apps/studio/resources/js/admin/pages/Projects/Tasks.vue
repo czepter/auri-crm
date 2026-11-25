@@ -151,6 +151,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
               :placeholder="$t('lead.taskTitle')"
               class="min-w-[220px] flex-1"
               type="text"
+              required
             />
             <Chip v-if="parsedDue">{{ dayWithWeekday(parsedDue) }}</Chip>
             <DatePicker v-model="form.due_on" class="w-[150px]" />
@@ -163,7 +164,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="default" type="submit" :disabled="!form.title || form.processing">
+            <Button variant="default" type="submit" :disabled="form.processing">
               {{ $t('project.taskCreate') }}
             </Button>
           </form>

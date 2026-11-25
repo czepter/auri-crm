@@ -84,7 +84,7 @@ function createTask() {
                 <p class="m-0 mt-0.5 text-small break-words text-ink-2">{{ event.text }}</p>
                 <form v-if="replying === event.id" class="mt-2 flex gap-2" @submit.prevent="reply(event.id)">
                   <Input v-model="draft" required maxlength="2000" :aria-label="$t('galleryRecord.activity.reply')" />
-                  <Button class="ml-auto" type="submit" :disabled="!draft.trim()">{{ $t('galleryRecord.activity.send') }}</Button>
+                  <Button class="ml-auto" type="submit">{{ $t('galleryRecord.activity.send') }}</Button>
                 </form>
               </div>
               <Button v-if="!event.studio && replying !== event.id" type="button" variant="outline" @click="replying = event.id; draft = ''">{{ $t('galleryRecord.activity.reply') }}</Button>

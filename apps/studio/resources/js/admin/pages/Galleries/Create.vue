@@ -83,7 +83,7 @@ function submit() {
 
           <div class="flex flex-col gap-1.5">
             <Label for="gallery-title">{{ $t('galleries.titleField') }}</Label>
-            <Input id="gallery-title" v-model="form.title" type="text" />
+            <Input id="gallery-title" v-model="form.title" type="text" required />
           </div>
 
           <div v-if="mode === 'external'" class="flex flex-col gap-1.5">
@@ -104,7 +104,7 @@ function submit() {
         </div>
         </FormSection>
 
-        <Button class="ml-auto mt-6" type="submit" :disabled="form.processing || form.title === ''">
+        <Button class="ml-auto mt-6" type="submit" :disabled="form.processing">
           {{ $t('galleries.create') }}
         </Button>
       </form>
