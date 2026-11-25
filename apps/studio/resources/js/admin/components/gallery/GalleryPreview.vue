@@ -112,7 +112,7 @@ const titleStyle = computed(() => ({ fontFamily: font.value.family, fontWeight: 
             <div class="text-[8px] font-bold tracking-[0.18em] uppercase text-[rgba(242,237,233,.9)]">
               {{ $page.props.brand }}
             </div>
-            <div class="mt-2.5 text-[24px] leading-[1.1] break-words text-white" :style="titleStyle">
+            <div class="mt-2.5 text-heading leading-[1.1] break-words text-white" :style="titleStyle">
               {{ title }}
             </div>
             <div class="mt-3.5 h-px w-[34px] bg-[rgba(242,237,233,.45)]" :class="look.cover !== 'links' && 'mx-auto'" />
@@ -133,7 +133,7 @@ const titleStyle = computed(() => ({ fontFamily: font.value.family, fontWeight: 
             <div class="text-[8px] font-bold tracking-[0.18em] uppercase" :style="{ color: scheme.muted }">
               {{ $page.props.brand }}
             </div>
-            <div class="mt-2.5 text-[20px] leading-[1.1] break-words" :style="titleStyle">
+            <div class="mt-2.5 text-title leading-[1.1] break-words" :style="titleStyle">
               {{ title }}
             </div>
             <div class="mt-3 h-px w-[34px]" :style="{ background: scheme.line }" />

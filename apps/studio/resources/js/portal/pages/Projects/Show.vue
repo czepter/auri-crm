@@ -160,7 +160,7 @@ function documentNote(document: Document) {
         <h1 class="animate-rise motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ project.name }}
         </h1>
-        <p class="mt-1.5 text-[14px] leading-[1.5] tabular-nums text-muted-foreground">
+        <p class="mt-1.5 text-ui leading-[1.5] tabular-nums text-muted-foreground">
           {{ [project.date ? dayDate(project.date) : $t('portal.dateOpen'), project.venue].filter(Boolean).join(' · ') }}
         </p>
       </section>

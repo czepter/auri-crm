@@ -29,7 +29,7 @@ const nav = computed(() => usePage().props.portalNav as { unread: number } | nul
 const named = computed(() => (props.studio.name ?? '').trim() !== '')
 
 const CHIP
-  = 'inline-flex items-center gap-2 rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-[13px] leading-none font-medium text-foreground no-underline transition-colors duration-200 hover:border-foreground hover:bg-foreground hover:text-background [&_svg]:size-3.5 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.5]'
+  = 'inline-flex items-center gap-2 rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-small leading-none font-medium text-foreground no-underline transition-colors duration-200 hover:border-foreground hover:bg-foreground hover:text-background [&_svg]:size-3.5 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.5]'
 </script>
 
 <template>

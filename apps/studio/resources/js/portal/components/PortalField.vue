@@ -52,13 +52,13 @@ const helpId = `${base}-help`
        inline-level, so the label's own strut is part of the line box it sits
        in. At the inherited 15px/1.6 a textarea gains 5px of descender space
        it never had. -->
-  <component :is="help || group ? 'div' : 'label'" :class="cn('block text-[13px] leading-none', CONTROL, props.class)">
+  <component :is="help || group ? 'div' : 'label'" :class="cn('block text-small leading-none', CONTROL, props.class)">
     <component
       :is="group ? 'span' : help ? 'label' : 'span'"
       :id="group ? captionId : undefined"
       :for="help && !group ? controlId : undefined"
       data-slot="caption"
-      class="mb-[7px] block text-[13px] leading-none font-normal text-muted-foreground"
+      class="mb-[7px] block text-small leading-none font-normal text-muted-foreground"
     >
       {{ label }}
       <em v-if="optional" class="font-normal not-italic whitespace-nowrap text-muted-foreground">· {{ optional }}</em>

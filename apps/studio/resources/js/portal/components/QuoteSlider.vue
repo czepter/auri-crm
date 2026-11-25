@@ -151,8 +151,8 @@ function accept() {
     <div class="min-w-0 flex-1 max-lg:w-full" :class="accepted ? 'pointer-events-none opacity-45' : ''">
       <div class="flex items-baseline gap-3 lg:hidden">
         <span class="text-[46px] leading-[0.94] tracking-[-0.035em] tabular-nums">{{ hours }}</span>
-        <span class="text-[16px] leading-[1.2] text-muted-foreground">{{ $t('quotes.hours') }}</span>
-        <span class="ml-auto text-[16px] leading-[1.2] font-semibold text-[var(--accent)] tabular-nums">
+        <span class="text-body leading-[1.2] text-muted-foreground">{{ $t('quotes.hours') }}</span>
+        <span class="ml-auto text-body leading-[1.2] font-semibold text-[var(--accent)] tabular-nums">
           <ValueFlash :value="images">{{ $t('quotes.imageCount', { count: images }) }}</ValueFlash>
         </span>
       </div>
@@ -194,7 +194,7 @@ function accept() {
         <span class="text-[13.5px] leading-[1.45] text-muted-foreground">
           {{ $t('quotes.perHour', { amount: formatEuros(price(quote.hourlyRate ?? 0)) }) }}
         </span>
-        <span class="hidden text-[16px] leading-[1.2] font-semibold text-[var(--accent)] tabular-nums lg:inline">
+        <span class="hidden text-body leading-[1.2] font-semibold text-[var(--accent)] tabular-nums lg:inline">
           <ValueFlash :value="images">{{ $t('quotes.imageCount', { count: images }) }}</ValueFlash>
         </span>
       </div>
@@ -251,7 +251,7 @@ function accept() {
             <span class="block text-[14.5px] leading-[1.25] font-semibold tracking-[-0.015em]">{{ item.title }}</span>
             <span v-if="item.outcome" class="mt-[3px] block text-[12.5px] leading-[1.4] text-muted-foreground">{{ item.outcome }}</span>
             <span
-              class="mt-2.5 block text-[13px] leading-none font-semibold tabular-nums"
+              class="mt-2.5 block text-small leading-none font-semibold tabular-nums"
               :class="chosen.has(item.id) ? 'text-[var(--accent)]' : 'text-muted-foreground'"
             >+ <ValueFlash :value="price(item.netTotal)">{{ formatEuros(price(item.netTotal)) }}</ValueFlash></span>
           </span>

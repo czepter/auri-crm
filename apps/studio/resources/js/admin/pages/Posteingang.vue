@@ -184,7 +184,7 @@ function receivedAt(iso: string) {
           <div class="mt-[5px] flex items-start gap-3.5">
             <div>
               <div class="text-small leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
-              <h1 class="m-0 mt-0.5 text-[20px] leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
+              <h1 class="m-0 mt-0.5 text-title leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
             </div>
             <div class="ml-auto flex items-center gap-2">
               <Chip v-if="open.task">{{ [$t('inbox.task'), open.task.dueOn && dayWithWeekday(open.task.dueOn)].filter(Boolean).join(' · ') }}</Chip>

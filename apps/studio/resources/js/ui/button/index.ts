@@ -42,7 +42,7 @@ export const buttonVariants = cva(
         /* mockups/redesign/tokens.css .chip — the quiet portal action, and
            the only one that ever stands next to another of its kind. */
         "portal-chip":
-          "gap-2 rounded-[var(--r-pill)] border border-line-hover bg-transparent px-[15px] py-2.5 text-[13px] leading-none font-medium text-foreground transition-colors duration-200 ease-[var(--ease)] hover:border-foreground hover:bg-foreground hover:text-background [&_svg]:size-3.5 [&_svg]:stroke-[1.5]",
+          "gap-2 rounded-[var(--r-pill)] border border-line-hover bg-transparent px-[15px] py-2.5 text-small leading-none font-medium text-foreground transition-colors duration-200 ease-[var(--ease)] hover:border-foreground hover:bg-foreground hover:text-background [&_svg]:size-3.5 [&_svg]:stroke-[1.5]",
         /*
          * A destination in a portal nav rather than an action: it inherits
          * the colour of the rail it stands in and answers on opacity, so the
@@ -59,7 +59,7 @@ export const buttonVariants = cva(
          * the call sites carried it before this variant existed.
          */
         "portal-filter":
-          "rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-[13px] leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground data-[active=true]:border-foreground! data-[active=true]:bg-foreground data-[active=true]:font-semibold data-[active=true]:text-background!",
+          "rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-small leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground data-[active=true]:border-foreground! data-[active=true]:bg-foreground data-[active=true]:font-semibold data-[active=true]:text-background!",
       },
       size: {
         default: "",

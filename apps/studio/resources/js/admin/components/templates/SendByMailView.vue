@@ -102,7 +102,7 @@ function send() {
     <header class="flex h-16 flex-none items-center gap-3.5 px-7">
       <BackButton @click="emit('cancel')" />
 
-      <h1 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]">{{ $t('sendMail.title') }}</h1>
+      <h1 class="m-0 text-title leading-7 font-semibold tracking-[-0.02em]">{{ $t('sendMail.title') }}</h1>
     </header>
 
     <div class="flex min-h-0 flex-1">

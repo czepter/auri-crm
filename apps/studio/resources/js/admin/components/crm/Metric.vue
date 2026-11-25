@@ -70,7 +70,7 @@ const DOT: Record<string, string> = {
     <template v-else>
       <div class="text-small text-ink-2">{{ label }}</div>
       <div
-        class="mt-2 flex items-baseline gap-[3px] font-mono text-[24px] leading-none font-medium tracking-[-0.02em] tabular-nums"
+        class="mt-2 flex items-baseline gap-[3px] font-mono text-heading leading-none font-medium tracking-[-0.02em] tabular-nums"
         :class="warn && 'text-due'"
       >
         {{ value }}<span v-if="unit" class="text-[0.52em] font-medium text-ink-2">{{ unit }}</span>

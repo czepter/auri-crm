@@ -118,7 +118,7 @@ const INPUT = [
 const OPT = [
   'flex cursor-pointer items-center gap-5 border-b border-border py-5',
   '[&>span]:flex-1 [&>span:last-child]:flex-none [&>span:last-child]:text-right',
-  '[&_b]:text-[14px] [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_b]:[display:block]',
+  '[&_b]:text-ui [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_b]:[display:block]',
   '[&_b+span]:text-[12.5px] [&_b+span]:leading-[1.4] [&_b+span]:font-normal [&_b+span]:text-muted-foreground',
 ].join(' ')
 </script>
@@ -144,7 +144,7 @@ const OPT = [
         </Button>
       </form>
 
-      <div v-if="pinForm.errors.pin" class="mt-5 rounded-md border border-destructive/30 bg-due-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-destructive"><b>{{ pinForm.errors.pin }}</b></div>
+      <div v-if="pinForm.errors.pin" class="mt-5 rounded-md border border-destructive/30 bg-due-bg px-3.5 py-3 text-left text-small leading-[1.55] font-normal text-destructive"><b>{{ pinForm.errors.pin }}</b></div>
 
       <Button as="a" variant="portal-ghost" class="mt-3 w-full justify-center" :href="`/galerien/${gallery.id}`">
         {{ $t('gallery.backToGallery') }}
@@ -156,7 +156,7 @@ const OPT = [
       <div class="text-center">
         <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.emailKicker') }}</div>
         <h1 class="m-0 font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">{{ $t('gallery.emailTitle') }}</h1>
-        <p v-if="gallery.title" class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">{{ gallery.title }}</p>
+        <p v-if="gallery.title" class="mt-1.5 text-ui leading-[1.6] font-normal text-muted-foreground">{{ gallery.title }}</p>
       </div>
 
       <p v-if="status" class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ status }}</p>
@@ -186,7 +186,7 @@ const OPT = [
       <PortalBack :href="`/galerien/${gallery.id}`" :label="$t('gallery.backToGallery')" />
 
       <h1 class="m-0 font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)] mt-8">{{ $t('gallery.downloadTitle') }}</h1>
-      <p class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">
+      <p class="mt-1.5 text-ui leading-[1.6] font-normal text-muted-foreground">
         {{ [gallery.title, $t('portal.imageCount', gallery.count)].filter(Boolean).join(' · ') }}
         <template v-if="gallery.expiresAt">
           · {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
@@ -270,7 +270,7 @@ const OPT = [
       <section v-if="build" class="mt-16">
         <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.yourFiles') }}</p>
 
-        <p v-if="build.status === 'failed'" class="mt-5 rounded-md border border-destructive/30 bg-due-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-destructive"><b>{{ $t('gallery.buildFailed') }}</b></p>
+        <p v-if="build.status === 'failed'" class="mt-5 rounded-md border border-destructive/30 bg-due-bg px-3.5 py-3 text-left text-small leading-[1.55] font-normal text-destructive"><b>{{ $t('gallery.buildFailed') }}</b></p>
 
         <p v-else-if="build.status === 'building'" class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ $t('gallery.preparing') }}</p>
 

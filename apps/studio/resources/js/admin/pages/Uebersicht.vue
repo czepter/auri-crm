@@ -300,7 +300,7 @@ const CHIP = {
 
                 <div v-if="urgent" class="mx-6 mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[var(--r)] bg-foreground px-6 py-4 text-background">
                     <span class="text-small opacity-70">{{ $t("create.lead") }}</span>
-                    <span class="min-w-0 flex-1 truncate text-[20px] leading-tight font-semibold tracking-[-0.02em]">{{ urgent.name }}</span>
+                    <span class="min-w-0 flex-1 truncate text-title leading-tight font-semibold tracking-[-0.02em]">{{ urgent.name }}</span>
                     <span class="rounded-[var(--r-sm)] bg-late-bg px-2.5 py-1 text-small font-medium text-destructive">
                         {{ $t("dashboard.waited", urgent.waitingDays) }}
                     </span>
@@ -349,7 +349,7 @@ const CHIP = {
 
                         <div class="mt-4 flex flex-col gap-1">
                             <div class="text-small font-medium text-ink-2">{{ acceptance.label }}</div>
-                            <div class="flex items-baseline gap-1 text-[24px] leading-tight font-semibold tracking-[-0.02em] tabular-nums">
+                            <div class="flex items-baseline gap-1 text-heading leading-tight font-semibold tracking-[-0.02em] tabular-nums">
                                 {{ acceptance.value }}<span v-if="acceptance.unit" class="text-small font-medium tracking-normal text-ink-2">{{ acceptance.unit }}</span>
                             </div>
                             <div v-if="quotes.sent" class="mt-1 h-2 overflow-hidden rounded-full bg-line-hover" aria-hidden="true">
@@ -360,7 +360,7 @@ const CHIP = {
                         <div class="mt-4 grid grid-cols-2 gap-4">
                             <div v-for="figure in minor" :key="figure.key" class="flex flex-col gap-1">
                                 <div class="text-small font-medium text-ink-2">{{ figure.label }}</div>
-                                <div class="text-[24px] leading-tight font-semibold tracking-[-0.02em] tabular-nums" :class="figure.warn && 'text-due'">
+                                <div class="text-heading leading-tight font-semibold tracking-[-0.02em] tabular-nums" :class="figure.warn && 'text-due'">
                                     {{ figure.value }}
                                 </div>
                                 <div v-if="figure.note" class="text-small tabular-nums text-ink-2">{{ figure.note }}</div>

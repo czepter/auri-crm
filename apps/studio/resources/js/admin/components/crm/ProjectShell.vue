@@ -114,7 +114,7 @@ usePageCommands(() => {
       <div class="sticky top-0 z-[5] -mx-[26px] mt-0.5 bg-background px-[26px] pb-4 max-[640px]:contents">
         <div class="flex flex-wrap items-center gap-3">
           <slot name="title">
-            <h1 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]">
+            <h1 class="m-0 text-title leading-7 font-semibold tracking-[-0.02em]">
               {{ header.name }}
             </h1>
           </slot>

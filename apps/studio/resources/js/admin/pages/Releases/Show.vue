@@ -63,7 +63,7 @@ function toggle(key: string, index: number) {
 
                     <div class="mt-2.5 flex items-baseline gap-3">
                         <h1
-                            class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]"
+                            class="m-0 text-title leading-7 font-semibold tracking-[-0.02em]"
                         >
                             {{ release.version }}
                         </h1>
