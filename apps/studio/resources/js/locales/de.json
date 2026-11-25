@@ -1908,6 +1908,7 @@
     "nameField": "Name",
     "create": "Neuer Fragebogen",
     "fromTemplate": "Aus Vorlage",
+    "seededFrom": "Aus Vorlage {name}",
     "orBlank": "Oder ohne Vorlage",
     "startBlank": "Leer beginnen",
     "send": "Fragebogen senden",

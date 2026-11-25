@@ -42,7 +42,7 @@ const create = () => router.post('/einstellungen/automationen')
       <template #nav><SettingsNav active="automations" /></template>
 
       <div class="min-w-0">
-        <Empty v-if="!rules.length" :text="$t('automations.empty')">
+        <Empty v-if="!rules.length">
           <Button variant="secondary" type="button" @click="create">{{ $t('automations.add') }}</Button>
         </Empty>
 
