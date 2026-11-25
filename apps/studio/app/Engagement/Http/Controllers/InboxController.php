@@ -233,12 +233,15 @@ class InboxController extends Controller
      * needs no reply looks exactly like one waiting for it — so it is a
      * decision, and a new message from the client undoes it.
      */
-    public function close(Thread $thread): RedirectResponse
+    public function close(Request $request, Thread $thread): RedirectResponse
     {
         $this->authorizeThread($thread);
 
+        // The undo toast reopens explicitly: a toggle would close a message the client sent in between.
+        $reopen = $request->boolean('reopen') || $thread->workState() === 'erledigt';
+
         $thread->forceFill([
-            'closed_message_id' => $thread->workState() === 'erledigt' ? null : $thread->latestMessage?->id,
+            'closed_message_id' => $reopen ? null : $thread->latestMessage?->id,
         ])->save();
 
         return back();

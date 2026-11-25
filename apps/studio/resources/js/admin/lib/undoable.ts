@@ -3,13 +3,13 @@ import { toast } from 'vue-sonner'
 import { UNDO_WINDOW_MS } from '@/admin/lib/deferredDelete'
 
 /** Runs `url` at once and offers a toast whose undo action posts `undoUrl`. */
-export function postWithUndo(url: string, undoUrl: string, labels: { done: string; undo: string }, data: Record<string, unknown> = {}) {
+export function postWithUndo(url: string, undoUrl: string, labels: { done: string; undo: string }, data: Record<string, unknown> = {}, undoData: Record<string, unknown> = {}) {
   router.post(url, data as Record<string, string>, {
     preserveScroll: true,
     onSuccess: () =>
       toast(labels.done, {
         duration: UNDO_WINDOW_MS,
-        action: { label: labels.undo, onClick: () => router.post(undoUrl, {}, { preserveScroll: true }) },
+        action: { label: labels.undo, onClick: () => router.post(undoUrl, undoData as Record<string, string>, { preserveScroll: true }) },
       }),
   })
 }

@@ -120,7 +120,7 @@ function close(id: string) {
   const url = `/posteingang/unterhaltung/${id}/erledigt`
 
   if (props.open?.state === 'erledigt') router.post(url, {}, { preserveScroll: true })
-  else postWithUndo(url, url, { done: t('common.done'), undo: t('common.undo') })
+  else postWithUndo(url, url, { done: t('common.done'), undo: t('common.undo') }, {}, { reopen: true })
 }
 
 function show(id: string) {

@@ -66,6 +66,20 @@ it('files a conversation as done, and reopens it when the client writes again', 
     expect(collect(inbox()['groups'])->firstWhere('key', 'unbeantwortet')['rows'])->toHaveCount(1);
 });
 
+it('keeps a conversation open when undo arrives after the client wrote again', function () {
+    $thread = threadWhereLastSpoke('client');
+    $this->post("/posteingang/unterhaltung/{$thread->public_id}/erledigt");
+
+    Message::factory()->for($thread)->create([
+        'contact_id' => Contact::factory()->create()->id,
+        'author_id' => null,
+    ]);
+
+    $this->post("/posteingang/unterhaltung/{$thread->public_id}/erledigt", ['reopen' => true])->assertRedirect();
+
+    expect($thread->fresh()->closed_message_id)->toBeNull();
+});
+
 it('opens the first unanswered conversation, or the one asked for', function () {
     threadWhereLastSpoke('studio', 'Wartet');
     $unanswered = threadWhereLastSpoke('client', 'Unbeantwortet');
