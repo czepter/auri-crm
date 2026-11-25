@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import { EllipsisVertical } from 'lucide-vue-next'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -14,13 +15,14 @@ import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import Chip from '@/ui/page/Chip.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
-import DraftDeleteDialog from '@/admin/components/DraftDeleteDialog.vue'
+import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 
 type Draft = { invoiceId: string; invoiceNumber: string; recipient: string | null; projectName: string | null; updatedOn: string; amount: number }
 
 const props = defineProps<{ creditNotes: App.Payments.Data.CreditNoteRowData[]; drafts: Draft[] }>()
 useLiveProps(['creditNotes', 'drafts'])
-const deleteUrl = ref<string | null>(null)
+const { t } = useI18n()
+const remove = (url: string) => deleteWithUndo(url, { deleted: t('common.deleted'), undo: t('common.undo'), failed: t('common.deleteFailed') })
 
 const query = ref('')
 
@@ -37,7 +39,7 @@ const shown = computed(() => {
 const shownDrafts = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
 
-  return props.drafts.filter((draft) => !needle || `${draft.invoiceNumber} ${draft.projectName ?? ''} ${draft.recipient ?? ''}`.toLocaleLowerCase('de').includes(needle))
+  return props.drafts.filter((draft) => !isHidden(`/rechnungen/${draft.invoiceId}/gutschrift/entwurf`) && (!needle || `${draft.invoiceNumber} ${draft.projectName ?? ''} ${draft.recipient ?? ''}`.toLocaleLowerCase('de').includes(needle)))
 })
 
 const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount, 0))
@@ -91,7 +93,7 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem class="text-destructive" @select="deleteUrl = `/rechnungen/${draft.invoiceId}/gutschrift/entwurf`">{{ $t('common.delete') }}</DropdownMenuItem>
+                        <DropdownMenuItem class="text-destructive" @select="remove(`/rechnungen/${draft.invoiceId}/gutschrift/entwurf`)">{{ $t('common.delete') }}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -126,6 +128,5 @@ const total = computed(() => shown.value.reduce((sum, note) => sum + note.amount
         </Empty>
       </div>
     </Page>
-    <DraftDeleteDialog v-model:url="deleteUrl" />
   </AdminLayout>
 </template>

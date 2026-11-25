@@ -11,6 +11,7 @@ import { computed, ref, watch } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
+import { completeTask } from '@/admin/lib/undoable'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import StudioTaskCreateDialog from '@/admin/components/crm/StudioTaskCreateDialog.vue'
 import { Button } from '@/ui/button'
@@ -96,7 +97,8 @@ function firstName(name: string) {
 }
 
 function complete(task: App.Crm.Data.TaskRowData) {
-  router.post(`/aufgaben/${task.id}/${task.isDone ? 'wieder-oeffnen' : 'erledigt'}`, {}, { preserveScroll: true })
+  if (task.isDone) router.post(`/aufgaben/${task.id}/wieder-oeffnen`, {}, { preserveScroll: true })
+  else completeTask(task, { done: t('common.done'), undo: t('common.undo') })
 }
 
 function assign(task: App.Crm.Data.TaskRowData, value: string) {

@@ -12,6 +12,7 @@ import { Input } from '@/ui/input'
 import { computed, ref } from 'vue'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
+import { completeTask } from '@/admin/lib/undoable'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import Card from '@/ui/page/Card.vue'
@@ -83,7 +84,7 @@ function add() {
 function complete(row: App.Crm.Data.TaskRowData, on: string | null = null) {
   if (on !== null && on === row.completedOn) return
 
-  router.post(`/aufgaben/${row.id}/erledigt`, { completed_on: on }, { preserveScroll: true })
+  completeTask(row, { done: t('common.done'), undo: t('common.undo') }, { completed_on: on })
 }
 
 function assign(row: App.Crm.Data.TaskRowData, value: string) {

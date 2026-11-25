@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
@@ -13,6 +14,7 @@ import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { postWithUndo } from '@/admin/lib/undoable'
 
 type Row = {
   id: string
@@ -97,6 +99,7 @@ function file(id: string) {
 // conversation and colouring it would make every thread look late.
 const NOTICEABLE_DAYS = 3
 
+const { t } = useI18n()
 const reply = useForm({ body: '' })
 
 function send() {
@@ -109,7 +112,10 @@ function send() {
 }
 
 function close(id: string) {
-  router.post(`/posteingang/unterhaltung/${id}/erledigt`, {}, { preserveScroll: true })
+  const url = `/posteingang/unterhaltung/${id}/erledigt`
+
+  if (props.open?.state === 'erledigt') router.post(url, {}, { preserveScroll: true })
+  else postWithUndo(url, url, { done: t('common.done'), undo: t('common.undo') })
 }
 
 function show(id: string) {
