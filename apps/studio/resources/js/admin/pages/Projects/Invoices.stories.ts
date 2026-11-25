@@ -13,6 +13,8 @@ const rechnung = (
     credited: 0,
     dueOn: null,
     overdueDays: null,
+    settledOn: null,
+    cancelledOn: null,
     sentOn: null,
     viewedOn: null,
     views: [],

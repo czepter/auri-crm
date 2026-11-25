@@ -22,6 +22,8 @@ const meta = {
         status: 'open',
         statusLabel: 'Offen',
         overdueDays: null,
+        settledOn: null,
+        cancelledOn: null,
         sentOn: null,
         viewedOn: null,
         views: [],

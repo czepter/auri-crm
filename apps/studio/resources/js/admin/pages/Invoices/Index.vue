@@ -18,9 +18,10 @@ import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDi
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
 import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 import { formatEuros } from '@/lib/money'
-import { dayWithWeekday } from '@/admin/lib/dates'
+import { dayWithWeekday, monthDate } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
-import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
+import Chip from '@/ui/page/Chip.vue'
+import { invoiceStatusDetail } from '@/admin/lib/invoiceStatus'
 
 type Draft = { id: string; recipient: string | null; projectName: string | null; updatedOn: string; dueOn: string | null; amount: number }
 
@@ -41,8 +42,6 @@ const requested = new URLSearchParams(usePage().url.split('?')[1]).get('filter')
 const filter = ref(FILTERS.includes(requested) ? requested : 'all')
 
 const filters = computed(() => FILTERS.map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
-
-const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue: 'danger', paid: 'success', cancelled: 'neutral' }
 
 const euros = (rows: App.Payments.Data.InvoiceRowData[]) => formatEuros(rows.reduce((sum, row) => sum + row.amount - row.paidAmount, 0))
 const openRows = computed(() => props.invoices.filter((invoice) => OPEN.includes(invoice.status)))
@@ -173,24 +172,18 @@ const shown = computed(() =>
                   <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ invoice.dueOn ? dayWithWeekday(invoice.dueOn) : '' }}</TableCell>
                   <TableCell align="right" class="whitespace-nowrap">
                     {{ formatEuros(invoice.amount) }}
-                    <span v-if="invoice.status === 'partial' || (invoice.status === 'overdue' && invoice.paidAmount)" class="block text-small text-ink-2">
-                      {{ $t('payments.open', { amount: formatEuros(invoice.amount - invoice.paidAmount) }) }}
-                    </span>
                   </TableCell>
                   <TableCell class="whitespace-nowrap">
-                    <Chip :tone="CHIP[invoice.status]">{{ invoice.status === 'overdue' ? $t(invoice.paidAmount ? 'invoicesOverview.partial' : 'invoicesOverview.open') : invoice.statusLabel }}</Chip>
-                    <span v-if="invoice.overdueDays" class="ml-2 text-small text-destructive">{{ $t('invoicesOverview.overdueDays', invoice.overdueDays) }}</span>
-                    <Popover v-if="invoice.views.length">
-                      <PopoverTrigger class="ml-2 cursor-pointer border-0 bg-transparent p-0 text-small text-ink-2 underline decoration-dotted">
-                        {{ $t(invoice.viewedOn ? 'invoicesOverview.viewed' : 'documentViews.title') }}
+                    <Popover>
+                      <PopoverTrigger :disabled="!invoice.views.length" class="block border-0 bg-transparent p-0 text-left enabled:cursor-pointer">
+                        <Chip :tone="invoice.status === 'overdue' ? 'danger' : 'neutral'">{{ invoice.statusLabel }}</Chip>
+                        <span v-if="invoiceStatusDetail(invoice, t)" class="block pt-0.5 text-small text-ink-2">{{ invoiceStatusDetail(invoice, t) }}</span>
                       </PopoverTrigger>
                       <PopoverContent class="w-[420px]">
+                        <p v-if="invoice.sentOn" class="m-0 pb-2 text-small text-ink-2">{{ $t('invoicesOverview.sent') }} {{ monthDate(invoice.sentOn) }}</p>
                         <DocumentViews :views="invoice.views" />
                       </PopoverContent>
                     </Popover>
-                    <span v-else-if="invoice.sentOn" class="ml-2 text-small text-ink-2">
-                      {{ $t('invoicesOverview.sent') }}
-                    </span>
                   </TableCell>
                   <TableCell align="right">
                     <div class="flex items-center justify-end gap-1.5">
