@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
+import { completeTask } from "@/admin/lib/undoable";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
@@ -260,7 +261,7 @@ const dunning = computed(() => props.dunning.slice(0, SHOWN).map(fromRow));
 const todo = computed(() => [...props.tasks.map(fromTask), ...props.todo.map(fromRow)].slice(0, SHOWN));
 
 function complete(task: App.Crm.Data.TaskRowData) {
-    router.post(`/aufgaben/${task.id}/erledigt`, {}, { preserveScroll: true });
+    completeTask(task, { done: t('common.done'), undo: t('common.undo') });
 }
 
 const CREATE = [

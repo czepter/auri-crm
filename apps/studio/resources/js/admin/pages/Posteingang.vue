@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
@@ -13,6 +14,10 @@ import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { dayWithWeekday } from '@/admin/lib/dates'
+import Chip from '@/ui/page/Chip.vue'
+import StudioTaskCreateDialog from '@/admin/components/crm/StudioTaskCreateDialog.vue'
+import { postWithUndo } from '@/admin/lib/undoable'
 
 type Row = {
   id: string
@@ -30,6 +35,7 @@ const props = defineProps<{
     id: string
     subject: string
     state: string
+    task: { dueOn: string | null } | null
     projectId: string | null
     projectName: string | null
     shootDate: string | null
@@ -56,8 +62,9 @@ const props = defineProps<{
   unfiled: { id: string; subject: string; snippet: string | null; startedAt: string }[]
   drafts: { id: string; subject: string; body: string; projectName: string | null; to: string }[]
   projects: { id: string; label: string }[]
+  staffOptions: { value: string; label: string }[]
 }>()
-useLiveProps(['groups', 'open', 'catchAll', 'pending', 'threads', 'unfiled', 'drafts', 'projects'])
+useLiveProps(['groups', 'open', 'catchAll', 'pending', 'threads', 'unfiled', 'drafts', 'projects', 'staffOptions'])
 
 // One open picker at a time, keyed by the row — the same shape the payments
 // card uses for marking an installment paid.
@@ -97,6 +104,7 @@ function file(id: string) {
 // conversation and colouring it would make every thread look late.
 const NOTICEABLE_DAYS = 3
 
+const { t } = useI18n()
 const reply = useForm({ body: '' })
 
 function send() {
@@ -109,7 +117,10 @@ function send() {
 }
 
 function close(id: string) {
-  router.post(`/posteingang/unterhaltung/${id}/erledigt`, {}, { preserveScroll: true })
+  const url = `/posteingang/unterhaltung/${id}/erledigt`
+
+  if (props.open?.state === 'erledigt') router.post(url, {}, { preserveScroll: true })
+  else postWithUndo(url, url, { done: t('common.done'), undo: t('common.undo') }, {}, { reopen: true })
 }
 
 function show(id: string) {
@@ -168,9 +179,21 @@ function receivedAt(iso: string) {
               <div class="text-small leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
               <h1 class="m-0 mt-0.5 text-[20px] leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
             </div>
-            <Button class="ml-auto" variant="secondary" type="button" @click="close(open.id)">
-              {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
-            </Button>
+            <div class="ml-auto flex items-center gap-2">
+              <Chip v-if="open.task">{{ [$t('inbox.task'), open.task.dueOn && dayWithWeekday(open.task.dueOn)].filter(Boolean).join(' · ') }}</Chip>
+              <StudioTaskCreateDialog
+                :key="open.id"
+                :staff-options="staffOptions"
+                :label="$t('inbox.task')"
+                variant="secondary"
+                :title="open.subject"
+                :project="open.projectId"
+                :thread="open.id"
+              />
+              <Button variant="secondary" type="button" @click="close(open.id)">
+                {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
+              </Button>
+            </div>
           </div>
 
           <div v-for="message in open.messages" :key="message.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)]" :class="

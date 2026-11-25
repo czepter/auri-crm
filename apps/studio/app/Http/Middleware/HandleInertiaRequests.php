@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRun;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Stage;
@@ -104,9 +103,7 @@ class HandleInertiaRequests extends Middleware
                 'projects' => fn () => app(OpenCases::class)->count($user),
                 // Client mails an automation drafted; the Posteingang row's badge.
                 'drafts' => fn () => $user->can(Capability::ManageMessages->value)
-                    ? (($user->can(Capability::ViewAllCases->value)
-                        ? AutomationRun::query()->where('status', AutomationRunStatus::AwaitingApproval)->count()
-                        : AutomationRun::awaitingFor($user)->count()) ?: null)
+                    ? (AutomationRun::awaitingFor($user)->count() ?: null)
                     : null,
             ],
             // Die laufende Version und ob release-log eine höhere kennt. Chrome

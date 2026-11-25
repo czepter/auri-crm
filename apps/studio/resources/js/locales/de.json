@@ -31,6 +31,7 @@
     "deleted": "Gelöscht",
     "deleteFailed": "Nicht gelöscht",
     "undo": "Rückgängig",
+    "done": "Erledigt",
     "save": "Speichern",
     "edit": "Ändern",
     "signOut": "Abmelden",
@@ -164,6 +165,9 @@
     "postcode": "PLZ",
     "city": "Ort",
     "correspondence": "Nachrichten",
+    "openInvoices": "Offene Beträge",
+    "openTasks": "Offene Aufgaben",
+    "nextShoot": "Nächster Termin",
     "deliveryFailed": "nicht zugestellt",
     "projects": "Projekte",
     "openInquiries": "Offene Anfragen",
@@ -891,6 +895,7 @@
     "discard": "Verwerfen",
     "done": "Erledigt",
     "reopen": "Wieder öffnen",
+    "task": "Aufgabe",
     "people": "Beteiligte",
     "project": "Projekt",
     "noThreads": "Keine Unterhaltungen."
@@ -1328,6 +1333,7 @@
     "today": "Heute",
     "project": "Projekt",
     "blocked": "Wartet auf",
+    "thread": "Unterhaltung",
     "anchor": "Frist",
     "empty": "Nichts offen."
   },
@@ -1805,7 +1811,7 @@
     "depositPercent": "Anzahlung (%)",
     "zahlungszielDays": "Zahlungsziel (Tage)",
     "remindersSection": "Erinnerungen",
-    "remindersEnabled": "Kunden an offene Raten erinnern",
+    "remindersEnabled": "Erinnerung an offene Raten als Entwurf",
     "remindersCadence": "Ab dem fünften Tag nach Fälligkeit, danach in wachsendem Abstand.",
     "defaultsReadOnlyHint": "Anzahlung und Zahlungsziel werden unter Dokumente gepflegt:"
   },

@@ -10,8 +10,9 @@ import { Input } from '@/ui/input'
  * überfällig, weil eine Frist ohne Tag keine ist.
  */
 import { computed, ref } from 'vue'
-import { router, useForm, usePage } from '@inertiajs/vue3'
+import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
+import { completeTask } from '@/admin/lib/undoable'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import Card from '@/ui/page/Card.vue'
@@ -19,6 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+import { parseQuickAdd } from '@/admin/lib/quickAdd'
+import Chip from '@/ui/page/Chip.vue'
 import { taskGroupLabel, taskGroups } from '@/admin/lib/projectOverview'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
@@ -70,8 +73,16 @@ const doneSummary = computed(() => done.value.map((task) => task.title).join(', 
 
 const form = useForm({ title: '', audience: 'internal', due_on: '', assignee: 'none' })
 
+const quick = computed(() => parseQuickAdd(form.title))
+const parsedDue = computed(() => (form.due_on === '' ? quick.value.dueOn : null))
+
 function add() {
-  form.transform((data) => ({ ...data, assignee: data.assignee === 'none' ? null : data.assignee })).post(`/auftraege/${props.header.id}/aufgaben`, {
+  form.transform((data) => ({
+    ...data,
+    title: parsedDue.value ? quick.value.title : data.title,
+    due_on: parsedDue.value ?? data.due_on,
+    assignee: data.assignee === 'none' ? null : data.assignee,
+  })).post(`/auftraege/${props.header.id}/aufgaben`, {
     preserveScroll: true,
     onSuccess: () => form.reset(),
   })
@@ -83,7 +94,7 @@ function add() {
 function complete(row: App.Crm.Data.TaskRowData, on: string | null = null) {
   if (on !== null && on === row.completedOn) return
 
-  router.post(`/aufgaben/${row.id}/erledigt`, { completed_on: on }, { preserveScroll: true })
+  completeTask(row, { done: t('common.done'), undo: t('common.undo') }, { completed_on: on })
 }
 
 function assign(row: App.Crm.Data.TaskRowData, value: string) {
@@ -141,6 +152,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
               class="min-w-[220px] flex-1"
               type="text"
             />
+            <Chip v-if="parsedDue">{{ dayWithWeekday(parsedDue) }}</Chip>
             <DatePicker v-model="form.due_on" class="w-[150px]" />
             <Select v-if="!$page.props.soloStudio" v-model="form.assignee">
               <SelectTrigger class="w-44" :aria-label="$t('project.taskAssignee')"><SelectValue /></SelectTrigger>
@@ -168,6 +180,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 @update:model-value="complete(row)"
               />
               <span class="text-ui leading-[1.47]">{{ row.title }}</span>
+              <Link v-if="row.threadId" class="text-small" :href="`/posteingang?unterhaltung=${row.threadId}`">{{ $t('tasks.thread') }}</Link>
               <span class="text-small text-ink-2">{{ row.audienceLabel }}</span>
               <span v-if="row.shootLabel" class="text-small text-faint">{{ row.shootLabel }}</span>
               <span v-if="row.isBlocked" class="text-small text-faint">{{

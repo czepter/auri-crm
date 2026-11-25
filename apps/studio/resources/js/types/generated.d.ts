@@ -426,6 +426,7 @@ assigneeId: string | null,
 assigneeName: string | null,
 contactId: string | null,
 contactName: string | null,
+threadId: string | null,
 };
 export type TaskTemplateData = {
 id: string,

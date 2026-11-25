@@ -36,6 +36,7 @@ const task = (id: string, projectId: string, projectName: string, title: string,
   assigneeName: 'Christian Zepter',
   contactId: null,
   contactName: null,
+  threadId: null,
 })
 
 const lead = (id: string, name: string, waitingDays: number): App.Crm.Data.LeadQueueRowData => ({

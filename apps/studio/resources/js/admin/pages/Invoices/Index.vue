@@ -16,7 +16,7 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDialog.vue'
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
-import DraftDeleteDialog from '@/admin/components/DraftDeleteDialog.vue'
+import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
@@ -26,9 +26,9 @@ type Draft = { id: string; recipient: string | null; projectName: string | null;
 
 const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], exportYears: number[] }>()
 useLiveProps(['invoices', 'drafts', 'exportYears'])
-const deleteUrl = ref<string | null>(null)
 
 const { t } = useI18n()
+const remove = (url: string) => deleteWithUndo(url, { deleted: t('common.deleted'), undo: t('common.undo'), failed: t('common.deleteFailed') })
 
 const query = ref('')
 
@@ -58,7 +58,7 @@ const needle = computed(() => query.value.trim().toLocaleLowerCase('de'))
 
 const shownDrafts = computed(() =>
   ['all', 'drafts'].includes(filter.value)
-    ? props.drafts.filter((draft) => !needle.value || `${draft.projectName ?? ''} ${draft.recipient ?? ''}`.toLocaleLowerCase('de').includes(needle.value))
+    ? props.drafts.filter((draft) => !isHidden(`/rechnungen/entwuerfe/${draft.id}`) && (!needle.value || `${draft.projectName ?? ''} ${draft.recipient ?? ''}`.toLocaleLowerCase('de').includes(needle.value)))
     : [])
 
 const shown = computed(() =>
@@ -145,7 +145,7 @@ const shown = computed(() =>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem class="text-destructive" @select="deleteUrl = `/rechnungen/entwuerfe/${draft.id}`">{{ $t('common.delete') }}</DropdownMenuItem>
+                        <DropdownMenuItem class="text-destructive" @select="remove(`/rechnungen/entwuerfe/${draft.id}`)">{{ $t('common.delete') }}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -232,6 +232,5 @@ const shown = computed(() =>
         </Empty>
       </div>
     </Page>
-    <DraftDeleteDialog v-model:url="deleteUrl" />
   </AdminLayout>
 </template>

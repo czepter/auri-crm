@@ -14,6 +14,7 @@ use App\Engagement\Support\InboundAddress;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Models\User;
 use App\Settings\Actions\RotateInboundSecret;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -70,6 +71,9 @@ class InboxController extends Controller
                     ->all(),
             ])->all(),
             'open' => $open === null ? null : $this->conversation($open),
+            'staffOptions' => User::query()->orderBy('name')->get()
+                ->map(fn (User $user) => ['value' => $user->public_id, 'label' => $user->name])
+                ->all(),
             'configured' => InboundAddress::configured(),
             // The studio's own name in the address, not a generic handle:
             // this is the one inbound address a studio prints on a website
@@ -196,6 +200,7 @@ class InboxController extends Controller
             'id' => $thread->public_id,
             'subject' => $thread->subject,
             'state' => $thread->workState(),
+            'task' => $this->task($thread),
             'projectId' => $thread->case?->public_id,
             'projectName' => $thread->case?->name,
             'shootDate' => $thread->case?->primaryShoot?->date?->format('Y-m-d'),
@@ -215,17 +220,28 @@ class InboxController extends Controller
         ];
     }
 
+    /** The earliest open task made from this conversation. */
+    private function task(Thread $thread): ?array
+    {
+        $task = $thread->tasks()->open()->byDueDate()->first();
+
+        return $task === null ? null : ['dueOn' => $task->due_on?->format('Y-m-d')];
+    }
+
     /**
      * A conversation nobody has to answer any more. Not derivable — one that
      * needs no reply looks exactly like one waiting for it — so it is a
      * decision, and a new message from the client undoes it.
      */
-    public function close(Thread $thread): RedirectResponse
+    public function close(Request $request, Thread $thread): RedirectResponse
     {
         $this->authorizeThread($thread);
 
+        // The undo toast reopens explicitly: a toggle would close a message the client sent in between.
+        $reopen = $request->boolean('reopen') || $thread->workState() === 'erledigt';
+
         $thread->forceFill([
-            'closed_message_id' => $thread->workState() === 'erledigt' ? null : $thread->latestMessage?->id,
+            'closed_message_id' => $reopen ? null : $thread->latestMessage?->id,
         ])->save();
 
         return back();

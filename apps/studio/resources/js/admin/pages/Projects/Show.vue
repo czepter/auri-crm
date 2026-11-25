@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { completeTask } from "@/admin/lib/undoable";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
@@ -342,7 +343,7 @@ const detailsSummary = computed(() =>
 const notes = computed(() => props.thread.filter((entry) => !entry.system).reverse());
 
 function complete(row: App.Crm.Data.TaskRowData) {
-    router.post(`/aufgaben/${row.id}/erledigt`, {}, { preserveScroll: true });
+    completeTask(row, { done: t('common.done'), undo: t('common.undo') });
 }
 </script>
 
