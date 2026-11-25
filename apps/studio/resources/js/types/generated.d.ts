@@ -1102,6 +1102,7 @@ id: string,
 number: string,
 amount: number,
 issuedOn: string,
+reason: string | null,
 hasDocument: boolean,
 }[],
 };

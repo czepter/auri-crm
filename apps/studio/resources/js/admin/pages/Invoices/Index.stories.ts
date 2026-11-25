@@ -19,6 +19,7 @@ const meta = {
   parameters: { layout: 'fullscreen', url: '/rechnungen', page },
   args: {
     exportYears: [2026, 2025],
+    creditNoteDrafts: [{ invoiceId: 'in-14', updatedOn: '2026-11-15', amount: 5_000 }],
     drafts: [
       { id: 'dr-1', recipient: 'Marie Fuhrmann', projectName: 'Hochzeit Marie & Adrian', updatedOn: '2026-11-14', dueOn: '2026-11-28', amount: 120_000 },
       { id: 'dr-2', recipient: 'Jonas Gast', projectName: null, updatedOn: '2026-11-12', dueOn: null, amount: 2_000 },
@@ -49,6 +50,7 @@ const meta = {
             number: 'GS-2026-002',
             amount: 10_000,
             issuedOn: '2026-09-11',
+            reason: 'Zweite Kamera nicht erbracht',
             hasDocument: true,
           },
         ],

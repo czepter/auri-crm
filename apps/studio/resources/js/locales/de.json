@@ -565,6 +565,8 @@
     "open": "Offen",
     "paid": "Bezahlt",
     "cancelled": "Storniert",
+    "credits": "Gutschriften",
+    "creditNote": "Gutschrift",
     "send": "Versenden",
     "sent": "Versendet",
     "viewed": "Geöffnet",
@@ -649,19 +651,6 @@
     "kpiSigned": "Unterschrieben {year}",
     "kpiDrafts": "Entwürfe",
     "kpiCount": "1 Vertrag | {count} Verträge"
-  },
-  "creditNotesOverview": {
-    "title": "Gutschriften",
-    "searchPlaceholder": "Suchen",
-    "empty": "Keine Gutschriften.",
-    "toInvoices": "Zu den Rechnungen",
-    "draft": "Entwurf",
-    "number": "Nummer",
-    "recipient": "Empfänger",
-    "issuedOn": "Datum",
-    "invoice": "Rechnung",
-    "reason": "Grund",
-    "amount": "Betrag"
   },
   "financeExpenses": {
     "title": "Ausgaben",

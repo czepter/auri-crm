@@ -6,7 +6,7 @@ use App\Payments\Models\CreditNote;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** #409: one Gutschrift as a line on /gutschriften. */
+/** #409: one Gutschrift as the API lists it. */
 #[TypeScript]
 class CreditNoteRowData extends Data
 {

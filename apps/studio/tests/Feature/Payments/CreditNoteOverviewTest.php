@@ -1,7 +1,5 @@
 <?php
 
-use App\Enums\Capability;
-use App\Enums\StaffRole;
 use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Models\CreditNoteDraft;
 use App\Settings\Actions\UpdateStudioSetting;
@@ -17,28 +15,24 @@ beforeEach(function () {
     Bus::fake();
 });
 
-it('lists every Gutschrift of an invoice, newest first', function () {
+it('nests the Gutschriften under their invoice', function () {
     $installment = creditableInstallment();
 
     app(IssueCreditNote::class)($installment->invoice, 25_000, 'Nachlass');
     $this->travel(1)->minute();
     app(IssueCreditNote::class)($installment->invoice, 10_000, 'Zweite Kamera nicht erbracht');
 
-    $rows = $this->actingAs(staffMember(), 'staff')->get('/gutschriften')
-        ->assertOk()->viewData('page')['props']['creditNotes'];
+    $row = collect($this->actingAs(staffMember(), 'staff')->get('/rechnungen')
+        ->assertOk()->viewData('page')['props']['invoices'])->firstWhere('number', $installment->invoice->number);
 
-    expect($rows)->toHaveCount(2)
-        ->and($rows[0]['amount'])->toBe(10_000)
-        ->and($rows[0]['reason'])->toBe('Zweite Kamera nicht erbracht')
-        ->and($rows[0]['invoiceNumber'])->toBe($installment->invoice->number)
-        ->and($rows[0]['number'])->toStartWith('GS-')
-        ->and($rows[1]['amount'])->toBe(25_000);
+    expect($row['creditNotes'])->toHaveCount(2)
+        ->and(collect($row['creditNotes'])->pluck('amount')->sort()->values()->all())->toBe([10_000, 25_000])
+        ->and(collect($row['creditNotes'])->firstWhere('amount', 10_000)['reason'])->toBe('Zweite Kamera nicht erbracht')
+        ->and($row['creditNotes'][0]['number'])->toStartWith('GS-');
 });
 
-it('refuses a role that may not manage payment plans', function () {
-    $role = collect(StaffRole::cases())->first(fn (StaffRole $role) => ! $role->allows(Capability::ManageContracts));
-
-    $this->actingAs(staffMember($role), 'staff')->get('/gutschriften')->assertForbidden();
+it('sends the former Gutschriften list to the invoice list filter', function () {
+    $this->actingAs(staffMember(), 'staff')->get('/gutschriften')->assertRedirect('/rechnungen?filter=credits');
 });
 
 it('lists a Gutschrift draft with the gross of its ticked lines', function () {
@@ -47,8 +41,10 @@ it('lists a Gutschrift draft with the gross of its ticked lines', function () {
 
     CreditNoteDraft::create(['invoice_id' => $invoice->id, 'payload' => ['taken' => [true]]]);
 
-    $drafts = $this->actingAs(staffMember(), 'staff')->get('/gutschriften')
-        ->assertOk()->viewData('page')['props']['drafts'];
+    $drafts = $this->actingAs(staffMember(), 'staff')->get('/rechnungen')
+        ->assertOk()->viewData('page')['props']['creditNoteDrafts'];
 
-    expect($drafts)->toHaveCount(1)->and($drafts[0]['amount'])->toBe($line);
+    expect($drafts)->toHaveCount(1)
+        ->and($drafts[0]['invoiceId'])->toBe($invoice->public_id)
+        ->and($drafts[0]['amount'])->toBe($line);
 });

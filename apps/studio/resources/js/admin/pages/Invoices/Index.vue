@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 import { EllipsisVertical } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
@@ -24,8 +24,10 @@ import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 type Draft = { id: string; recipient: string | null; projectName: string | null; updatedOn: string; dueOn: string | null; amount: number }
 
-const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], exportYears: number[] }>()
-useLiveProps(['invoices', 'drafts', 'exportYears'])
+type CreditNoteDraft = { invoiceId: string; updatedOn: string; amount: number }
+
+const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], creditNoteDrafts: CreditNoteDraft[], exportYears: number[] }>()
+useLiveProps(['invoices', 'drafts', 'creditNoteDrafts', 'exportYears'])
 
 const { t } = useI18n()
 const remove = (url: string) => deleteWithUndo(url, { deleted: t('common.deleted'), undo: t('common.undo'), failed: t('common.deleteFailed') })
@@ -34,9 +36,11 @@ const query = ref('')
 
 const OPEN = ['open', 'partial', 'overdue']
 const matches = (value: string, status: string) => value === 'all' || (value === 'open' ? OPEN.includes(status) : status === value)
-const filter = ref('all')
+const FILTERS = ['all', 'drafts', 'open', 'paid', 'cancelled', 'credits']
+const requested = new URLSearchParams(usePage().url.split('?')[1]).get('filter') ?? ''
+const filter = ref(FILTERS.includes(requested) ? requested : 'all')
 
-const filters = computed(() => ['all', 'drafts', 'open', 'paid', 'cancelled'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
+const filters = computed(() => FILTERS.map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
 
 const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue: 'danger', paid: 'success', cancelled: 'neutral' }
 
@@ -61,12 +65,15 @@ const shownDrafts = computed(() =>
     ? props.drafts.filter((draft) => !isHidden(`/rechnungen/entwuerfe/${draft.id}`) && (!needle.value || `${draft.projectName ?? ''} ${draft.recipient ?? ''}`.toLocaleLowerCase('de').includes(needle.value)))
     : [])
 
+const creditDraft = (invoice: App.Payments.Data.InvoiceRowData) =>
+  isHidden(`/rechnungen/${invoice.id}/gutschrift/entwurf`) ? undefined : props.creditNoteDrafts.find((draft) => draft.invoiceId === invoice.id)
+
 const shown = computed(() =>
   filter.value === 'drafts'
     ? []
     : props.invoices.filter((invoice) =>
-      matches(filter.value, invoice.status)
-      && (!needle.value || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''}`.toLocaleLowerCase('de').includes(needle.value))))
+      (filter.value === 'credits' ? invoice.creditNotes.length > 0 || creditDraft(invoice) !== undefined : matches(filter.value, invoice.status))
+      && (!needle.value || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''} ${invoice.creditNotes.map((note) => note.number).join(' ')}`.toLocaleLowerCase('de').includes(needle.value))))
 </script>
 
 <template>
@@ -220,6 +227,41 @@ const shown = computed(() =>
                       :remaining="invoice.openInstallments[0].remaining"
                     />
                     <InstallmentStornoDialog v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" bare v-bind="bind('storno', invoice.id)" :invoice-id="invoice.id" />
+                  </TableCell>
+                </TableRow>
+                <TableRow v-for="note in invoice.creditNotes" :key="note.id">
+                  <TableCell class="whitespace-nowrap pl-8">
+                    <a v-if="note.hasDocument" :href="`/rechnungen/${invoice.id}/gutschrift/${note.id}`" target="_blank">{{ note.number }}</a>
+                    <template v-else>{{ note.number }}</template>
+                  </TableCell>
+                  <TableCell tone="muted">{{ note.reason }}</TableCell>
+                  <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(note.issuedOn) }}</TableCell>
+                  <TableCell class="max-[640px]:hidden" />
+                  <TableCell align="right" class="whitespace-nowrap">−{{ formatEuros(note.amount) }}</TableCell>
+                  <TableCell class="whitespace-nowrap"><Chip>{{ $t('invoicesOverview.creditNote') }}</Chip></TableCell>
+                  <TableCell />
+                </TableRow>
+                <TableRow v-if="creditDraft(invoice)">
+                  <TableCell class="whitespace-nowrap pl-8">—</TableCell>
+                  <TableCell />
+                  <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(creditDraft(invoice)!.updatedOn) }}</TableCell>
+                  <TableCell class="max-[640px]:hidden" />
+                  <TableCell align="right" class="whitespace-nowrap">−{{ formatEuros(creditDraft(invoice)!.amount) }}</TableCell>
+                  <TableCell class="whitespace-nowrap"><Chip>{{ $t('invoicesOverview.draft') }}</Chip></TableCell>
+                  <TableCell align="right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <Button :as="Link" variant="outline" :href="`/rechnungen/${invoice.id}/gutschrift/neu`">{{ $t('common.edit') }}</Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                          <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')">
+                            <EllipsisVertical />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem class="text-destructive" @select="remove(`/rechnungen/${invoice.id}/gutschrift/entwurf`)">{{ $t('common.delete') }}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               </template>

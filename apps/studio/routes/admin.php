@@ -66,7 +66,6 @@ use App\Integration\Http\Controllers\OAuthTokenController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Media\Http\Controllers\UploadPrecheckController;
-use App\Payments\Http\Controllers\CreditNoteController;
 use App\Payments\Http\Controllers\InvoiceController;
 use App\Payments\Http\Controllers\InvoiceExportController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
@@ -1014,9 +1013,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/rechnungen/{invoice}/gutschrift/entwurf', [InvoiceController::class, 'destroyCreditNoteDraft'])->name('invoices.credit-note-draft.destroy');
         Route::post('/rechnungen/{invoice}/gutschrift/vorschau', [InvoiceController::class, 'creditNotePreview'])->name('invoices.credit-note.preview');
 
-        // Die Gutschriften des ganzen Buchs. Eine Gutschrift haengt an ihrer
-        // Rechnung, die Frage nach allen stellt aber der Jahresabschluss.
-        Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
+        Route::redirect('/gutschriften', '/rechnungen?filter=credits');
 
         // Ausgaben, Belege, Anlagen und die EÜR. Alles hinter ManageFinances,
         // das als 404 antwortet. /ausgaben/neu bleibt über /ausgaben/{expense}.

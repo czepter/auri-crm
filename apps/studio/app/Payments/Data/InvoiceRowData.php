@@ -17,7 +17,7 @@ class InvoiceRowData extends Data
     /**
      * @param  list<array{id: string, remaining: int}>  $openInstallments
      * @param  list<DocumentViewData>  $views
-     * @param  list<array{id: string, number: string, amount: int, issuedOn: string, hasDocument: bool}>  $creditNotes
+     * @param  list<array{id: string, number: string, amount: int, issuedOn: string, reason: ?string, hasDocument: bool}>  $creditNotes
      */
     public function __construct(
         public string $id,
@@ -79,6 +79,7 @@ class InvoiceRowData extends Data
                 'number' => $note->number,
                 'amount' => (int) $note->amount,
                 'issuedOn' => $note->issued_at->format('Y-m-d'),
+                'reason' => $note->reason,
                 'hasDocument' => $note->pdf_path !== null,
             ])->all(),
         );
