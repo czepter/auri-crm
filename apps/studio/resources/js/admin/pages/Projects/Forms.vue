@@ -133,7 +133,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
 
 <template>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
-    <ProjectShell :header="header" active="documents" child="forms">
+    <ProjectShell :header="header" active="forms">
       <template v-if="header.canManageForms" #actions>
         <Button v-if="formTemplates.length === 1" variant="outline" type="button" @click="createFrom(formTemplates[0].value)">
           {{ $t('formInstances.send') }}

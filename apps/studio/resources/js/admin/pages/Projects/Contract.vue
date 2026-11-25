@@ -133,7 +133,7 @@ function day(value: string | null): string {
 
 <template>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
-    <ProjectShell :header="header" active="documents" child="contract">
+    <ProjectShell :header="header" active="contract">
       <div v-if="contract" class="@container">
       <div class="grid items-start gap-6 @[1280px]:grid-cols-[560px_minmax(0,1fr)]">
         <div class="flex min-w-0 flex-col gap-3">

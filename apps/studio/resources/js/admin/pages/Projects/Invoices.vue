@@ -21,7 +21,7 @@ const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue:
 
 <template>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
-    <ProjectShell :header="header" active="documents" child="invoices">
+    <ProjectShell :header="header" active="invoices">
       <template #actions>
         <Button v-if="invoices.length" :as="Link" variant="outline" :href="`/rechnungen/neu?projekt=${header.id}`">
           {{ $t('invoicesOverview.create') }}

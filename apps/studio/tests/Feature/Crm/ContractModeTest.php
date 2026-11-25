@@ -19,11 +19,9 @@ function contractMode(string $mode): void
     StudioSettings::forgetCurrent();
 }
 
-function documentChildren(ClientCase $case): array
+function tabs(ClientCase $case): array
 {
-    $tabs = test()->get("/auftraege/{$case->public_id}")->viewData('page')['props']['header']['tabs'];
-
-    return collect($tabs)->firstWhere('key', 'documents')['children'];
+    return test()->get("/auftraege/{$case->public_id}")->viewData('page')['props']['header']['tabs'];
 }
 
 it('asks for a contract only when contracts are always', function (string $mode, string $label) {
@@ -43,7 +41,7 @@ it('shows the contract tab by mode', function (string $mode, bool $withContract,
         renderedContract($this->case);
     }
 
-    expect(collect(documentChildren($this->case))->pluck('key')->contains('contract'))->toBe($shown);
+    expect(collect(tabs($this->case))->pluck('key')->contains('contract'))->toBe($shown);
 })->with([
     ['always', false, true],
     ['on_demand', false, false],
