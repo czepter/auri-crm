@@ -24,6 +24,7 @@ import { Link } from '@inertiajs/vue3'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
+import { shortDate } from '@/admin/lib/dates'
 
 type Request = {
   id: string
@@ -45,7 +46,7 @@ const props = defineProps<{
 useLiveProps(['package', 'projectTypes', 'galleryPresets', 'requests', 'catalogItems', 'vatRate'])
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 const NO_PRESET = 'none'
@@ -278,7 +279,7 @@ watch(() => form.data(), autosave, { deep: true })
           <PackagePriceSummary :items="form.items" />
 
           <PreviewOverlay :min="1280" :label="$t('common.preview')" wrapper-class="mt-6">
-            <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+            <div class="overflow-hidden surface-card">
               <div class="border-b border-border px-[26px] py-4 text-small leading-none font-semibold text-faint">
                 {{ $t('packages.preview') }}
               </div>
@@ -306,7 +307,7 @@ watch(() => form.data(), autosave, { deep: true })
         <div
           v-for="request in requests"
           :key="request.id"
-          class="flex items-baseline gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+          class="flex items-baseline gap-4 py-2.5 border-t border-rule first-of-type:border-t-0"
         >
           <span class="w-[64px] flex-none text-small tabular-nums text-ink-2">{{ request.requestedOn ? day(request.requestedOn) : '—' }}</span>
           <span class="min-w-0 flex-1 text-small">

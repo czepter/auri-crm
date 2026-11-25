@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChoiceGroup } from '@/ui/choice-group'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import { filterGalleries, loadView, saveView, type GalleryFilter } from '@/admin/lib/galleryFilter'
+import { shortDate } from '@/admin/lib/dates'
 
 const props = defineProps<{
   galleries: App.Gallery.Data.GalleryRowData[]
@@ -60,7 +61,7 @@ function close() {
 }
 
 function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+  return iso ? shortDate(iso) : '—'
 }
 </script>
 
@@ -105,7 +106,7 @@ function day(iso: string | null) {
             <div
               v-for="gallery in shown"
               :key="gallery.id"
-              class="flex items-center gap-3.5 py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none max-[640px]:flex-wrap max-[640px]:gap-x-3 max-[640px]:gap-y-1"
+              class="flex items-center gap-3.5 py-3 border-t border-rule first-of-type:border-t-0 max-[640px]:flex-wrap max-[640px]:gap-x-3 max-[640px]:gap-y-1"
             >
               <img v-if="gallery.cover" :src="gallery.cover" alt="" class="h-12 w-16 flex-none rounded-[var(--r-sm)] bg-sunk object-cover max-[640px]:hidden" loading="lazy" @error="(event: Event) => (event.target as HTMLElement).classList.add('invisible')">
               <span v-else class="h-12 w-16 flex-none rounded-[var(--r-sm)] bg-sunk max-[640px]:hidden" />

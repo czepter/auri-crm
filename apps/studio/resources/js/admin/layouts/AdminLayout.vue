@@ -414,7 +414,7 @@ const collectorsOpen = ref<Record<string, boolean>>(
         </main>
 
         <nav
-            class="fixed inset-x-0 bottom-0 z-30 hidden h-[calc(3.5rem+env(safe-area-inset-bottom))] bg-paper pb-[env(safe-area-inset-bottom)] shadow-[inset_0_1px_0_var(--rule)] max-[640px]:flex"
+            class="fixed inset-x-0 bottom-0 z-30 hidden h-[calc(3.5rem+env(safe-area-inset-bottom))] bg-paper pb-[env(safe-area-inset-bottom)] border-t border-rule max-[640px]:flex"
             data-tokens
         >
             <Link

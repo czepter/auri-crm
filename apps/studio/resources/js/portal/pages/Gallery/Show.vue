@@ -464,7 +464,7 @@ const COVER_INPUT = [
       <!-- data-tokens: the gate's title is a bare h1, and tokens.css sets one
            unlayered — 24px in the app's own sans, which beats any utility. -->
       <div data-tokens class="relative z-3 w-[min(560px,100%)] px-8 py-11 text-center">
-        <span v-if="!project" class="mb-5 inline-block text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline" :class="overlaid && 'rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-2'">
+        <span v-if="!project" class="mb-5 inline-block text-small leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-inherit no-underline" :class="overlaid && 'rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-2'">
           {{ studioName }}
         </span>
         <h1
@@ -472,14 +472,14 @@ const COVER_INPUT = [
         >
           {{ gallery.title }}
         </h1>
-        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-inherit" :class="overlaid ? 'inline-block rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-1.5' : 'opacity-80'">
+        <p v-if="subtitle" class="mt-5 text-ui leading-[1.6] font-normal text-inherit" :class="overlaid ? 'inline-block rounded-full bg-[rgba(12,10,9,.72)] px-3.5 py-1.5' : 'opacity-80'">
           {{ subtitle }}
         </p>
         <br v-if="subtitle && gallery.expiresAt && overlaid" />
-        <p v-if="gallery.expiresAt" class="mt-2 text-[14px] leading-[1.6] font-normal" :class="[overlaid || expiring ? 'inline-block rounded-full px-3.5 py-1.5' : '', expiring ? 'bg-due-bg font-semibold text-due' : overlaid ? 'bg-[rgba(12,10,9,.72)] text-inherit' : 'text-inherit opacity-80']">
+        <p v-if="gallery.expiresAt" class="mt-2 text-ui leading-[1.6] font-normal" :class="[overlaid || expiring ? 'inline-block rounded-full px-3.5 py-1.5' : '', expiring ? 'bg-due-bg font-semibold text-due' : overlaid ? 'bg-[rgba(12,10,9,.72)] text-inherit' : 'text-inherit opacity-80']">
           {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}
         </p>
-        <p v-if="downloadAfterPayment" class="mt-2 text-[14px] leading-[1.6] font-normal text-inherit opacity-80">
+        <p v-if="downloadAfterPayment" class="mt-2 text-ui leading-[1.6] font-normal text-inherit opacity-80">
           {{ unbilled ? `${$t('gallery.downloadAfterPayment')} · ${formatEuros(unbilled.amount)} · ${$t('portal.dueOn', { date: dayDate(unbilled.dueOn) })}` : $t('gallery.downloadAfterPayment') }}
         </p>
 
@@ -504,7 +504,7 @@ const COVER_INPUT = [
 
           <div
             v-if="form.errors.password"
-            class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-[#E7B190]"
+            class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-small leading-[1.55] font-normal text-[#E7B190]"
           >
             <b>{{ form.errors.password }}</b>
           </div>
@@ -513,7 +513,7 @@ const COVER_INPUT = [
 
       <a
         v-if="assets?.length && !unlocked"
-        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 rounded-full bg-[rgba(12,10,9,.72)] px-4 py-3 text-[14px] leading-none font-semibold tracking-[0.12em] uppercase text-white [text-shadow:0_1px_12px_rgba(0,0,0,.7)] no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
+        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 rounded-full bg-[rgba(12,10,9,.72)] px-4 py-3 text-ui leading-none font-semibold tracking-[0.12em] uppercase text-white [text-shadow:0_1px_12px_rgba(0,0,0,.7)] no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
         href="#raster"
       >
         {{ $t('gallery.scrollCue') }}
@@ -529,7 +529,7 @@ const COVER_INPUT = [
         <PortalBack v-if="project" class="min-[761px]:hidden" :href="`/projekte/${project.id}`" />
         <!-- tokens.css .who decides everything but the size and the colour -->
         <span
-          class="m-0 pr-[18px] text-[14px] leading-[1.35] font-semibold tracking-[-0.015em] text-muted-foreground max-[760px]:hidden [&_b]:font-semibold [&_b]:text-foreground"
+          class="m-0 pr-[18px] text-ui leading-[1.35] font-semibold tracking-[-0.015em] text-muted-foreground max-[760px]:hidden [&_b]:font-semibold [&_b]:text-foreground"
         >
           <b>{{ gallery.title }}</b>
           <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: dayDate(gallery.expiresAt) }) }}</template>
@@ -628,8 +628,8 @@ const COVER_INPUT = [
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
           </button>
 
-          <span v-if="menu === asset.key" data-list-menu class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]" @click.stop="menuClick">
-            <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
+          <span v-if="menu === asset.key" data-list-menu class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-line-hover bg-muted p-1.5" @click.stop="menuClick">
+            <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-small leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
               <Checkbox
                 :model-value="onList(list, asset.key)"
                 @update:model-value="toggle(list, asset.key)"
@@ -689,7 +689,7 @@ const COVER_INPUT = [
 
           <div v-for="(list, index) in lists" :key="list.listId" :class="index > 0 && 'mt-8'">
             <div
-              class="mb-3.5 flex flex-wrap items-baseline gap-5 [&_b]:text-[14px] [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_button]:cursor-pointer [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:text-[12.5px] [&_button]:leading-none [&_button]:font-normal [&_button]:text-muted-foreground [&_button:hover]:text-foreground"
+              class="mb-3.5 flex flex-wrap items-baseline gap-5 [&_b]:text-ui [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_button]:cursor-pointer [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:text-[12.5px] [&_button]:leading-none [&_button]:font-normal [&_button]:text-muted-foreground [&_button:hover]:text-foreground"
             >
               <b>{{ list.name ?? $t('gallery.heart') }}</b>
               <span class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground flex-1">
@@ -721,7 +721,7 @@ const COVER_INPUT = [
 
           <form class="mt-8 grid gap-3.5 min-[761px]:flex min-[761px]:items-end" @submit.prevent="addList">
             <Label class="block flex-1">
-              <span class="mb-2 block text-[13px] leading-none text-foreground">{{ $t('gallery.newListName') }}</span>
+              <span class="mb-2 block text-small leading-none text-foreground">{{ $t('gallery.newListName') }}</span>
               <Input v-model="listForm.name" type="text" />
             </Label>
             <Button class="min-h-11 w-full justify-center disabled:opacity-60 min-[761px]:w-auto" type="submit" variant="portal-ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
@@ -772,7 +772,7 @@ const COVER_INPUT = [
             </Label>
             <p
               v-if="gateForm.errors.secret"
-              class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-[#E7B190]"
+              class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-small leading-[1.55] font-normal text-[#E7B190]"
             >
               {{ gateForm.errors.secret }}
             </p>

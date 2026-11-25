@@ -150,8 +150,8 @@ function open(row: Row) {
 
         <div class="flex flex-wrap items-center gap-2 px-6 pt-5">
           <Link
-            class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
-            :class="kind === null ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
+            class="rounded-lg border border-transparent px-2.5 py-[5px] text-small leading-[1.3] no-underline"
+            :class="kind === null ? 'bg-paper font-medium text-foreground border-faint' : 'bg-sunk-2 text-foreground'"
             href="/vorlagen"
           >
             {{ $t('templates.all') }}
@@ -160,8 +160,8 @@ function open(row: Row) {
           <Link
             v-for="entry in kinds"
             :key="entry"
-            class="rounded-lg px-2.5 py-[5px] text-small leading-[1.3] no-underline"
-            :class="kind === entry ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk-2 text-foreground'"
+            class="rounded-lg border border-transparent px-2.5 py-[5px] text-small leading-[1.3] no-underline"
+            :class="kind === entry ? 'bg-paper font-medium text-foreground border-faint' : 'bg-sunk-2 text-foreground'"
             :href="`/vorlagen?typ=${entry}`"
           >
             {{ $t(KIND_LABEL[entry]) }}
@@ -177,7 +177,7 @@ function open(row: Row) {
                 {{ $t(KIND_LABEL[entry]) }}
               </div>
 
-              <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+              <div class="overflow-hidden surface-card">
                 <component
                   :is="row.href ? Link : 'button'"
                   v-for="row in matching(rows[entry]).slice(0, 4)"

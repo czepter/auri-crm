@@ -184,7 +184,7 @@ function receivedAt(iso: string) {
           <div class="mt-[5px] flex items-start gap-3.5">
             <div>
               <div class="text-small leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
-              <h1 class="m-0 mt-0.5 text-[20px] leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
+              <h1 class="m-0 mt-0.5 text-title leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
             </div>
             <div class="ml-auto flex items-center gap-2">
               <Chip v-if="open.task">{{ [$t('inbox.task'), open.task.dueOn && dayWithWeekday(open.task.dueOn)].filter(Boolean).join(' · ') }}</Chip>
@@ -203,9 +203,9 @@ function receivedAt(iso: string) {
             </div>
           </div>
 
-          <div v-for="message in open.messages" :key="message.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)]" :class="
+          <div v-for="message in open.messages" :key="message.id" class="py-3 border-t border-rule" :class="
               message.own &&
-                'pl-3.5 shadow-[inset_0_1px_0_var(--rule),inset_2px_0_0_var(--sunk-2)]'
+                'border-l-2 border-l-sunk-2 pl-3'
             ">
             <div class="flex items-baseline gap-[9px]">
               <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.who }}</span>
@@ -260,7 +260,7 @@ function receivedAt(iso: string) {
         <section v-if="drafts.length" class="mt-8">
           <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.draftsTitle') }}</h2>
 
-          <div v-for="draft in drafts" :key="draft.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+          <div v-for="draft in drafts" :key="draft.id" class="py-3 border-t border-rule first-of-type:border-t-0">
             <div class="flex items-baseline gap-[9px]">
               <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ draft.subject }}</span>
               <span class="ml-auto text-small leading-[1.47] text-ink-2">{{ [draft.projectName, draft.to].filter(Boolean).join(' · ') }}</span>
@@ -280,7 +280,7 @@ function receivedAt(iso: string) {
         <section v-if="unfiled.length" class="mt-8">
           <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.unfiledTitle') }}</h2>
 
-          <div v-for="row in unfiled" :key="row.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+          <div v-for="row in unfiled" :key="row.id" class="py-3 border-t border-rule first-of-type:border-t-0">
             <div class="flex items-baseline gap-[9px]">
               <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.subject }}</span>
               <span class="ml-auto text-small leading-[1.47] tabular-nums text-ink-2">{{ receivedAt(row.startedAt) }}</span>
@@ -314,7 +314,7 @@ function receivedAt(iso: string) {
         <section v-if="pending.length" class="mt-8">
           <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.triageTitle') }}</h2>
 
-          <div v-for="row in pending" :key="row.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+          <div v-for="row in pending" :key="row.id" class="py-3 border-t border-rule first-of-type:border-t-0">
             <div class="flex items-baseline gap-[9px]">
               <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.from }}</span>
               <span class="text-small leading-[1.47] text-ink-2">

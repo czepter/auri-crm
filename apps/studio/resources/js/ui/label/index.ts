@@ -24,10 +24,10 @@ export const labelVariants = cva("", {
   variants: {
     variant: {
       field: [
-        "font-sans text-[13px] font-medium leading-none text-foreground",
+        "font-sans text-small font-medium leading-none text-foreground",
         "[&_em]:ml-1.5 [&_em]:text-small [&_em]:font-normal [&_em]:not-italic [&_em]:text-ink-2",
       ],
-      inline: "cursor-pointer select-none font-sans text-[13px] font-normal leading-[1.4] text-foreground",
+      inline: "cursor-pointer select-none font-sans text-small font-normal leading-[1.4] text-foreground",
       /*
        * crm.css .field > span — the same caption on the admin's own screens,
        * where it is lighter and wider: the field below it is denser, and a

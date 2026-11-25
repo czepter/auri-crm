@@ -517,7 +517,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                             />
 
                             <CappedList v-slot="{ item: row }" :items="taskRows" :limit="3" :more-href="`${base}/aufgaben`">
-                                <div class="flex min-h-11 items-center gap-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+                                <div class="flex min-h-11 items-center gap-3 border-t border-rule first:border-t-0">
                                     <span
                                         v-if="row.isDone"
                                         class="grid size-6 flex-none place-items-center rounded-full bg-ok-bg text-ok"
@@ -575,7 +575,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                 </div>
                             </template>
                             <CappedList v-else v-slot="{ item: shoot }" :items="shoots" :limit="3" :more-href="`${base}/shootings`">
-                                <div class="grid grid-cols-[140px_minmax(0,1fr)] gap-4 py-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:grid-cols-1 max-[640px]:gap-1">
+                                <div class="grid grid-cols-[140px_minmax(0,1fr)] gap-4 py-3 border-t border-rule first:border-t-0 max-[640px]:grid-cols-1 max-[640px]:gap-1">
                                     <div>
                                         <b class="font-semibold">{{ day(shoot.date) }}</b>
                                         <div class="text-small text-ink-2">{{ shoot.statusLabel }}</div>
@@ -612,7 +612,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                 <div
                                     v-for="(person, index) in kontakte.people"
                                     :key="person.id"
-                                    class="flex items-end gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
+                                    class="flex items-end gap-3 py-2 border-t border-rule first:border-t-0 max-[640px]:flex-wrap"
                                 >
                                     <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
                                         <Input :id="id" v-model="person.name" type="text" />
@@ -631,7 +631,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                     </Button>
                                 </div>
 
-                                <div v-if="adding" class="mt-3 flex flex-col gap-3 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
+                                <div v-if="adding" class="mt-3 flex flex-col gap-3 pt-3 border-t border-rule">
                                     <ContactTypeahead :model-value="picked" @update:model-value="pick" @create-new="(term) => { pick(null); newContact.name = term }" />
 
                                     <div v-if="newContact.name && !picked" class="flex gap-3 max-[640px]:flex-wrap">
@@ -675,7 +675,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                 <div
                                     v-for="person in people"
                                     :key="person.id"
-                                    class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                                    class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 border-t border-rule first:border-t-0"
                                 >
                                     <Link class="min-w-[200px] flex-1 font-semibold text-foreground no-underline hover:underline" :href="`/kontakte/${person.id}`">
                                         {{ person.name }}

@@ -183,7 +183,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             <tr v-for="item in quote.items" :key="item.id" :class="[ROW, (item.isIncluded || (item.selectable && !item.selected)) && '[&>td]:text-muted-foreground']">
               <td>
                 <template v-if="item.selectable && !item.selected">{{ $t('quotes.optional') }}: </template>{{ item.title }}
-                <div v-if="item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
+                <div v-if="item.description" class="text-small leading-[1.45] text-muted-foreground">
                   {{ item.description }}
                 </div>
               </td>

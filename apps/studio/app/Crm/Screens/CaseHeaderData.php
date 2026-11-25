@@ -32,7 +32,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 class CaseHeaderData extends Data
 {
-    /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, narrowOnly: bool}>  $tabs
+    /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null}>  $tabs
      * @param  list<array{key: string, label: string, pipeline: string, state: string}>  $track
      * @param  list<array{key: string, rows: list<CaseQueueRowData>}>  $queue
      * @param  list<CasePersonData>  $people
@@ -146,7 +146,7 @@ class CaseHeaderData extends Data
     private static function projectTabs(ClientCase $project): array
     {
         $base = "/auftraege/{$project->public_id}";
-        $tab = fn (string $key, string $label, string $path, ?int $count = null) => ['key' => $key, 'label' => $label, 'href' => $base.$path, 'count' => $count, 'countTo' => null, 'narrowOnly' => false];
+        $tab = fn (string $key, string $label, string $path, ?int $count = null) => ['key' => $key, 'label' => $label, 'href' => $base.$path, 'count' => $count, 'countTo' => null];
 
         $vocabulary = app(CrmVocabulary::class);
         $delivered = $project->shoots->reject->isCancelled()
@@ -181,17 +181,16 @@ class CaseHeaderData extends Data
         $case = "/anfragen/{$project->public_id}";
 
         return [
-            ['key' => 'overview', 'label' => 'project.overview', 'href' => $case, 'count' => null, 'countTo' => null, 'narrowOnly' => false],
-            ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "{$case}/angebot", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'narrowOnly' => false],
-            ['key' => 'messages', 'label' => 'project.messages', 'href' => "{$case}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'narrowOnly' => false],
+            ['key' => 'overview', 'label' => 'project.overview', 'href' => $case, 'count' => null, 'countTo' => null],
+            ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "{$case}/angebot", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null],
+            ['key' => 'messages', 'label' => 'project.messages', 'href' => "{$case}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null],
             self::infoTab($case),
         ];
     }
 
-    /** The rail, for the widths that have no room for it. */
     private static function infoTab(string $base): array
     {
-        return ['key' => 'info', 'label' => 'lead.info', 'href' => "{$base}/info", 'count' => null, 'countTo' => null, 'narrowOnly' => true];
+        return ['key' => 'info', 'label' => 'lead.info', 'href' => "{$base}/info", 'count' => null, 'countTo' => null];
     }
 
     /**

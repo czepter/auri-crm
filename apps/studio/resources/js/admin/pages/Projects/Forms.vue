@@ -255,7 +255,7 @@ function summary(instance: App.Crm.Data.FormInstanceData): string {
             <!-- P-03 (#222): sharing is what makes this fillable in the
                  portal. Un-sharing hides the screen and deletes nothing —
                  form_answers is append-only and stays that way. -->
-            <div class="mt-4 flex items-center gap-2.5 pt-3.5 shadow-[inset_0_1px_0_var(--rule)]">
+            <div class="mt-4 flex items-center gap-2.5 pt-3.5 border-t border-rule">
               <Switch
                 :id="`share-${instance.id}`"
                 :model-value="Boolean(instance.sharedAt)"

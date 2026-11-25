@@ -40,7 +40,7 @@ defineProps<{
     </Link>
 
     <span class="min-w-0 flex-1">
-      <b class="block truncate text-[16px] leading-[1.25] font-semibold tracking-[-0.014em]">{{ title }}</b>
+      <b class="block truncate text-body leading-[1.25] font-semibold tracking-[-0.014em]">{{ title }}</b>
       <span v-if="note" class="mt-px block truncate text-[11.5px] leading-[1.3] text-muted-foreground">{{ note }}</span>
     </span>
   </div>

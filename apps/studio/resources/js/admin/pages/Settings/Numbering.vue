@@ -109,7 +109,7 @@ function save(rangeId: string) {
         <div
           v-for="range in ranges"
           :key="range.id"
-          class="flex items-baseline justify-between gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+          class="flex items-baseline justify-between gap-4 py-2.5 border-t border-rule first:border-t-0"
         >
           <span class="text-small text-ink-2">{{ range.documentTypeLabel }}</span>
           <span class="text-ui font-semibold tabular-nums">{{ range.nextNumberPreview }}</span>

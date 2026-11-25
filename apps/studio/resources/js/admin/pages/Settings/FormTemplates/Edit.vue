@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { shortDate } from '@/admin/lib/dates'
 
 const { t } = useI18n()
 
@@ -88,7 +89,7 @@ function submit() {
         <div class="px-6 pt-7 pb-8">
           <div class="mt-2.5 flex flex-row gap-6">
             <span class="inline-flex items-center bg-left bg-no-repeat bg-[length:13px_13px] pl-[19px] text-small leading-[1.35] font-normal text-muted-foreground bg-icon-kind">{{ projectTypeLabel }}</span>
-            <span class="inline-flex items-center bg-left bg-no-repeat bg-[length:13px_13px] pl-[19px] text-small leading-[1.35] font-normal text-muted-foreground bg-icon-date">{{ $t('formTemplates.updatedAt', { date: new Date(template.updatedAt).toLocaleDateString('de-DE') }) }}</span>
+            <span class="inline-flex items-center bg-left bg-no-repeat bg-[length:13px_13px] pl-[19px] text-small leading-[1.35] font-normal text-muted-foreground bg-icon-date">{{ $t('formTemplates.updatedAt', { date: shortDate(template.updatedAt) }) }}</span>
           </div>
 
           <form id="form-template-form" style="margin-top: var(--s5)" @submit.prevent="submit">

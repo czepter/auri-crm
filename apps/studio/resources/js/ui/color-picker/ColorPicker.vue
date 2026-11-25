@@ -114,7 +114,7 @@ const hueColor = computed(() => hsvToHex({ h: hsv.value.h, s: 1, v: 1 }))
           @keydown="keyArea"
         >
           <span
-            class="pointer-events-none absolute size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgb(0_0_0_/_0.35)]"
+            class="pointer-events-none absolute size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white outline outline-1 outline-black/40"
             :style="{ left: `${hsv.s * 100}%`, top: `${(1 - hsv.v) * 100}%`, background: swatch }"
           />
         </div>
@@ -130,7 +130,7 @@ const hueColor = computed(() => hsvToHex({ h: hsv.value.h, s: 1, v: 1 }))
           @keydown="keyHue"
         >
           <span
-            class="pointer-events-none absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgb(0_0_0_/_0.35)]"
+            class="pointer-events-none absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white outline outline-1 outline-black/40"
             :style="{ left: `${(hsv.h / 360) * 100}%`, background: hueColor }"
           />
         </div>

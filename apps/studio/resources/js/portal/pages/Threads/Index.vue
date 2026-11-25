@@ -203,7 +203,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
              PortalSubhead has said the subject and the booking by then, so
              the pane's own head steps aside with the frame. -->
         <div
-          class="flex min-h-0 flex-col overflow-hidden rounded-md border border-border max-[979px]:rounded-none max-[979px]:border-0"
+          class="flex min-h-0 flex-col overflow-hidden surface-card max-[979px]:rounded-none max-[979px]:border-0"
           :class="!subscreen && 'max-[979px]:hidden'"
         >
           <template v-if="openThread && !composing">
@@ -239,7 +239,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                 <Button
                   type="button"
                   variant="portal-chip"
-                  class="-translate-y-full bg-background shadow-md motion-reduce:transition-none"
+                  class="-translate-y-full bg-background motion-reduce:transition-none"
                   @click="jump"
                 >
                   {{ $t('portal.messagesUnseen', unseen) }} ↓

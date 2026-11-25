@@ -25,7 +25,7 @@ defineProps<{ title: string; rows: ChainRow[] }>()
     <div
       v-for="row in rows"
       :key="row.key"
-      class="grid min-h-16 grid-cols-[88px_minmax(0,1fr)_auto_auto] items-center gap-4 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:grid-cols-[72px_minmax(0,1fr)_auto]"
+      class="grid min-h-16 grid-cols-[88px_minmax(0,1fr)_auto_auto] items-center gap-4 border-t border-rule first:border-t-0 max-[640px]:grid-cols-[72px_minmax(0,1fr)_auto]"
     >
       <span class="text-small font-medium text-ink-2">{{ row.label }}</span>
       <div class="min-w-0">

@@ -14,6 +14,7 @@ import { Input } from '@/ui/input'
 import { TimePicker } from '@/ui/time-picker'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import { focusFirstError } from '@/admin/lib/focusInvalid'
+import { shortDate } from '@/admin/lib/dates'
 
 const props = defineProps<{
   project: App.Crm.Data.CaseSuggestionData | null
@@ -122,7 +123,7 @@ function submit() {
             { label: $t('create.pick'), value: project?.name },
             { label: $t('project.shootKind'), value: form.kind },
             { label: $t('project.shootLabel'), value: form.label },
-            { label: $t('project.shootDate'), value: form.date ? new Date(form.date).toLocaleDateString('de-DE') : null },
+            { label: $t('project.shootDate'), value: form.date ? shortDate(form.date) : null },
             { label: $t('project.callTime'), value: form.call_time },
             { label: $t('project.endTime'), value: form.end_time },
             { label: $t('project.venueName'), value: [form.venue_name, form.venue_city].filter(Boolean).join(', ') },

@@ -137,7 +137,7 @@ const width = computed(() => {
             </aside>
 
             <Button
-              class="fixed right-6 bottom-6 z-40 shadow-[0_8px_24px_rgb(20_16_14_/_0.16)] min-[1441px]:hidden"
+              class="fixed right-6 bottom-6 z-40 min-[1441px]:hidden"
               variant="default"
               type="button"
               @click="expanded = true"
@@ -169,7 +169,7 @@ const width = computed(() => {
               </div>
               <iframe
                 :src="src"
-                class="mx-auto block h-[calc(100dvh-140px)] rounded-lg border-0 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                class="mx-auto block h-[calc(100dvh-140px)] rounded-lg border border-border bg-background"
                 :style="{ width }"
                 title=""
               />

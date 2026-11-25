@@ -12,7 +12,7 @@ import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
-import { dayDate, daysUntil } from '@/portal/lib/dates'
+import { dayDate, dayMonth, daysUntil } from '@/portal/lib/dates'
 import { reachable, type Studio } from '@/portal/lib/studio'
 import { formatEuros } from '@/lib/money'
 import { Button } from '@/ui/button'
@@ -90,11 +90,6 @@ const years = computed(() => {
 
 function folded(key: string, rows: Booking[]) {
   return rows.length > ROLLUP_FROM && !opened.value[key]
-}
-
-// The year already heads the group, so the tile names the day.
-function dayMonth(iso: string) {
-  return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })
 }
 
 function phaseState(phase: Phase) {

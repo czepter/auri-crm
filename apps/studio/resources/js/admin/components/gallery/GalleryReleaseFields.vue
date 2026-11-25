@@ -120,7 +120,7 @@ function setPermission(audience: Audience, action: Action, on: boolean | 'indete
       </tr>
     </thead>
     <tbody>
-      <tr v-for="action in ACTIONS" :key="action" class="shadow-[inset_0_1px_0_var(--rule)]">
+      <tr v-for="action in ACTIONS" :key="action" class="border-t border-rule">
         <td class="py-2.5 font-medium">{{ $t(`galleryRecord.permission.${action}`) }}</td>
         <td v-for="audience in AUDIENCES" :key="audience" class="py-2.5">
           <Checkbox

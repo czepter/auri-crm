@@ -54,7 +54,7 @@ const sendFirst = computed(() => live.value && unpaid.value && !row.value.sentOn
         </PageHead>
 
         <div class="grid grid-cols-[minmax(0,1fr)_320px] items-start gap-8 px-6 pt-6 max-[900px]:grid-cols-1">
-          <section class="rounded-lg border border-border p-8 max-[640px]:p-5">
+          <section class="surface-card p-8 max-[640px]:p-5">
             <div class="flex items-start justify-between gap-6">
               <div>
                 <div class="text-small text-ink-2">{{ $t('invoiceDetail.recipient') }}</div>

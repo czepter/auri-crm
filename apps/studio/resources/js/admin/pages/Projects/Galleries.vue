@@ -52,7 +52,7 @@ const missingSummary = computed(() =>
           <div
             v-for="gallery in galleries"
             :key="gallery.id"
-            class="flex items-baseline gap-2.5 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+            class="flex items-baseline gap-2.5 py-2.5 border-t border-rule first:border-t-0"
           >
             <div class="min-w-0 flex-1">
               <Link :href="`/galerien/${gallery.id}`" class="text-small leading-[1.3] font-semibold tracking-[-0.01em]">
@@ -81,7 +81,7 @@ const missingSummary = computed(() =>
           <div
             v-for="shoot in withoutGallery"
             :key="shoot.id"
-            class="flex items-center gap-2.5 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+            class="flex items-center gap-2.5 py-2.5 border-t border-rule first:border-t-0"
           >
             <div class="w-[88px] flex-none text-small leading-[1.2] font-semibold tabular-nums">
               {{ dayAndMonth(shoot.date) ?? '—' }}

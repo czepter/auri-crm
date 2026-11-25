@@ -75,6 +75,8 @@
    width of its own. */
 [data-theme="portal"] {
   scroll-padding-top: 6rem;
+  --paper:var(--bg);
+  --rule:var(--line);
   --hover:#F0F3F5;
   --sunk:#F0F3F5;
   --muted:#626B78;

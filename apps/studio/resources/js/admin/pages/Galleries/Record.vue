@@ -33,6 +33,7 @@ import Activity, { type ActivityData } from '@/admin/pages/Galleries/panes/Activ
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
 import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
+import { shortDate } from '@/admin/lib/dates'
 
 const { t } = useI18n()
 
@@ -143,7 +144,7 @@ const stateWord = computed(() => {
   if (key !== 'online') return t(key === 'draft' ? 'galleryRecord.stateDraft' : 'galleryRecord.stateWithdrawn')
   return props.figures.expiresAt === null
     ? t('galleryRecord.stateOnline')
-    : t('galleryRecord.stateOnlineUntil', { date: new Date(props.figures.expiresAt).toLocaleDateString('de-DE') })
+    : t('galleryRecord.stateOnlineUntil', { date: shortDate(props.figures.expiresAt) })
 })
 const stateTone = computed(() => ({ online: 'text-ok', withdrawn: 'text-ink-2', draft: 'text-ink-2' })[stateKey(publishState.value)])
 const publishLabel = computed(() => publishLabelKey(publishState.value))

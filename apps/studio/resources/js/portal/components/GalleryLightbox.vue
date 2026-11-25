@@ -331,7 +331,7 @@ function time(iso: string) {
     <header class="flex items-center justify-between gap-5 px-8 py-5">
       <button
         type="button"
-        class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+        class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-small leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
         @click="open = null"
       >
         <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
@@ -340,7 +340,7 @@ function time(iso: string) {
       <span class="text-[12.5px] leading-none font-normal tabular-nums text-muted-foreground">{{ $t('gallery.position', { at: at + 1, of: assets.length }) }}</span>
       <button
         type="button"
-        class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+        class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-small leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
         @click="open = null"
       >
         {{ $t('common.close') }}
@@ -401,7 +401,7 @@ function time(iso: string) {
           <div v-if="offers.lists && lists?.length" ref="listsRoot" class="relative">
             <button
               type="button"
-              class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+              class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-small leading-none font-medium no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
               :class="onLists.length ? 'text-action [&_svg]:fill-current' : 'text-muted-foreground [&_svg]:fill-none'"
               @click="listsOpen = !listsOpen"
             >
@@ -409,8 +409,8 @@ function time(iso: string) {
               {{ onLists.length ? $t('gallery.onLists', onLists.length) : $t('gallery.addToList') }}
             </button>
 
-            <div v-if="listsOpen" class="absolute top-7 left-0 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]">
-              <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
+            <div v-if="listsOpen" class="absolute top-7 left-0 z-5 w-[216px] rounded-md border border-line-hover bg-muted p-1.5">
+              <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-small leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
                 <Checkbox
                   :model-value="list.keys.includes(asset.key)"
                   @update:model-value="toggleList(list)"
@@ -424,7 +424,7 @@ function time(iso: string) {
           <button
             v-else-if="offers.lists"
             type="button"
-            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:transition-transform [&_svg]:duration-200 motion-reduce:[&_svg]:transition-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-small leading-none font-medium no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:transition-transform [&_svg]:duration-200 motion-reduce:[&_svg]:transition-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
             :class="[isFavorite ? 'text-action [&_svg]:fill-current' : 'text-muted-foreground [&_svg]:fill-none', bursting && '[&_svg]:scale-125']"
             @click="toggleFavorite"
           >
@@ -432,7 +432,7 @@ function time(iso: string) {
             {{ isFavorite ? $t('gallery.unfavorite') : $t('gallery.favorite') }}
           </button>
 
-          <a v-if="offers.downloads" class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]" :href="`${base}/download`">
+          <a v-if="offers.downloads" class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-small leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]" :href="`${base}/download`">
             <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
             {{ $t('gallery.download') }}
           </a>
@@ -440,7 +440,7 @@ function time(iso: string) {
           <button
             v-if="offers.hide"
             type="button"
-            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-small leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
             @click="hide"
           >
             <svg viewBox="0 0 24 24"><path d="M4 4l16 16M10 6.2A9 9 0 0121 12a9 9 0 01-3 3.5M6.5 7.5A9 9 0 003 12c1.5 3.5 5 6 9 6 1.1 0 2.1-.2 3-.5" /></svg>
@@ -450,7 +450,7 @@ function time(iso: string) {
           <button
             v-if="offers.share"
             type="button"
-            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-small leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
             @click="share"
           >
             <svg viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 13v7h14v-7" /></svg>

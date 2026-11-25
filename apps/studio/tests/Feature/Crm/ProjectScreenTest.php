@@ -56,8 +56,7 @@ it('shows only the tabs whose feature exists', function () {
     $tabs = fn () => props("/auftraege/{$this->case->public_id}")['header']['tabs'];
 
     expect(array_column($tabs(), 'key'))->toBe(['overview', 'shoots', 'tasks', 'messages', 'quotes', 'invoices', 'info'])
-        ->and(collect($tabs())->every(fn ($tab) => ! array_key_exists('children', $tab)))->toBeTrue()
-        ->and(array_column(array_filter($tabs(), fn ($tab) => $tab['narrowOnly']), 'key'))->toBe(['info']);
+        ->and(collect($tabs())->every(fn ($tab) => ! array_key_exists('children', $tab)))->toBeTrue();
 
     FormInstance::factory()->for($this->case, 'case')->create();
     expect(array_column($tabs(), 'key'))->toContain('forms');

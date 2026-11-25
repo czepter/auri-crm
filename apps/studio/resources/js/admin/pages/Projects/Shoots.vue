@@ -7,7 +7,7 @@ import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import ShootAdvance from '@/admin/components/crm/ShootAdvance.vue'
 import ShootTimeline from '@/admin/components/crm/ShootTimeline.vue'
 import { chipClass, filterShoots, shootDays, type ShootFilter } from '@/admin/lib/shoots'
-import { dayWithWeekday } from '@/admin/lib/dates'
+import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
 import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -43,7 +43,7 @@ const form = useForm({
 })
 
 
-const today = new Date().toISOString().slice(0, 10)
+const today = isoDate(new Date())
 
 function metrics(shoot: App.Crm.Data.ShootData) {
   return [
@@ -235,7 +235,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
         />
 
         <div class="flex flex-col gap-3">
-          <section v-for="day in days" :key="day.key" class="rounded-[var(--r)] bg-paper shadow-card">
+          <section v-for="day in days" :key="day.key" class="surface-card">
             <header class="flex items-baseline gap-3 px-6 pt-4 pb-2 max-[640px]:px-4">
               <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">
                 {{ dayWithWeekday(day.key || null, null) ?? $t('board.openDate') }}
@@ -243,7 +243,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
               <span v-if="day.items.length > 1" class="text-small text-ink-2">{{ $t('project.dayCount', day.items.length) }}</span>
             </header>
 
-            <div v-for="shoot in day.items" :key="shoot.id" class="shadow-[inset_0_1px_0_var(--rule)]">
+            <div v-for="shoot in day.items" :key="shoot.id" class="border-t border-rule">
               <div class="flex items-center gap-3.5 px-6 py-1.5 max-[640px]:flex-wrap max-[640px]:px-4">
                 <button
                   type="button"
@@ -306,7 +306,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
                 </div>
               </div>
 
-              <div v-if="!soloStudio" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
+              <div v-if="!soloStudio" class="mt-4 pt-3 border-t border-rule">
                 <div class="text-small leading-none font-semibold text-faint">{{ $t('project.crew') }}</div>
 
                 <div v-for="member in shoot.crew" :key="member.id" class="mt-1.5 flex items-center gap-2.5">

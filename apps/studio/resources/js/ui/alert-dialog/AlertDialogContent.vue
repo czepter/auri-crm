@@ -29,7 +29,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
         'fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-2*var(--s5))] max-w-[416px]',
         '-translate-x-1/2 -translate-y-1/2 flex-col',
         'rounded-md border border-line-hover bg-background font-sans text-foreground',
-        'shadow-[0_24px_64px_rgb(20_16_14_/_0.16)] outline-none',
+        'outline-none',
         props.class,
       )"
     >

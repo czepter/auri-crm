@@ -418,7 +418,7 @@ onUnmounted(() => {
       <div class="mb-2 text-small leading-none font-semibold text-faint">
         {{ $t('media.needsAttention') }} · {{ $t('media.needsAttentionCount', failedAssets.length) }}
       </div>
-      <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+      <div class="overflow-hidden surface-card">
         <div v-for="asset in failedAssets" :key="asset.publicId" class="flex items-center gap-2.5 border-t border-border p-2.5 text-small first:border-t-0">
           <span class="font-medium text-foreground">{{ asset.filename }}</span>
           <span class="text-ink-2">{{ asset.error }}</span>

@@ -107,7 +107,7 @@ function at(iso: string) {
         <div
           v-for="entry in rows"
           :key="entry.id"
-          class="flex items-start gap-4 py-2.5 shadow-[inset_0_-1px_0_var(--rule)]"
+          class="flex items-start gap-4 py-2.5 border-b border-rule"
         >
           <span class="w-36 flex-none text-small tabular-nums text-ink-2">{{ at(entry.at) }}</span>
           <span class="w-36 flex-none truncate text-small">{{ entry.actor ?? '—' }}</span>

@@ -96,7 +96,7 @@ const STATUS_KEY: Record<Exclude<TrayRow['status'], 'uploading'>, string> = {
 <template>
   <div
     v-if="rows.length > 0"
-    class="fixed right-5 bottom-5 flex max-h-[calc(100vh-2.5rem)] flex-col overflow-hidden rounded-lg border border-border bg-paper shadow-lg"
+    class="fixed right-5 bottom-5 flex max-h-[calc(100vh-2.5rem)] flex-col overflow-hidden rounded-lg border border-line-hover bg-paper"
     :class="expanded ? 'w-[min(560px,calc(100vw-2.5rem))]' : 'w-[260px]'"
   >
     <div class="flex items-start gap-2 border-b border-border px-3 py-2.5">

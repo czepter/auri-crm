@@ -61,7 +61,7 @@ const toggle = (version: string) => {
                         <article
                             v-for="release in releases"
                             :key="release.version"
-                            class="mb-3 rounded-[var(--r)] border border-border bg-paper px-5 py-4"
+                            class="mb-3 surface-card px-5 py-4"
                         >
                             <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                                 <h2 class="text-body leading-[1.3] font-semibold tracking-[-0.02em]">
@@ -126,7 +126,7 @@ const toggle = (version: string) => {
                     </div>
 
                     <aside class="sticky top-6 w-[320px] flex-none max-[900px]:static max-[900px]:w-full">
-                        <div class="rounded-[var(--r)] border border-border bg-paper px-5 py-4">
+                        <div class="surface-card px-5 py-4">
                             <div class="text-small font-semibold text-faint">{{ $t('releases.current') }}</div>
                             <div class="mt-1 text-[22px] leading-[1.2] font-semibold tabular-nums">{{ installed }}</div>
                             <div v-if="current && current.version === installed" class="mt-1 text-small tabular-nums text-ink-2">

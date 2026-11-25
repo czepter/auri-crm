@@ -3,7 +3,7 @@ defineProps<{ label: string; value: string; error?: boolean }>()
 </script>
 
 <template>
-  <details :open="error" class="shadow-[inset_0_-1px_0_var(--rule)]">
+  <details :open="error" class="border-b border-rule">
     <summary class="flex cursor-pointer items-baseline gap-2 py-3 text-small">
       <span class="font-medium">{{ label }}</span>
       <span class="text-ink-2">·</span>

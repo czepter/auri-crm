@@ -104,7 +104,7 @@ function submit() {
               {{ suggestion.author.slice(0, 1) }}
             </span>
             <div>
-              <p class="m-0 max-w-[48ch] text-[16px] leading-[1.6]">{{ suggestion.note }}</p>
+              <p class="m-0 max-w-[48ch] text-body leading-[1.6]">{{ suggestion.note }}</p>
               <span v-if="suggestion.author" class="mt-2 block text-[13px] text-muted-foreground">{{ suggestion.author }}</span>
             </div>
           </div>

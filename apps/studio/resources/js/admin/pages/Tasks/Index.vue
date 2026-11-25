@@ -123,7 +123,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
 
           <Empty v-if="shown.length === 0" :text="$t('tasks.empty')" />
 
-          <div v-else class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+          <div v-else class="overflow-hidden surface-card">
             <div
               v-for="task in shown"
               :key="task.id"

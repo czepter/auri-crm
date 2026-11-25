@@ -30,7 +30,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     )"
   >
     <SwitchThumb
-      class="pointer-events-none block size-4 rounded-full bg-background shadow-sm transition-transform duration-[120ms] ease-out data-[state=checked]:translate-x-4"
+      class="pointer-events-none block size-4 rounded-full border border-border bg-background transition-transform duration-[120ms] ease-out data-[state=checked]:translate-x-4"
     />
   </SwitchRoot>
 </template>

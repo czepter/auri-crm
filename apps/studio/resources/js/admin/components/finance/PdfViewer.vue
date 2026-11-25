@@ -47,7 +47,7 @@ async function draw() {
     canvas.height = Math.floor(viewport.height * ratio)
     canvas.style.width = `${Math.round(viewport.width)}px`
     canvas.style.height = `${Math.round(viewport.height)}px`
-    canvas.className = 'mx-auto mb-4 block last:mb-0 border border-border bg-white shadow-[0_18px_40px_-24px_rgba(20,16,14,.28)]'
+    canvas.className = 'mx-auto mb-4 block last:mb-0 border border-rule bg-white'
 
     const context = canvas.getContext('2d')
     if (!context) return

@@ -106,7 +106,7 @@ function defaultLabel(key: string) {
   <div
     v-for="key in switches"
     :key="key"
-    class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+    class="flex items-center gap-3 py-[9px] border-t border-rule first-of-type:border-t-0"
   >
     <div class="min-w-0 flex-1 text-small">
       {{ $t(`contacts.portalKey.${key}`) }}
@@ -142,7 +142,7 @@ function defaultLabel(key: string) {
   <!-- The caption is the inline one, not the field caption: under the
        rail's section headings a second heading-like caption reads as a third
        section rather than as the name of the control. -->
-  <div v-if="group === 'all' || group === 'permissions'" class="py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+  <div v-if="group === 'all' || group === 'permissions'" class="py-[9px] border-t border-rule first-of-type:border-t-0">
     <Label variant="inline" for="portal-messaging">
       {{ $t('contacts.portalKey.messaging_mode') }}
     </Label>
@@ -164,7 +164,7 @@ function defaultLabel(key: string) {
   <div
     v-for="state in (group === 'all' || group === 'welcome' ? WELCOME_STATES : [])"
     :key="state"
-    class="py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+    class="py-[9px] border-t border-rule first-of-type:border-t-0"
   >
     <Label variant="inline" :for="`portal-welcome-${state}`">
       {{ $t(`portalSettings.welcomeState.${state}`) }}

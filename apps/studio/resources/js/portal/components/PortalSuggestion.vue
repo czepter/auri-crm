@@ -38,15 +38,15 @@ function priceLabel(service: Service) {
   <section>
     <PortalLabel class="mb-6">{{ $t('portal.suggestionTitle') }}</PortalLabel>
 
-    <div class="rounded-md border border-border p-4">
+    <div class="surface-card p-4">
       <div v-if="props.suggestion.note" class="flex items-start gap-3">
         <span
           v-if="props.suggestion.author"
-          class="grid h-8 w-8 flex-none place-items-center rounded-full bg-sunk font-serif text-[13px] leading-none text-muted-foreground"
+          class="grid h-8 w-8 flex-none place-items-center rounded-full bg-sunk font-serif text-small leading-none text-muted-foreground"
         >
           {{ props.suggestion.author.slice(0, 1) }}
         </span>
-        <p class="m-0 line-clamp-3 text-[14px] leading-[1.55]">{{ props.suggestion.note }}</p>
+        <p class="m-0 line-clamp-3 text-ui leading-[1.55]">{{ props.suggestion.note }}</p>
       </div>
       <span
         v-if="props.suggestion.note && props.suggestion.author"

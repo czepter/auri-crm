@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { shortDate as formatDate } from "@/admin/lib/dates";
 import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { Clock } from "lucide-vue-next";
@@ -84,11 +85,7 @@ const DONE_STAGES = ["booked"];
 
 function shortDate(date: string | null) {
     return date
-        ? new Date(date).toLocaleDateString("de-DE", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-          })
+        ? formatDate(date)
         : null;
 }
 
@@ -352,7 +349,7 @@ const workflowAllowed = computed(() =>
                             <ContextMenu>
                             <ContextMenuTrigger as-child>
                             <Link
-                                class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
+                                class="relative block cursor-grab surface-card p-3.5 text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover hover:bg-accent"
                                 :class="
                                     moving?.id === card.id && 'cursor-grabbing'
                                 "

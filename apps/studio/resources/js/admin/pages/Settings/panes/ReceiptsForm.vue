@@ -45,7 +45,7 @@ defineExpose({ form, submit })
           <label
             v-for="option in DOCUMENT_LAYOUTS"
             :key="option.value"
-            class="block cursor-pointer rounded-md bg-muted px-4 pt-4 pb-6 shadow-[inset_0_0_0_1px_transparent] has-[[data-state=checked]]:shadow-[inset_0_0_0_2px_var(--accent)]"
+            class="block cursor-pointer rounded-md bg-muted px-4 pt-4 pb-6 border-2 border-transparent has-[[data-state=checked]]:border-accent"
           >
             <RadioGroupItem :value="option.value" class="sr-only" />
             <b class="block text-title leading-tight font-semibold text-foreground">{{ $t(option.labelKey) }}</b>

@@ -20,3 +20,8 @@ export function daysUntil(iso: string, now: Date = new Date()): number {
 
   return Math.round((day.getTime() - today.getTime()) / 86_400_000)
 }
+
+/** "30. Mai": the year already heads the group. */
+export function dayMonth(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })
+}

@@ -21,7 +21,7 @@ defineProps<{ title: string; kicker?: string; kickerHref?: string }>()
         </div>
         <div class="flex items-center gap-3 max-[640px]:flex-wrap">
             <h1
-                class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em] max-[640px]:w-full"
+                class="m-0 text-title leading-7 font-semibold tracking-[-0.02em] max-[640px]:w-full"
             >
                 <slot name="title">{{ title }}</slot>
             </h1>

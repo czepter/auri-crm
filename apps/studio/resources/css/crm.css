@@ -67,9 +67,6 @@
   --r-pill: 980px;
   /* Buttons the portal shares round to a pill there; here they are controls. */
   --r-control: var(--r-sm);
-
-  /* White cards on a white page: the shadow sets them apart, not a border. */
-  --card-shadow: 0 1px 3px rgba(24, 24, 27, .06), 0 6px 20px rgba(24, 24, 27, .05);
 }
 
 /* Not on :root with the values above — tokens.css sets the same shorthand on

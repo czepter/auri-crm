@@ -30,7 +30,7 @@ function pick(event: MouseEvent) {
         <div class="relative cursor-crosshair overflow-hidden rounded-md" @click="pick">
           <img :src="src" alt="" class="block max-h-[60vh] w-full object-contain">
           <span
-            class="pointer-events-none absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,.4)]"
+            class="pointer-events-none absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white outline outline-1 outline-black/40"
             :style="{ left: `${point.x}%`, top: `${point.y}%` }"
           />
         </div>

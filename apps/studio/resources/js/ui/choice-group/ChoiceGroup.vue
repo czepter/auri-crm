@@ -44,7 +44,7 @@ const ITEM = "flex h-full cursor-pointer items-center rounded-[calc(var(--r-sm)-
 
 /* Ein Zeichen füllt keine Textzeile: es steht mittig in einem Feld, das so
    hoch ist wie breit, sonst liegt es in einer flachen Pille. */
-const SEGMENT_THUMB = "peer-checked:bg-paper peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08)]"
+const SEGMENT_THUMB = "border border-transparent peer-checked:border-border peer-checked:bg-paper"
 
 const root = useTemplateRef<HTMLElement>("root")
 const rail = useTemplateRef<HTMLElement>("rail")
@@ -52,7 +52,7 @@ const track = computed(() => (props.label ? rail.value : root.value))
 const { rect, animate } = useSlidingIndicator(track, () => model.value, { selector: "label:has(:checked)" })
 
 const ICON_ITEM
-  = "flex size-[26px] cursor-pointer items-center justify-center rounded-[calc(var(--r-sm)-2px)] text-foreground transition-colors duration-[120ms] ease-out peer-checked:bg-paper peer-checked:shadow-[0_1px_2px_rgba(24,24,27,.08)] [&_svg]:size-[15px] [&_svg]:stroke-[1.75]"
+  = "flex size-[26px] cursor-pointer items-center justify-center rounded-[calc(var(--r-sm)-2px)] text-foreground transition-colors duration-[120ms] ease-out border border-transparent peer-checked:border-border peer-checked:bg-paper [&_svg]:size-[15px] [&_svg]:stroke-[1.75]"
 </script>
 
 <template>
@@ -74,7 +74,7 @@ const ICON_ITEM
       <SlidingIndicator
         :rect="rect"
         :animate="animate"
-        class="rounded-[calc(var(--r-sm)-2px)] bg-paper shadow-[0_1px_2px_rgba(24,24,27,.08)]"
+        class="rounded-[calc(var(--r-sm)-2px)] border border-border bg-paper"
       />
       <label v-for="option in options" :key="option.value" class="relative">
         <input

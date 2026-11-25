@@ -74,7 +74,7 @@ function chooseSource(text: LegalText, source: Source) {
 <template>
   <div>
     <div class="mt-0 mb-6 flex flex-col gap-3">
-      <div v-for="text in LEGAL_TEXTS" :key="text" class="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[var(--r)] bg-paper shadow-card p-5" :class="missingBeforeSend.includes(text) && 'bg-due-bg'">
+      <div v-for="text in LEGAL_TEXTS" :key="text" class="flex flex-wrap items-center gap-x-5 gap-y-3 surface-card p-5" :class="missingBeforeSend.includes(text) && 'bg-due-bg'">
         <div class="w-[200px] flex-none">
           <span class="block text-ui leading-none font-semibold tracking-[-0.01em] text-foreground">{{ $t(`portalSettings.legal_${text}`) }}</span>
           <span v-if="text === 'widerruf'" class="mt-1.5 block text-small text-muted-foreground">{{ $t('portalSettings.legalNote_widerruf') }}</span>

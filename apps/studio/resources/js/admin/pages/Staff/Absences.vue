@@ -60,7 +60,7 @@ function add() {
           <div
             v-for="absence in absences"
             :key="absence.id"
-            class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+            class="flex items-center gap-3 py-2.5 border-t border-rule first:border-t-0"
           >
             <span v-if="!$page.props.soloStudio" class="w-44 flex-none text-ui leading-[1.35] font-semibold tracking-[-0.015em]">{{ absence.userName }}</span>
 
