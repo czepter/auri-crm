@@ -108,7 +108,7 @@ const props = withDefaults(defineProps<{
   nav: App.Gallery.Data.GalleryNavData
   area: 'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'
   activeSetId: string | null
-  settingsSection: 'allgemein' | 'zugang' | 'freigabe' | 'download' | 'listen'
+  settingsSection: 'zugang' | 'download' | 'darstellung'
 }>(), {
   siblings: () => [],
   assets: () => [],
@@ -633,11 +633,11 @@ function saveFocal(focal: { x: number; y: number }) {
         <!-- Einstellungen: Pixieset's General Settings shape — a
              sub-navigation in the rail, one labelled section at a time here. -->
         <div v-else-if="tab === 'einstellungen'" class="flex min-w-0 flex-1 px-6 pt-7 pb-8">
-          <Settings :gallery="gallery" :siblings="siblings" :versions="versions" :lists="lists" :settings-section="settingsSection" />
+          <Settings :gallery="gallery" :siblings="siblings" :settings-section="settingsSection" />
         </div>
 
         <div v-else class="flex min-w-0 flex-1 px-6 pt-7 pb-8">
-          <Activity :gallery-id="gallery.id" :activity="activity" :builds="builds" />
+          <Activity :gallery-id="gallery.id" :activity="activity" :builds="builds" :lists="lists" :versions="versions" />
         </div>
       </div>
     </div>

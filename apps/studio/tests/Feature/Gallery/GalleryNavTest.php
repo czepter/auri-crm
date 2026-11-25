@@ -98,7 +98,7 @@ it('carries the cover in every area', function () {
     $asset = picture($this->gallery, $this->highlights, 'a.jpg');
     $this->gallery->update(['cover_asset_id' => $asset->id]);
 
-    foreach (['bilder', 'gestaltung', 'einstellungen/allgemein', 'aktivitaet'] as $area) {
+    foreach (['bilder', 'gestaltung', 'einstellungen/zugang', 'aktivitaet'] as $area) {
         $props = $this->get("/galerien/{$this->gallery->public_id}/{$area}")->viewData('page')['props'];
 
         expect($props['nav']['cover'])->toContain($asset->public_id);

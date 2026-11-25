@@ -104,13 +104,13 @@ const base = {
   figures: { published: null, assets: 0, expiresAt: null, marked: 0, downloaded: 0, viewed: 0 },
   area: 'bilder',
   activeSetId: 's1',
-  settingsSection: 'allgemein',
+  settingsSection: 'zugang',
   nav: {
     cover: null,
     tabs: [
       { key: 'bilder', label: 'galleryRecord.tab.bilder', href: '/galerien/g1/bilder', count: null, countTo: null, children: [] },
       { key: 'gestaltung', label: 'galleryRecord.tab.gestaltung', href: '/galerien/g1/gestaltung', count: null, countTo: null, children: [] },
-      { key: 'einstellungen', label: 'galleryRecord.tab.einstellungen', href: '/galerien/g1/einstellungen/allgemein', count: null, countTo: null, children: [] },
+      { key: 'einstellungen', label: 'galleryRecord.tab.einstellungen', href: '/galerien/g1/einstellungen/zugang', count: null, countTo: null, children: [] },
       { key: 'aktivitaet', label: 'galleryRecord.tab.aktivitaet', href: '/galerien/g1/aktivitaet', count: null, countTo: null, children: [] },
     ],
   },

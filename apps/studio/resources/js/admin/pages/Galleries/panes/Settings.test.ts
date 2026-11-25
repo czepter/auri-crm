@@ -7,7 +7,7 @@ import Settings from './Settings.vue'
 
 // SSR string render through the real compiler and the real i18n catalog —
 // three defects already shipped in this stage from a control that never
-// rendered at all. This pins that each of the five sections actually
+// rendered at all. This pins that each of the three sections actually
 // reaches the page.
 function render(props: Record<string, unknown>) {
   const i18n = createI18n({ legacy: false, locale: 'de', messages: { de } })
@@ -28,6 +28,13 @@ const gallery = {
   downloadPin: null,
   requiresVerifiedEmail: false,
   expiresAt: null,
+  isExternal: false,
+  listedOnHome: false,
+  homePinned: false,
+  homeBlocker: null,
+  homeMode: 'overview' as const,
+  categoryId: null,
+  categories: [{ id: 'c1', name: 'Hochzeit' }],
   offers: { downloads: true, lists: true, comments: true },
   permissions: {
     client: { favorites: true, comments: true, hide: true, share: true },
@@ -45,71 +52,57 @@ const gallery = {
   followsPlan: false,
 }
 
-const base = { gallery, siblings: [], versions: [], lists: [] }
+const base = { gallery, siblings: [] }
 
 describe('Settings', () => {
-  it('Allgemein shows the address, wrapped in the URL it produces', async () => {
-    const html = await render({ ...base, settingsSection: 'allgemein' })
-
-    expect(html).toContain('http://localhost:4321/bahlmann/')
-    expect(html).toContain('hochzeit-bahlmann')
-    expect(html).toContain(de.galleryRecord.slugHint)
-  })
-
-  it('Zugang carries the link and the view password', async () => {
+  it('Zugang carries the link, the view password, the expiry and its reminder', async () => {
     const html = await render({ ...base, settingsSection: 'zugang' })
 
     expect(html).toContain(gallery.url)
     expect(html).toContain(de.gallery.gateView)
-  })
-
-  it('Download carries the download PIN — no longer in Zugang', async () => {
-    const html = await render({ ...base, settingsSection: 'download' })
-
-    expect(html).toContain(de.gallery.gateDownload)
-    expect(html).not.toContain(de.gallerySettings.downloadsLabel)
-  })
-
-  it('Allgemein carries the expiry reminder switch', async () => {
-    const html = await render({ ...base, settingsSection: 'allgemein' })
-
     expect(html).toContain(de.galleryRecord.expiryReminder)
   })
 
-  it('Listen carries the empty state once nobody has picked anything', async () => {
-    const html = await render({ ...base, settingsSection: 'listen' })
+  it('folds the rare settings into details that show their value', async () => {
+    const html = await render({ ...base, settingsSection: 'zugang', gallery: { ...gallery, categoryId: 'c1' } })
 
-    expect(html).toContain(de.gallery.listEmpty)
-  })
-
-  it('Freigabe carries the matrix with a dash for guests hiding, and the intro switch', async () => {
-    const html = await render({ ...base, settingsSection: 'freigabe' })
-
-    expect(html).toContain(de.galleryRecord.permission.comments)
-    expect(html).toContain(de.galleryRecord.intro)
+    expect(html.match(/<details/g)).toHaveLength(5)
+    expect(html).not.toContain('<details open')
+    expect(html).toContain(de.galleryRecord.slugHint)
+    expect(html).toMatch(/Kategorie<\/span>.*Hochzeit/)
     expect(html.match(/id="cb-perm-/g)).toHaveLength(7)
     expect(html).not.toContain('cb-perm-guest-hide')
-    expect(html).not.toContain(de.gallerySettings.downloadsLabel)
   })
 
-  it('Freigabe offers the view modes and download rules, and the portal summary', async () => {
-    const html = await render({ ...base, settingsSection: 'freigabe' })
+  it('an external gallery keeps neither category nor home-page settings', async () => {
+    const html = await render({ ...base, settingsSection: 'zugang', gallery: { ...gallery, isExternal: true } })
 
-    for (const mode of Object.values(de.galleryRecord.viewMode)) expect(html).toContain(mode)
+    expect(html.match(/<details/g)).toHaveLength(2)
+    expect(html).toContain('id="gallery-url"')
+  })
+
+  it('Download carries the rule, the sizes and the PIN', async () => {
+    const html = await render({ ...base, settingsSection: 'download' })
+
     for (const rule of Object.values(de.galleries.download)) expect(html).toContain(rule)
-    expect(html).toContain(de.galleryRecord.inPortal)
+    expect(html).toContain(de.gallery.gateDownload)
+    expect(html).toContain('cb-size-web')
     expect(html).not.toContain('download-invoice')
-    expect(html).not.toContain('placeholder="Atelier Nordlicht"')
+    expect(html).not.toContain('cb-perm-')
   })
 
-  it('Freigabe asks for the invoice once downloads wait for payment, and for the text once it is a watermark', async () => {
-    const html = await render({
-      ...base,
-      settingsSection: 'freigabe',
-      gallery: { ...gallery, downloadRule: 'after_payment', viewMode: 'text' },
-    })
+  it('Download asks for the invoice once downloads wait for payment', async () => {
+    const html = await render({ ...base, settingsSection: 'download', gallery: { ...gallery, downloadRule: 'after_payment' } })
 
     expect(html).toContain('id="download-invoice"')
-    expect(html).toContain('placeholder="Atelier Nordlicht"')
+  })
+
+  it('Darstellung carries the view mode and the intro, and the watermark text once it is one', async () => {
+    const html = await render({ ...base, settingsSection: 'darstellung' })
+
+    for (const mode of Object.values(de.galleryRecord.viewMode)) expect(html).toContain(mode)
+    expect(html).toContain(de.galleryRecord.intro)
+    expect(html).not.toContain('placeholder="Atelier Nordlicht"')
+    expect(await render({ ...base, settingsSection: 'darstellung', gallery: { ...gallery, viewMode: 'text' } })).toContain('placeholder="Atelier Nordlicht"')
   })
 })

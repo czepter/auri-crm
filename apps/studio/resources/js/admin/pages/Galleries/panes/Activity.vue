@@ -19,6 +19,8 @@ const props = defineProps<{
   galleryId: string
   activity: ActivityData
   builds: { id: string; size: string; status: string; parts: number; bytes: number }[]
+  lists: { id: string; name: string | null; owner: string | null; count: number }[]
+  versions: { version: number; publishedAt: string | null; assetCount: number }[]
 }>()
 
 const { t } = useI18n()
@@ -141,6 +143,26 @@ function createTask() {
         </tbody>
       </table>
       <p v-else class="text-small leading-[1.45] text-faint">{{ $t('galleryRecord.noBuilds') }}</p>
+
+      <template v-if="lists.length">
+        <h2 class="mt-9">{{ $t('galleryRecord.settingsNav.listen') }}</h2>
+        <div>
+          <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+            <span class="text-small font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
+            <span class="w-14 flex-none text-small text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
+            <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>
+          </div>
+        </div>
+      </template>
+
+      <template v-if="versions.length">
+        <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
+        <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+          <span class="w-[62px] flex-none text-small font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
+          <span class="text-small font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
+          <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ version.publishedAt ? day(version.publishedAt) : '—' }}</span>
+        </div>
+      </template>
     </div>
 
     <aside v-if="activity.favorites.length || activity.hidden.length" class="flex flex-none flex-col gap-6 min-[1280px]:w-[280px]">

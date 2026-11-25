@@ -2578,6 +2578,8 @@
     "state": "Stand",
     "noBuilds": "Noch nichts vorbereitet.",
     "emailGate": "E-Mail-Bestätigung",
+    "home": "Startseite",
+    "rights": "Rechte",
     "listedOnHome": "Auf der Startseite zeigen",
     "homePinned": "Oben anheften",
     "category": "Kategorie",
@@ -2631,10 +2633,9 @@
     },
     "downloadsHeading": "Download",
     "settingsNav": {
-      "allgemein": "Allgemein",
       "zugang": "Zugang",
-      "freigabe": "Freigabe",
       "download": "Download",
+      "darstellung": "Darstellung",
       "listen": "Listen",
       "kommentare": "Kommentare"
     },
@@ -2670,7 +2671,6 @@
       "original": "Original",
       "web": "Web"
     },
-    "inPortal": "Im Portal",
     "expiryReminder": "Kunde vorher erinnern",
     "setAccess": {
       "internal": "Nur Projekt-Kontakte",
