@@ -5,6 +5,8 @@ namespace App\Support;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Inertia\Inertia;
+use Inertia\LiveProp;
 
 /**
  * #357: tells every open admin tab that an entry changed. The event carries
@@ -22,6 +24,9 @@ class LiveUpdate
     private const ISSUER = 'https://auri-crm.de';
 
     private const AUDIENCE = 'https://auri-crm.de/.well-known/mercure';
+
+    /** The SSE event name; Inertia's live props listen for it. */
+    public const EVENT = 'changed';
 
     public static function publish(): void
     {
@@ -64,13 +69,13 @@ class LiveUpdate
             ->timeout(2)
             ->withToken(self::token('publish', $key, now()->addMinute()->timestamp, $topic))
             ->asForm()
-            ->post($url, ['topic' => $topic, 'data' => '{}'])
+            ->post($url, ['topic' => $topic, 'type' => self::EVENT, 'data' => '{}'])
             ->throw()));
     }
 
     /**
      * Queues the cookie the hub authenticates a subscriber by, and returns
-     * the URL to subscribe to. Refreshed on every Inertia response, so it
+     * the hub's public URL. Refreshed on every Inertia response, so it
      * lives exactly as long as the session would.
      */
     public static function subscribe(): ?string
@@ -93,7 +98,7 @@ class LiveUpdate
             sameSite: 'lax',
         ));
 
-        return config('services.mercure.public_url').'?match='.rawurlencode(self::topic());
+        return config('services.mercure.public_url');
     }
 
     /** The signed-in portal contact's cookie, valid for their own topic only. */
@@ -118,7 +123,19 @@ class LiveUpdate
             sameSite: 'lax',
         ));
 
-        return config('services.mercure.portal_public_url').'?match='.rawurlencode($topic);
+        return config('services.mercure.portal_public_url');
+    }
+
+    /** A prop that refetches whenever the admin topic changes. */
+    public static function live(mixed $value): LiveProp
+    {
+        return Inertia::live($value, on: self::EVENT, channel: self::topic());
+    }
+
+    /** A prop that refetches whenever this contact's topic changes. */
+    public static function liveForContact(mixed $value, string $contactId): LiveProp
+    {
+        return Inertia::live($value, on: self::EVENT, channel: self::contactTopic($contactId));
     }
 
     public static function contactTopic(string $contactId): string
