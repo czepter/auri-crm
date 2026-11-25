@@ -16,7 +16,7 @@ class CreateProjectGallery
 {
     public function __construct(private readonly CreateGallery $create) {}
 
-    public function __invoke(ClientCase $case, ?string $shootPublicId, ?User $actor): Gallery
+    public function __invoke(ClientCase $case, ?string $shootPublicId, ?User $actor, ?string $title = null): Gallery
     {
         $shoot = $shootPublicId === null
             ? null
@@ -27,7 +27,7 @@ class CreateProjectGallery
 
         return ($this->create)(
             [
-                'title' => $shoot ? ($shoot->label ?? $shoot->kind) : $case->name,
+                'title' => $title ?? ($shoot ? ($shoot->label ?? $shoot->kind) : $case->name),
                 // galleries_one_date: ein Shooting trägt das Datum, sonst das Projekt.
                 'event_date' => $shoot ? null : $case->primaryShoot?->date,
                 'is_external' => false,

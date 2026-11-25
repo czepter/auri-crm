@@ -227,12 +227,11 @@ describe('Record', () => {
     expect(html).toContain(de.galleryRecord.more)
   })
 
-  it('offers the three ways out of a draft in the Veröffentlichen menu', async () => {
+  it('has one Veröffentlichen button and no second route past the send dialog', async () => {
     const html = await render({ ...base, gallery: { ...gallery, canMail: true }, figures: { ...base.figures, assets: 2 } })
 
-    expect(html).toContain(de.galleryRecord.publishAndSend)
-    expect(html).toContain(de.galleryRecord.publishOnly)
-    expect(html).toContain(de.galleryRecord.copyLinkAndPassword)
+    expect(html).toContain(de.galleryRecord.publish)
+    expect(html).not.toContain(de.galleryRecord.publishSilently)
   })
 
   it('offers Erneut senden only for a standing, unchanged version', async () => {
