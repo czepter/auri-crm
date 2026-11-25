@@ -63,7 +63,7 @@ defineExpose({ form, submit })
 <template>
   <form id="portal-settings-form" @submit.prevent="submit">
     <FormSection :title="$t('portalSettings.welcomeSection')">
-      <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
+      <div class="mb-2 overflow-hidden surface-card">
         <div v-for="state in STATES" :key="state" class="px-4 py-3 not-first:border-t not-first:border-border">
           <div class="mb-2 flex flex-wrap items-center gap-2.5">
             <Chip>{{ $t(`portalSettings.welcomeState.${state}`) }}</Chip>
@@ -97,7 +97,7 @@ defineExpose({ form, submit })
          portal into each capability, whether or not the feature behind
          it already ships elsewhere. -->
     <FormSection :title="$t('portalSettings.capabilitiesSection')">
-      <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
+      <div class="mb-2 overflow-hidden surface-card">
         <div
           v-for="capability in CAPABILITIES"
           :key="capability.field"

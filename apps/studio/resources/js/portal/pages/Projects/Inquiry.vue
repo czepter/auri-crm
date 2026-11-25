@@ -79,7 +79,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
           {{ [project.date ? dayDate(project.date) : $t('portal.dateOpen'), venue].filter(Boolean).join(' · ') }}
         </p>
 
-        <div v-if="project.quote" class="-mx-2 mt-8 rounded-md border border-border p-6">
+        <div v-if="project.quote" class="-mx-2 mt-8 surface-card p-6">
           <PortalLabel>{{ $t('portal.document.quote') }}</PortalLabel>
           <p class="mt-4 font-serif text-[34px] leading-[1.1] tracking-[-0.015em] tabular-nums">{{ formatEuros(project.quote.total) }}</p>
           <p v-if="project.quote.acceptedOn || project.quote.validUntil" class="mt-2 text-[13.5px] text-muted-foreground">

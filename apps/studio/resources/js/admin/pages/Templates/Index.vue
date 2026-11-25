@@ -177,7 +177,7 @@ function open(row: Row) {
                 {{ $t(KIND_LABEL[entry]) }}
               </div>
 
-              <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+              <div class="overflow-hidden surface-card">
                 <component
                   :is="row.href ? Link : 'button'"
                   v-for="row in matching(rows[entry]).slice(0, 4)"

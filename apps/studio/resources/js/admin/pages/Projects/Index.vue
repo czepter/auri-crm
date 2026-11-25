@@ -269,7 +269,7 @@ function reset() {
               <ContextMenu>
               <ContextMenuTrigger as-child>
               <Link
-                class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
+                class="relative block cursor-grab surface-card p-3.5 text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover hover:bg-accent"
                 :class="moving?.id === project.id && 'cursor-grabbing'"
                 :href="`/auftraege/${project.id}`"
                 draggable="true"

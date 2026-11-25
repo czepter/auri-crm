@@ -41,7 +41,7 @@ function cancel() {
 </script>
 
 <template>
-    <section class="rounded-[var(--r)] bg-paper shadow-card">
+    <section class="surface-card">
         <header
             class="flex h-[52px] cursor-pointer items-center gap-3 pr-5 pl-6 max-[640px]:h-auto max-[640px]:min-h-[52px] max-[640px]:flex-wrap max-[640px]:gap-y-2 max-[640px]:py-2.5 max-[640px]:pr-3 max-[640px]:pl-4"
             @click="open = !open"

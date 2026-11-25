@@ -12,7 +12,7 @@ is the layout grammar, and it replaces `CaseSection` and `ui/page/Section`.
 
 ## The grammar
 
-**A card is a part of the case.** Border `--rule`, radius 16, white ground.
+**A card is a part of the case.** Border `--rule`, radius `--r`, white ground.
 Its header carries three things and nothing else: the title, a summary of
 what is inside, and the one action that belongs to it. Chevron far right.
 

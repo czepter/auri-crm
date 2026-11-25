@@ -218,7 +218,7 @@ function revoke() {
       </div>
 
       <template #aside>
-        <div class="rounded-[var(--r)] bg-paper px-5 py-4 shadow-card">
+        <div class="surface-card px-5 py-4 ">
         <Button v-if="!tokens.length" variant="outline" as-child>
           <Link href="/hilfe/mcp-claude-verbinden">{{ $t('apiTokens.mcpHelp') }}</Link>
         </Button>

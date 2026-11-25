@@ -152,7 +152,7 @@ function submit() {
           </div>
 
           <div class="mt-6 grid grid-cols-2 gap-3" :class="enabled ? '' : 'pointer-events-none'" :inert="!enabled">
-            <div v-for="tile in tiles" :key="tile.key" class="rounded-[var(--r)] bg-paper shadow-card px-5 py-4">
+            <div v-for="tile in tiles" :key="tile.key" class="surface-card px-5 py-4">
               <div class="text-small font-semibold text-ink-2">{{ $t(`settings.retention${tile.key}`) }}</div>
               <div class="mt-1 text-heading leading-[1.1] font-semibold tabular-nums" :class="tile.hot && 'text-destructive'">{{ tile.value }}</div>
               <div class="mt-1 text-small text-ink-2">
@@ -288,7 +288,7 @@ function submit() {
       </AlertDialog>
 
       <template #preview>
-        <aside v-if="expiring.length" class="sticky top-6 w-[352px] flex-none rounded-[var(--r)] bg-paper px-5 py-4 shadow-card max-[1100px]:hidden">
+        <aside v-if="expiring.length" class="sticky top-6 w-[352px] flex-none surface-card px-5 py-4 max-[1100px]:hidden">
           <div class="flex justify-between pb-1 text-small font-semibold text-ink-2">
             <span>{{ $t('settings.retentionExpiring') }}</span>
             <span>{{ expiring.length }}</span>

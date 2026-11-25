@@ -49,7 +49,7 @@ const create = () => router.post('/einstellungen/automationen')
         <template v-else>
           <section v-for="[group, list] in groups" :key="group" class="mb-6 last:mb-0">
             <h2 class="m-0 mb-2 text-small leading-none font-semibold text-foreground">{{ group }}</h2>
-            <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+            <div class="overflow-hidden surface-card">
               <div
                 v-for="rule in list"
                 :key="rule.id"

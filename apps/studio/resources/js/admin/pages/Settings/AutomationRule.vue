@@ -513,7 +513,7 @@ function chipTone(status: string): ChipTone {
               {{ $t('automations.runs') }}
             </div>
 
-            <div class="mt-2 overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+            <div class="mt-2 overflow-hidden surface-card">
               <div
                 v-for="run in runs"
                 :key="run.id"

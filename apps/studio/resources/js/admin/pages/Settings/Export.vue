@@ -89,7 +89,7 @@ function create(gallery: string | null) {
       </div>
 
       <template v-if="archives" #aside>
-        <div class="rounded-[var(--r)] bg-paper px-5 py-4 shadow-card">
+        <div class="surface-card px-5 py-4 ">
         <h2 class="mb-2 text-ui font-semibold">{{ $t('settings.exportRecent') }}</h2>
         <div
           v-for="row in recent"

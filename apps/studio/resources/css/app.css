@@ -48,9 +48,6 @@
   --color-input: var(--input, var(--line));
   --color-ring: var(--ring, var(--accent));
 
-  /* crm.css's card shadow as `shadow-card`; the admin's only surface depth. */
-  --shadow-card: var(--card-shadow);
-
   /* No shadcn name means these two, but the controls need them: --faint is
      placeholder and micro-label text, --line-hover the border a field takes
      on hover. Exposed here so the components can spell them as utilities
@@ -175,4 +172,12 @@
   [data-slot="dialog-panel"][data-state="open"],
   [data-slot="alert-dialog-panel"][data-state="open"],
   [data-slot="popover-panel"][data-state="open"] { animation: none; }
+}
+
+@layer components {
+  .surface-card {
+    border: 1px solid var(--rule);
+    border-radius: var(--r);
+    background: var(--paper);
+  }
 }

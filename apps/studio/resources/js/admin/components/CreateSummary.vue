@@ -3,7 +3,7 @@ defineProps<{ title: string; rows: { label: string; value: string | null | undef
 </script>
 
 <template>
-  <section class="rounded-[var(--r)] bg-paper p-5 shadow-card">
+  <section class="surface-card p-5 ">
     <h2 class="m-0 mb-2 text-ui font-semibold">{{ title }}</h2>
     <dl class="m-0">
       <template v-for="row in rows" :key="row.label">

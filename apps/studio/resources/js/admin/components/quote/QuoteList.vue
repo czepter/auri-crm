@@ -32,7 +32,7 @@ const total = computed(() => props.payments?.rows.reduce((sum, row) => sum + row
       </Button>
     </div>
 
-    <section v-if="quotes.length" class="rounded-[var(--r)] bg-paper shadow-card py-1.5">
+    <section v-if="quotes.length" class="surface-card py-1.5">
       <Link
         v-for="quote in quotes"
         :key="quote.id"

@@ -119,7 +119,7 @@ function submit() {
           ]"
         />
 
-        <section v-if="siblings.length" class="mt-4 rounded-[var(--r)] bg-paper p-5 shadow-card">
+        <section v-if="siblings.length" class="mt-4 surface-card p-5 ">
           <h2 class="m-0 mb-2 text-ui font-semibold">{{ $t('galleries.title') }}</h2>
           <Link
             v-for="row in siblings"

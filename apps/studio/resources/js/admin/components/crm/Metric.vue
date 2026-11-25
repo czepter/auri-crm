@@ -44,7 +44,7 @@ const DOT: Record<string, string> = {
     :href="href"
     class="flex min-h-[130px] flex-col rounded-[var(--r)] no-underline text-foreground"
     :class="[
-      'bg-paper shadow-card',
+      'surface-card',
       day ? 'overflow-hidden p-0' : 'px-[17px] pt-[15px] pb-3.5',
       href && 'hover:bg-accent',
     ]"

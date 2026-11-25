@@ -38,7 +38,7 @@ function priceLabel(service: Service) {
   <section>
     <PortalLabel class="mb-6">{{ $t('portal.suggestionTitle') }}</PortalLabel>
 
-    <div class="rounded-md border border-border p-4">
+    <div class="surface-card p-4">
       <div v-if="props.suggestion.note" class="flex items-start gap-3">
         <span
           v-if="props.suggestion.author"

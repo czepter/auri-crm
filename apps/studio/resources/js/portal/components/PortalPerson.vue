@@ -33,7 +33,7 @@ const CHIP
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-6 rounded-md border border-border p-6">
+  <div class="flex flex-wrap items-center gap-6 surface-card p-6">
     <img
       v-if="studio.avatarUrl"
       :src="studio.avatarUrl"

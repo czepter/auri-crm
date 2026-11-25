@@ -235,7 +235,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
         />
 
         <div class="flex flex-col gap-3">
-          <section v-for="day in days" :key="day.key" class="rounded-[var(--r)] bg-paper shadow-card">
+          <section v-for="day in days" :key="day.key" class="surface-card">
             <header class="flex items-baseline gap-3 px-6 pt-4 pb-2 max-[640px]:px-4">
               <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">
                 {{ dayWithWeekday(day.key || null, null) ?? $t('board.openDate') }}

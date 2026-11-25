@@ -278,7 +278,7 @@ watch(() => form.data(), autosave, { deep: true })
           <PackagePriceSummary :items="form.items" />
 
           <PreviewOverlay :min="1280" :label="$t('common.preview')" wrapper-class="mt-6">
-            <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+            <div class="overflow-hidden surface-card">
               <div class="border-b border-border px-[26px] py-4 text-small leading-none font-semibold text-faint">
                 {{ $t('packages.preview') }}
               </div>
