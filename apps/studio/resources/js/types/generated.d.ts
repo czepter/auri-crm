@@ -524,7 +524,6 @@ label: string,
 href: string,
 count: number | null,
 countTo: number | null,
-narrowOnly: boolean,
 }[],
 track: {
 key: string,

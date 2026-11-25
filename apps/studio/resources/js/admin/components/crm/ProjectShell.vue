@@ -201,7 +201,6 @@ usePageCommands(() => {
             :href="tab.href"
             class="relative inline-flex min-h-10 flex-none items-center px-3 whitespace-nowrap no-underline"
             :class="[
-              tab.narrowOnly && 'min-[1081px]:hidden',
               tab.key === lit
                 ? ['font-semibold text-foreground', !tabRect && '[background:linear-gradient(var(--ink),var(--ink))_bottom/100%_2px_no-repeat]']
                 : 'text-ink-2 hover:text-foreground',
