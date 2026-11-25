@@ -13,12 +13,14 @@ import { changedKeys, debounced, saveState } from '@/admin/lib/autosave'
 import Panel from '@/admin/components/crm/Panel.vue'
 import Metric from '@/admin/components/crm/Metric.vue'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { completeTask } from '@/admin/lib/undoable'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
-import { formatEurosRounded } from '@/lib/money'
+import { formatEuros, formatEurosRounded } from '@/lib/money'
 import { useI18n } from 'vue-i18n'
 import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
 import { useLiveProps } from '@/admin/lib/liveReload'
@@ -68,6 +70,9 @@ const props = defineProps<{
   socialProfiles: { platform: string; value: string }[]
   socialPlatforms: { value: string; label: string }[]
   correspondence: App.Engagement.Data.MessageData[]
+  openInvoices: App.Payments.Data.InvoiceRowData[]
+  openTasks: App.Crm.Data.TaskRowData[]
+  nextShoot: { date: string; title: string; projectId: string; projectName: string } | null
   projects: { id: string; name: string; role: string; date: string | null; value: number | null; booked: boolean; open: boolean; quote: { status: string; total: number } | null }[]
   galleries: {
     id: string
@@ -98,7 +103,7 @@ const props = defineProps<{
   offerablePackages: { id: string; name: string; price: number | null; priceMode: string; requiresDate: boolean }[]
   portalLogins: { count: number; firstAt: string | null; lastAt: string | null }
 }>()
-useLiveProps(['contacts', 'contact', 'billingAddress', 'socialProfiles', 'correspondence', 'projects', 'galleries', 'connected', 'suggestions', 'offerablePackages', 'portalLogins', 'portalAccessRevokedAt', 'canRevokePortalAccess', 'canSendPortalAccess', 'dsgvoErasedAt', 'canManageDsgvo', 'portalDefaults', 'portalOverrides', 'canPreviewPortal', 'dsgvoRequests'])
+useLiveProps(['contacts', 'contact', 'billingAddress', 'socialProfiles', 'correspondence', 'openInvoices', 'openTasks', 'nextShoot', 'projects', 'galleries', 'connected', 'suggestions', 'offerablePackages', 'portalLogins', 'portalAccessRevokedAt', 'canRevokePortalAccess', 'canSendPortalAccess', 'dsgvoErasedAt', 'canManageDsgvo', 'portalDefaults', 'portalOverrides', 'canPreviewPortal', 'dsgvoRequests'])
 
 const { t } = useI18n()
 
@@ -377,6 +382,47 @@ function eraseDsgvoData() {
                   {{ $t('contacts.email') }}
                 </a>
               </div>
+
+              <section v-if="openInvoices.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
+                  {{ $t('contacts.openInvoices') }}
+                </h2>
+                <div
+                  v-for="invoice in openInvoices"
+                  :key="invoice.id"
+                  class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                >
+                  <Link class="text-body font-semibold no-underline hover:underline" :href="`/rechnungen/${invoice.id}`">{{ invoice.number }}</Link>
+                  <span class="text-small tabular-nums" :class="invoice.status === 'overdue' ? 'text-destructive' : 'text-ink-2'">{{ day(invoice.dueOn) }}</span>
+                  <span class="ml-auto text-body tabular-nums">{{ formatEuros(invoice.openInstallments.reduce((sum, row) => sum + row.remaining, 0)) }}</span>
+                </div>
+              </section>
+
+              <section v-if="openTasks.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
+                  {{ $t('contacts.openTasks') }}
+                </h2>
+                <div
+                  v-for="task in openTasks"
+                  :key="task.id"
+                  class="flex items-center gap-3.5 py-2 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                >
+                  <Checkbox :model-value="false" :aria-label="$t('project.taskComplete')" @update:model-value="completeTask(task, { done: $t('common.done'), undo: $t('common.undo') })" />
+                  <span class="min-w-0 flex-1 truncate text-body">{{ task.title }}</span>
+                  <span class="text-small tabular-nums" :class="task.isOverdue ? 'text-destructive' : 'text-ink-2'">{{ task.dueOn ? day(task.dueOn) : task.dueAnchorLabel }}</span>
+                </div>
+              </section>
+
+              <section v-if="nextShoot" class="mb-7">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
+                  {{ $t('contacts.nextShoot') }}
+                </h2>
+                <div class="flex items-center gap-4">
+                  <span class="text-body tabular-nums">{{ day(nextShoot.date) }}</span>
+                  <span class="text-body">{{ nextShoot.title }}</span>
+                  <Link class="ml-auto text-small no-underline hover:underline" :href="`/auftraege/${nextShoot.projectId}`">{{ nextShoot.projectName }}</Link>
+                </div>
+              </section>
 
               <form class="mb-7 flex flex-col gap-4" @focusin="focusIn" @focusout="focusOut" @submit.prevent="save(true)">
                 <Field id="c-name" :label="$t('contacts.name')" :error="form.errors.name">

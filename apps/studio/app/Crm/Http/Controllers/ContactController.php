@@ -10,9 +10,12 @@ use App\Crm\Actions\CreateContact;
 use App\Crm\Actions\UpdateContact;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
+use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\SocialPlatform;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Shoot;
+use App\Crm\Models\Task;
 use App\Crm\Support\SocialProfiles;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
@@ -21,8 +24,11 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Models\User;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\MailPreview;
+use App\Payments\Data\InvoiceRowData;
+use App\Payments\Models\Invoice;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Notifications\PortalAccessInvitation;
 use App\Portal\Support\PortalSettings;
@@ -135,6 +141,61 @@ class ContactController extends Controller
             ->map(fn (SocialPlatform $platform) => ['value' => $platform->value, 'label' => $platform->label()])->all();
     }
 
+    /** What this person still owes, for the staff who may see payments on that invoice's project. */
+    private function openInvoices(Contact $contact, User $viewer)
+    {
+        return InvoiceRowData::collect(
+            Invoice::query()
+                ->where('contact_id', $contact->id)
+                ->with(['installments', 'creditNotes', 'contact', 'case', 'views'])
+                ->orderBy('issued_at')
+                ->get()
+                ->filter(fn (Invoice $invoice) => in_array($invoice->status(), ['open', 'partial', 'overdue'], true)
+                    && ($invoice->case === null
+                        ? $viewer->can(Capability::ManageContracts->value)
+                        : $viewer->can('managePaymentPlan', $invoice->case)))
+                ->map(InvoiceRowData::fromModel(...))
+                ->values()
+        );
+    }
+
+    /** Open work on this person's projects, or on the person directly. */
+    private function openTasks(Contact $contact, User $viewer)
+    {
+        return TaskRowData::collect(
+            Task::query()
+                ->open()
+                ->visibleTo($viewer)
+                ->where(fn ($query) => $query
+                    ->where('contact_id', $contact->id)
+                    ->orWhereIn('case_id', $contact->cases()->select('cases.id')))
+                ->byDueDate()
+                ->with(['case', 'contact', 'shoot', 'assignee', 'dependsOn', 'thread'])
+                ->get()
+                ->map(TaskRowData::fromTask(...))
+                ->values()
+        );
+    }
+
+    /** @return array{date: string, title: string, projectId: string, projectName: string}|null */
+    private function nextShoot(Contact $contact, User $viewer): ?array
+    {
+        $shoot = Shoot::query()
+            ->whereIn('case_id', $contact->cases()->visibleTo($viewer)->select('cases.id'))
+            ->uncancelled()
+            ->whereDate('date', '>=', today())
+            ->orderBy('date')
+            ->with('case')
+            ->first();
+
+        return $shoot === null ? null : [
+            'date' => $shoot->date->format('Y-m-d'),
+            'title' => $shoot->label ?? $shoot->kind,
+            'projectId' => $shoot->case->public_id,
+            'projectName' => $shoot->case->name,
+        ];
+    }
+
     public function edit(Contact $contact, PortalSettings $portal): Response
     {
         $this->authorize('update', $contact);
@@ -185,6 +246,9 @@ class ContactController extends Controller
                     'open' => ! $project->isBooked() && ! $project->isClosed(),
                     'quote' => $project->currentQuote === null ? null : ['status' => $project->currentQuote->status->value, 'total' => $project->currentQuote->gross()],
                 ])->all(),
+            'openInvoices' => $this->openInvoices($contact, $user),
+            'openTasks' => $this->openTasks($contact, $user),
+            'nextShoot' => $this->nextShoot($contact, $user),
             'galleries' => Gallery::query()
                 ->whereIn('case_id', $contact->cases()->select('cases.id'))
                 ->with('currentVersion')
