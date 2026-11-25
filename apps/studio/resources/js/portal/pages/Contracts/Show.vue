@@ -110,7 +110,6 @@ function sign() {
         <div v-else-if="contract.downloadUrl" class="h-[74vh] min-h-[520px] bg-sunk">
           <iframe class="block size-full border-0" :src="contract.downloadUrl" :title="$t('portal.contractTitle')" />
         </div>
-        <p v-else class="py-24 text-center text-[15px] text-muted-foreground">{{ $t('portal.contractPending') }}</p>
 
         <!-- T-08: signing is offered only while the switch is on and nothing
              is recorded yet; a recorded signature is a fact and shows above

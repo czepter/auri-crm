@@ -24,8 +24,7 @@ type Shoot = {
   date: string | null
   callTime: string | null
   venue: string | null
-  status: string
-  state: 'open' | 'done' | 'neutral'
+  phase: 'upcoming' | 'editing' | 'delivered'
 }
 
 type Document = {
@@ -99,7 +98,9 @@ const steps = computed(() => props.project.steps.map(step => ({
 
 const shoots = computed(() => [...props.project.shoots].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999')))
 
-const delivered = (shoot: Shoot) => shoot.state === 'done' && props.project.gallery !== null
+const SHOOT_DOT = { upcoming: 'neutral', editing: 'open', delivered: 'done' } as const
+
+const delivered = (shoot: Shoot) => shoot.phase === 'delivered' && props.project.gallery !== null
 
 const galleryExpiring = computed(() => {
   const expiresAt = props.project.gallery?.expiresAt
@@ -283,7 +284,7 @@ function documentNote(document: Document) {
             <div v-if="shoot.venue" class="mt-[3px] text-[13.5px] text-muted-foreground">{{ shoot.venue }}</div>
           </div>
           <div class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground">
-            <PortalDot :state="shoot.state" />{{ shoot.status }}
+            <PortalDot :state="SHOOT_DOT[shoot.phase]" />{{ $t(`portal.shootPhase.${shoot.phase}`) }}
           </div>
           <span v-if="delivered(shoot)" class="col-span-full inline-flex min-h-11 items-center gap-1 text-[13.5px] text-foreground max-[820px]:justify-between">
             {{ $t('portal.viewImages') }}

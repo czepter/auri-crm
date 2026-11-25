@@ -94,7 +94,7 @@ function payNow() {
           >{{ $t('portal.invoiceDownload', { number: invoice.number }) }}</a>
 
           <Button v-if="payInstallmentId" variant="portal" type="button" :state="paying ? 'loading' : 'idle'" :disabled="paying" @click="payNow">
-            {{ $t('portal.payNowButton') }}
+            {{ $t('portal.payButton') }}
           </Button>
         </div>
       </div>

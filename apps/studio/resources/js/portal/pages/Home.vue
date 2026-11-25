@@ -245,8 +245,6 @@ function phaseState(phase: Phase) {
             </template>
           </section>
 
-          <p v-else class="animate-rise [animation-delay:320ms] motion-reduce:animate-none text-[15px] text-muted-foreground">{{ $t('portal.nothingShared') }}</p>
-
           <!-- Straight to the pictures, no detour through the booking. The one
                reason a client opens this portal again after three years. -->
           <section v-if="galleries.length" class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">

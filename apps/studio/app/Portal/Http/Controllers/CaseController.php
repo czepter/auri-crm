@@ -3,8 +3,6 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Contracts\Models\Contract;
-use App\Crm\Enums\StageAnchor;
-use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
@@ -146,13 +144,7 @@ class CaseController extends Controller
         $gallery = $found->galleries->first(fn (Gallery $one) => $one->currentVersion !== null);
         $version = $gallery?->currentVersion;
 
-        // The two positions the three states are read against: at or past
-        // "fertig" the work is done, past the entry stage it is under way.
-        // Positions rather than a list of statuses, so a studio's own extra
-        // stage lands in the right state without being named here.
         $stages = app(CrmVocabulary::class);
-        $ready = $stages->anchored(StagePipeline::Project, StageAnchor::Ready)?->sort_order;
-        $started = $stages->anchored(StagePipeline::Project, StageAnchor::Entry)?->sort_order;
 
         return [
             'id' => $found->public_id,
@@ -166,20 +158,10 @@ class CaseController extends Controller
                 'date' => $shoot->date?->format('Y-m-d'),
                 'callTime' => $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
                 'venue' => $shoot->venue(),
-                // The client is told where their shoot stands, in the same
-                // words the studio uses. The temperature differs, not the
-                // fact: nothing here is coloured as a warning, because the
-                // studio chases and the client is not chased in their own
-                // portal.
-                'status' => $shoot->status->name,
-                // The same fact as a mark the eye reads before the word.
-                // Three states, because colour on this surface is a signal
-                // and a fourth would make it decoration again.
-                'state' => match (true) {
-                    $ready !== null && $shoot->status->sort_order >= $ready => 'done',
-                    $started !== null && $shoot->status->sort_order > $started => 'open',
-                    default => 'neutral',
-                },
+                // Three fixed states instead of the studio's own stage names:
+                // those are internal vocabulary, and renaming one must not
+                // change what the client reads.
+                'phase' => $stages->phase($shoot->status),
             ])->all(),
             // The entry point that was missing entirely: a strip of the
             // delivered pictures and a way into all of them.

@@ -282,7 +282,6 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
         </div>
 
-        <p v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 text-[15px] text-muted-foreground">{{ $t('portal.quoteNone') }}</p>
       </PortalRail>
     </PortalWrap>
 

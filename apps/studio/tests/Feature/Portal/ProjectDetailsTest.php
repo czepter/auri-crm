@@ -2,10 +2,13 @@
 
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\CrmVocabulary;
 use App\Engagement\Models\Thread;
 use App\Models\AuditLog;
 use App\Models\StudioSettings;
@@ -154,4 +157,23 @@ it('names the studio on both shapes of the booking screen', function () {
         ->assertOk()->viewData('page')['props'];
 
     expect($props['studio']['name'])->toBe('Nordlicht Fotografie');
+});
+
+it('shows a shoot as planned, in editing or delivered, never under the studio\'s own stage name', function () {
+    $contact = Contact::factory()->create();
+    $project = inquiryProject($contact);
+    markBooked($project);
+    $shoot = $project->primaryShoot()->first();
+    $stages = app(CrmVocabulary::class);
+
+    $phases = collect([StageAnchor::Booked, StageAnchor::Shot, StageAnchor::Delivered])
+        ->map(function (StageAnchor $anchor) use ($shoot, $stages, $contact, $project) {
+            $shoot->update(['status' => $stages->anchored(StagePipeline::Project, $anchor)]);
+
+            return test()->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}")
+                ->assertOk()->viewData('page')['props']['project']['shoots'][0];
+        });
+
+    expect($phases->pluck('phase')->all())->toBe(['upcoming', 'editing', 'delivered'])
+        ->and($phases[0])->not->toHaveKey('status');
 });

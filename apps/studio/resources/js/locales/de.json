@@ -2034,7 +2034,6 @@
     "shootCount": "ein Termin | {count} Termine",
     "dateOpen": "Termin noch offen",
     "noShoots": "Keine Termine.",
-    "nothingShared": "Nichts freigegeben.",
     "accountTitle": "Einstellungen",
     "yourData": "Eure Daten",
     "nameLabel": "Name",
@@ -2103,6 +2102,11 @@
     "dueOn": "fällig am {date}",
     "validUntil": "gültig bis {date}",
     "validDays": "Läuft heute ab|Gültig noch ein Tag|Gültig noch {count} Tage",
+    "shootPhase": {
+      "upcoming": "Geplant",
+      "editing": "Bearbeitung",
+      "delivered": "Geliefert"
+    },
     "phase": {
       "open": "Offen",
       "upcoming": "Anstehend",
@@ -2121,16 +2125,13 @@
       "contract": { "title": "Vertrag", "line": "Kein Vertrag" }
     },
     "contractDownload": "PDF herunterladen",
-    "contractPending": "Der Vertrag wird erstellt.",
-    "contractNone": "Kein Vertrag vorhanden.",
     "signTitle": "Unterschreiben",
-    "signName": "Ihr vollständiger Name",
+    "signName": "Dein vollständiger Name",
     "signNameHint": "Wie im Vertrag",
     "signConsent": "Ich habe den Vertrag gelesen",
     "signSubmit": "Vertrag unterschreiben",
     "signedConfirmation": "Unterschrieben von {name}.",
     "quoteTitle": "Angebot",
-    "quoteNone": "Kein Angebot vorhanden.",
     "quoteExpired": "Die Gültigkeit dieses Angebots ist abgelaufen.",
     "quoteAccept": "Angebot annehmen",
     "quoteTermsAnd": "und",
@@ -2144,7 +2145,6 @@
     "messagesNew": "Neue Nachricht",
     "messagesNoBooking": "Allgemein",
     "messagesAbout": "Betrifft",
-    "messagesNone": "Keine Nachrichten.",
     "messagesSubjectPlaceholder": "Worum geht's?",
     "messagesBodyPlaceholder": "Eure Nachricht …",
     "messagesSend": "Senden",
@@ -2170,7 +2170,6 @@
     "creditNote": "Gutschrift {number}",
     "cancelledOn": "Storniert am {date}",
     "payNowTitle": "Kartenzahlung",
-    "payNowButton": "Jetzt zahlen",
     "payNowRemaining": "{amount} zahlen",
     "payNowSuccess": "Zahlung eingegangen.",
     "payNowCancelled": "Zahlung abgebrochen.",
@@ -2233,7 +2232,8 @@
     "pendingTitle": "Das wartet auf Sie",
     "contactTitle": "Ihr Kontakt",
     "messagesBodyPlaceholder": "Ihre Nachricht …",
-    "backMessages": "Zu Ihren Nachrichten"
+    "backMessages": "Zu Ihren Nachrichten",
+    "signName": "Ihr vollständiger Name"
   },
   "galleries": {
     "title": "Galerien",
