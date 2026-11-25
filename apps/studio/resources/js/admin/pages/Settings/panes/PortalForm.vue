@@ -22,7 +22,6 @@ const form = useForm({
   portal_maintenance_enabled: props.settings.maintenanceEnabled,
   portal_maintenance_message: props.settings.maintenanceMessage ?? '',
   portal_accept_quotes_enabled: props.settings.acceptQuotesEnabled,
-  portal_sign_contracts_enabled: props.settings.signContractsEnabled,
   portal_payment_status_enabled: props.settings.paymentStatusEnabled,
   portal_offers_enabled: props.settings.offersEnabled,
   portal_messaging_mode: props.settings.messagingMode,
@@ -33,7 +32,6 @@ const form = useForm({
 
 const CAPABILITIES = [
   { field: 'portal_accept_quotes_enabled', label: 'portalSettings.acceptQuotesEnabledLabel' },
-  { field: 'portal_sign_contracts_enabled', label: 'portalSettings.signContractsEnabledLabel' },
   { field: 'portal_payment_status_enabled', label: 'portalSettings.paymentStatusEnabledLabel' },
   // Eigener Schalter und nicht an „Angebote annehmen" gehängt: ein Kunde
   // mitten in einer Reklamation soll nichts angeboten bekommen, darf aber

@@ -412,6 +412,7 @@ const permissions = {
     canManagePortalVisibility: true,
     canManageQuotes: true,
     canManageContracts: true,
+    canGenerateContract: false,
     canManagePaymentPlan: true,
     primaryShootCancelled: false,
     canManageForms: true,

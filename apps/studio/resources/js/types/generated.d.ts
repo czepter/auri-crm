@@ -507,6 +507,7 @@ portalVisible: boolean,
 canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
 canManageContracts: boolean,
+canGenerateContract: boolean,
 canManagePaymentPlan: boolean,
 primaryShootCancelled: boolean,
 canManageForms: boolean,
@@ -637,6 +638,7 @@ export type InboundMessageState = 'threaded' | 'triage' | 'quarantined';
 namespace Enums {
 export type AbsenceCategory = 'unavailable' | 'holiday' | 'other';
 export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_cases' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates' | 'manage_dsgvo' | 'manage_finances';
+export type ContractMode = 'always' | 'on_demand' | 'off';
 export type StaffRole = 'admin' | 'manager' | 'contributor' | 'reader';
 }
 namespace Finance {
@@ -1286,6 +1288,10 @@ export type ReportPeriod = '12m' | '6m' | 'jahr';
 }
 namespace Settings {
 namespace Data {
+export type ContractSettingsData = {
+mode: App.Enums.ContractMode,
+signOnline: boolean,
+};
 export type GallerySettingsData = {
 id: string,
 expiryDays: number | null,
@@ -1326,7 +1332,6 @@ agbAttach: boolean,
 widerrufAttach: boolean,
 legalFamilies: Record<string, string | null>,
 acceptQuotesEnabled: boolean,
-signContractsEnabled: boolean,
 paymentStatusEnabled: boolean,
 offersEnabled: boolean,
 messagingMode: string,

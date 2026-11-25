@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Enums\ContractMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -65,7 +66,7 @@ class StudioSettings extends Model
         'portal_legal_impressum_family', 'portal_legal_datenschutz_family',
         'portal_legal_agb_family', 'portal_legal_widerruf_family',
         'portal_legal_agb_attach', 'portal_legal_widerruf_attach',
-        'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled',
+        'contract_mode', 'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled',
         'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled',
         'portal_welcome_inquiry', 'portal_welcome_active', 'portal_welcome_done',
         'gallery_default_expiry_days',
@@ -125,6 +126,11 @@ class StudioSettings extends Model
     public static function forgetCurrent(): void
     {
         Cache::store('redis')->forget(self::CACHE_KEY_PREFIX.config('tenancy.tenant_id'));
+    }
+
+    public function contractMode(): ContractMode
+    {
+        return ContractMode::tryFrom((string) $this->contract_mode) ?? ContractMode::OnDemand;
     }
 
     /** config('mail.from.*') stands in until the E-Mail pane sets the tenant's own. */

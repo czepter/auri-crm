@@ -34,7 +34,6 @@ class PortalSettingsData extends Data
         /** @var array<string, ?string> Vorlagen-Familie je Rechtstext */
         public array $legalFamilies,
         public bool $acceptQuotesEnabled,
-        public bool $signContractsEnabled,
         public bool $paymentStatusEnabled,
         public bool $offersEnabled,
         public string $messagingMode,
@@ -65,7 +64,6 @@ class PortalSettingsData extends Data
                 ->mapWithKeys(fn (string $text) => [$text => LegalTexts::family($text)])
                 ->all(),
             acceptQuotesEnabled: (bool) StudioSettings::current()->portal_accept_quotes_enabled,
-            signContractsEnabled: (bool) StudioSettings::current()->portal_sign_contracts_enabled,
             paymentStatusEnabled: (bool) StudioSettings::current()->portal_payment_status_enabled,
             offersEnabled: (bool) StudioSettings::current()->portal_offers_enabled,
             messagingMode: (string) StudioSettings::current()->portal_messaging_mode,

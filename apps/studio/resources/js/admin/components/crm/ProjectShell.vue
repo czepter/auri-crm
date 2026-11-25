@@ -152,7 +152,7 @@ usePageCommands(() => {
               <Switch id="portal-visible" :model-value="header.portalVisible" @update:model-value="togglePortal" />
             </div>
 
-            <DropdownMenu v-if="$slots.menu || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
+            <DropdownMenu v-if="$slots.menu || header.canGenerateContract || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
               <DropdownMenuTrigger as-child>
                 <Button variant="secondary" size="icon" type="button" class="max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
                   <Ellipsis class="size-4" />
@@ -160,6 +160,9 @@ usePageCommands(() => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-[208px]">
                 <slot name="menu" />
+                <DropdownMenuItem v-if="header.canGenerateContract" as-child>
+                  <Link :href="`/auftraege/${header.id}/vertrag`">{{ $t('project.contractGenerate') }}</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem v-if="header.canManagePortalVisibility" class="min-[641px]:hidden" @select="togglePortal">
                   {{ $t(header.portalVisible ? 'project.portalHide' : 'project.portalShow') }}
                 </DropdownMenuItem>

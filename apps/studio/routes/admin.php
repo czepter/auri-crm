@@ -76,6 +76,7 @@ use App\Quotes\Http\Controllers\QuoteController;
 use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
 use App\Settings\Http\Controllers\AuditLogController;
+use App\Settings\Http\Controllers\ContractSettingsController;
 use App\Settings\Http\Controllers\DataExportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
@@ -577,6 +578,11 @@ Route::middleware('audience:staff')->group(function () {
             ->name('form-templates.update');
         Route::delete('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'destroy'])
             ->name('form-templates.destroy');
+
+        Route::get('/einstellungen/vertraege', [ContractSettingsController::class, 'edit'])
+            ->name('settings.contracts.edit');
+        Route::patch('/einstellungen/vertraege', [ContractSettingsController::class, 'update'])
+            ->name('settings.contracts.update');
 
         Route::get('/einstellungen/portal', [PortalSettingsController::class, 'edit'])
             ->name('settings.portal.edit');

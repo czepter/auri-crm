@@ -37,6 +37,7 @@ const items: { group?: string; key?: string; href?: string; label?: string; exte
   // Verweise auf die Stellen, an denen sie bedient werden; nie der offene Eintrag.
   { key: 'stages', href: `/auftraege/einstellungen/stufen?return=${encodeURIComponent(here)}`, label: 'settings.navStages', external: true },
   { key: 'templates', href: '/vorlagen', label: 'settings.navTemplates', external: true },
+  { key: 'contracts', href: '/einstellungen/vertraege', label: 'settings.navContracts' },
   { key: 'automations', href: '/einstellungen/automationen', label: 'automations.title' },
 
   { group: 'settings.groupPortal' },

@@ -12,6 +12,8 @@ use App\Crm\Data\CasePositionData;
 use App\Crm\Data\CaseQueueRowData;
 use App\Crm\Data\ThreadEntryData;
 use App\Crm\Models\ClientCase;
+use App\Enums\ContractMode;
+use App\Models\StudioSettings;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Enums\QuoteStatus;
 use Spatie\LaravelData\Data;
@@ -58,6 +60,7 @@ class CaseHeaderData extends Data
         public bool $canManagePortalVisibility,
         public bool $canManageQuotes,
         public bool $canManageContracts,
+        public bool $canGenerateContract,
         public bool $canManagePaymentPlan,
         // #418: the one condition the "Zahlungsplan abwickeln" link hangs
         // off, beside the plan's own settled_at.
@@ -103,6 +106,10 @@ class CaseHeaderData extends Data
             canManagePortalVisibility: $user?->can('manageVisibility', $project) ?? false,
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
+            canGenerateContract: $project->isBooked()
+                && StudioSettings::current()->contractMode() === ContractMode::OnDemand
+                && ! self::hasContract($project)
+                && ($user?->can('manageContracts', $project) ?? false),
             canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
             primaryShootCancelled: $project->primaryShoot?->isCancelled() ?? false,
             canManageForms: $user?->can('manageForms', $project) ?? false,
@@ -150,9 +157,16 @@ class CaseHeaderData extends Data
         $base = "/auftraege/{$project->public_id}";
         $children = [
             ['key' => 'quotes', 'label' => 'project.quotes', 'translate' => true, 'href' => "{$base}/angebote", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'reorderable' => false],
-            ['key' => 'contract', 'label' => 'project.contract', 'translate' => true, 'href' => "{$base}/vertrag", 'count' => self::unsignedContracts($project), 'reorderable' => false],
             ['key' => 'forms', 'label' => 'project.forms', 'translate' => true, 'href' => "{$base}/frageboegen", 'count' => self::unansweredForms($project), 'reorderable' => false],
         ];
+
+        $mode = StudioSettings::current()->contractMode();
+
+        if ($mode === ContractMode::Always || ($mode === ContractMode::OnDemand && self::hasContract($project))) {
+            array_splice($children, 1, 0, [
+                ['key' => 'contract', 'label' => 'project.contract', 'translate' => true, 'href' => "{$base}/vertrag", 'count' => self::unsignedContracts($project), 'reorderable' => false],
+            ]);
+        }
 
         $invoices = collect();
         if (auth('staff')->user()?->can('managePaymentPlan', $project)) {
@@ -165,7 +179,7 @@ class CaseHeaderData extends Data
             'label' => 'project.documents',
             'href' => $children[0]['href'],
             'count' => ($project->quotes()->count()
-                + $project->contracts()->where('state', '!=', ContractState::Superseded)->count()
+                + ($mode === ContractMode::Off ? 0 : $project->contracts()->where('state', '!=', ContractState::Superseded)->count())
                 + $project->formInstances()->count()
                 + $invoices->count()) ?: null,
             'countTo' => null,
@@ -219,6 +233,11 @@ class CaseHeaderData extends Data
             ->shared()
             ->whereDoesntHave('fields.answers')
             ->count();
+    }
+
+    private static function hasContract(ClientCase $project): bool
+    {
+        return $project->contracts()->where('state', '!=', ContractState::Superseded)->exists();
     }
 
     /**

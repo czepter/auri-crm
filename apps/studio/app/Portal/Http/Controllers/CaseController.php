@@ -10,8 +10,10 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
+use App\Enums\ContractMode;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
 use App\Payments\Data\PaymentInstallmentData;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -260,7 +262,7 @@ class CaseController extends Controller
             ];
         }
 
-        if ($found->latestContract !== null) {
+        if ($found->latestContract !== null && StudioSettings::current()->contractMode() !== ContractMode::Off) {
             $rows[] = [
                 'kind' => 'contract',
                 'href' => "/projekte/{$found->public_id}/vertrag",
