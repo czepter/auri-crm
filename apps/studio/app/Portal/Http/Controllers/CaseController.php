@@ -11,8 +11,8 @@ use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Payments\Data\PaymentPlanData;
-use App\Portal\Actions\ReadClientNextStep;
 use App\Portal\Actions\UpdateCaseDetails;
+use App\Portal\Screens\ReadClientNextStep;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
@@ -145,6 +145,8 @@ class CaseController extends Controller
         $version = $gallery?->currentVersion;
 
         $stages = app(CrmVocabulary::class);
+        $plan = PaymentPlanData::forCase($found);
+        $questionnaires = $next->questionnaires($found);
 
         return [
             'id' => $found->public_id,
@@ -175,9 +177,9 @@ class CaseController extends Controller
                     ->values()->all(),
             ],
             'documents' => $this->documents($found, $settings),
-            'payments' => $this->payments($found, $settings),
-            'questionnaires' => $next->questionnaires($found),
-            'steps' => $next($found, auth('portal')->user()),
+            'payments' => $this->payments($plan, $settings),
+            'questionnaires' => $questionnaires,
+            'steps' => $next($found, auth('portal')->user(), $plan, $questionnaires),
             'appointment' => $next->appointment($found),
             'details' => [
                 'date' => $found->primaryShoot?->date?->format('Y-m-d'),
@@ -249,10 +251,8 @@ class CaseController extends Controller
      * under it what happened to that invoice. Behind the switch the payment
      * screens are behind.
      */
-    private function payments(ClientCase $found, PortalSettings $settings): ?array
+    private function payments(?PaymentPlanData $plan, PortalSettings $settings): ?array
     {
-        $plan = PaymentPlanData::forCase($found);
-
         if ($plan === null || ! $settings->paymentStatusEnabled(auth('portal')->user())) {
             return null;
         }

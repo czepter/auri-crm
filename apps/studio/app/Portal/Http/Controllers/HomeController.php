@@ -8,7 +8,7 @@ use App\Engagement\Models\Thread;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Data\PaymentPlanData;
-use App\Portal\Actions\ReadClientNextStep;
+use App\Portal\Screens\ReadClientNextStep;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
 use Illuminate\Http\RedirectResponse;
@@ -55,7 +55,9 @@ class HomeController extends Controller
             return redirect()->route('portal.projects.show', $projects->first()->public_id);
         }
 
-        $bookings = $projects->map(fn (ClientCase $project) => $this->booking($project))
+        $plans = $projects->mapWithKeys(fn (ClientCase $project) => [$project->id => PaymentPlanData::forCase($project)]);
+
+        $bookings = $projects->map(fn (ClientCase $project) => $this->booking($project, $plans[$project->id]))
             ->sortBy(fn (array $booking) => [$booking['year'] ?? PHP_INT_MAX, $booking['date'] ?? ''])
             ->values();
 
@@ -63,7 +65,7 @@ class HomeController extends Controller
             'contact' => ['name' => $contact->name],
             'welcomeText' => $settings->welcomeText($contact, $this->welcomeState($bookings->all())),
             'welcomeState' => $this->welcomeState($bookings->all()),
-            'pending' => $this->pending($contact, $projects, $settings, $next),
+            'pending' => $this->pending($contact, $projects, $plans, $settings, $next),
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),
             'galleries' => $this->galleries($projects),
@@ -101,7 +103,7 @@ class HomeController extends Controller
      * date still ahead, and everything else is still being settled. Three
      * words a client already understands, off facts that already exist.
      */
-    private function booking(ClientCase $project): array
+    private function booking(ClientCase $project, ?PaymentPlanData $plan): array
     {
         $date = $project->primaryShoot?->date;
         $delivered = $project->galleries->contains(fn (Gallery $gallery) => $gallery->currentVersion !== null);
@@ -118,7 +120,7 @@ class HomeController extends Controller
                 $date !== null && $date->isFuture() => 'upcoming',
                 default => 'open',
             },
-            'openAmount' => $this->openAmount($project),
+            'openAmount' => $this->openAmount($plan),
             // A booking with a delivered picture wears it. One without gets
             // its year set in the display face instead of an empty grey
             // rectangle, which on paper reads as an image that failed.
@@ -141,9 +143,9 @@ class HomeController extends Controller
         return null;
     }
 
-    private function openAmount(ClientCase $project): ?int
+    private function openAmount(?PaymentPlanData $plan): ?int
     {
-        $open = PaymentPlanData::forCase($project)?->openTotal ?? 0;
+        $open = $plan?->openTotal ?? 0;
 
         return $open > 0 ? $open : null;
     }
@@ -157,12 +159,13 @@ class HomeController extends Controller
      * nothing is listed that the client cannot do. The message row respects
      * T-08's own switch.
      */
-    private function pending(Contact $contact, $projects, PortalSettings $settings, ReadClientNextStep $next): array
+    private function pending(Contact $contact, $projects, $plans, PortalSettings $settings, ReadClientNextStep $next): array
     {
         $rows = [];
+        $questionnaires = $next->questionnairesFor($projects);
 
         foreach ($projects as $project) {
-            $step = ($next($project, $contact))[0] ?? null;
+            $step = ($next($project, $contact, $plans[$project->id], $questionnaires[$project->id] ?? []))[0] ?? null;
 
             if ($step !== null) {
                 $rows[] = [

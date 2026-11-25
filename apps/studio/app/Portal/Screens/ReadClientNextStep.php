@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Portal\Actions;
+namespace App\Portal\Screens;
 
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\ClientCase;
@@ -14,6 +14,7 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Support\PaymentSettings;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
+use Illuminate\Support\Collection;
 
 /**
  * What the client can do on a project right now, most pressing first. A step
@@ -25,7 +26,7 @@ class ReadClientNextStep
     public function __construct(private readonly PortalSettings $settings) {}
 
     /** @return list<array{kind: string, label: ?string, detail: ?string, amount: ?int, dueOn: ?string, overdue: bool, href: string}> */
-    public function __invoke(ClientCase $project, Contact $contact): array
+    public function __invoke(ClientCase $project, Contact $contact, ?PaymentPlanData $plan, array $questionnaires): array
     {
         $base = "/projekte/{$project->public_id}";
         $steps = [];
@@ -48,7 +49,7 @@ class ReadClientNextStep
             $steps[] = [2, $this->step('quote', amount: $quote->gross(), dueOn: $quote->valid_until?->format('Y-m-d'), href: "{$base}/angebot")];
         }
 
-        $installment = $this->settings->paymentStatusEnabled($contact) ? $this->nextInstallment($project) : null;
+        $installment = $this->settings->paymentStatusEnabled($contact) ? $this->nextInstallment($plan) : null;
 
         if ($installment !== null && PaymentSettings::payableNow($installment)) {
             $steps[] = [$installment->isLate ? 1 : 3, $this->step(
@@ -61,7 +62,7 @@ class ReadClientNextStep
             )];
         }
 
-        foreach ($this->questionnaires($project) as $sheet) {
+        foreach ($questionnaires as $sheet) {
             if ($sheet['openCount'] > 0) {
                 $steps[] = [4, $this->step(
                     'questionnaire',
@@ -93,12 +94,24 @@ class ReadClientNextStep
     /** The questionnaires the studio shared; an open count is what a row says instead of a progress bar. */
     public function questionnaires(ClientCase $project): array
     {
+        return $this->questionnairesFor(collect([$project]))[$project->id] ?? [];
+    }
+
+    /**
+     * One query for any number of projects.
+     *
+     * @param  Collection<int, ClientCase>  $projects
+     * @return array<int, list<array{id: string, name: string, count: int, openCount: int}>>
+     */
+    public function questionnairesFor(Collection $projects): array
+    {
         return FormInstance::query()
             ->shared()
-            ->where('case_id', $project->id)
+            ->whereIn('case_id', $projects->pluck('id'))
             ->with('fields.currentAnswer')
             ->get()
-            ->map(fn (FormInstance $instance) => [
+            ->groupBy('case_id')
+            ->map(fn (Collection $instances) => $instances->map(fn (FormInstance $instance) => [
                 'id' => $instance->public_id,
                 'name' => $instance->name,
                 'count' => $instance->fields->where('type', '!=', FormFieldType::Section)->count(),
@@ -106,13 +119,13 @@ class ReadClientNextStep
                     ->where('type', '!=', FormFieldType::Section)
                     ->filter(fn ($field) => $field->currentAnswer?->value === null)
                     ->count(),
-            ])
+            ])->all())
             ->all();
     }
 
-    private function nextInstallment(ClientCase $project): ?PaymentInstallmentData
+    private function nextInstallment(?PaymentPlanData $plan): ?PaymentInstallmentData
     {
-        return collect(PaymentPlanData::forCase($project)?->installments ?? [])
+        return collect($plan?->installments ?? [])
             ->first(fn (PaymentInstallmentData $one) => in_array($one->status, array_column(PaymentInstallmentStatus::open(), 'value'), true));
     }
 

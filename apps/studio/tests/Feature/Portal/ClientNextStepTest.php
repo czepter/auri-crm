@@ -5,10 +5,11 @@ use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Shoot;
 use App\Models\StudioSettings;
+use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
-use App\Portal\Actions\ReadClientNextStep;
+use App\Portal\Screens\ReadClientNextStep;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Support\Surface;
@@ -34,7 +35,10 @@ beforeEach(function () {
 
 function nextStepsFor(ClientCase $project, Contact $contact): array
 {
-    return app(ReadClientNextStep::class)($project->fresh(), $contact);
+    $project = $project->fresh();
+    $next = app(ReadClientNextStep::class);
+
+    return $next($project, $contact, PaymentPlanData::forCase($project), $next->questionnaires($project));
 }
 
 function stepProject(?Contact &$contact = null): ClientCase

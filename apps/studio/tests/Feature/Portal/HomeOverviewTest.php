@@ -3,6 +3,7 @@
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Models\FormInstance;
 use App\Crm\Models\Shoot;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
@@ -19,6 +20,7 @@ use App\Quotes\Models\Quote;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -176,4 +178,26 @@ it('leaves out a gallery whose link has expired, and one nobody published', func
     $props = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
 
     expect($props['galleries'])->toBe([]);
+});
+
+it('reads every questionnaire for the overview in one query, and the plan of a project once', function () {
+    $contact = Contact::factory()->create();
+
+    foreach (range(1, 3) as $n) {
+        $project = bookingFor($contact, ['name' => "Hochzeit {$n}"]);
+        FormInstance::factory()->for($project, 'case')->create(['shared_at' => now()]);
+        dueInstallment($project, 50000, now()->addWeek()->toDateString());
+    }
+
+    $queries = [];
+    DB::listen(function ($query) use (&$queries) {
+        $queries[] = $query->sql;
+    });
+
+    $this->actingAs($contact, 'portal')->get('/')->assertOk();
+
+    $count = fn (string $table) => count(array_filter($queries, fn (string $sql) => str_contains($sql, "from \"{$table}\"")));
+
+    expect($count('form_instances'))->toBe(1)
+        ->and($count('invoices'))->toBe(3);
 });
