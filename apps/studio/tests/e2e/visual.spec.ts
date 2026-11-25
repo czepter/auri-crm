@@ -36,8 +36,8 @@ test('Auftrag', async ({ page }) => {
 
 test('Angebot', async ({ page }) => {
   await booking(page)
-  const card = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Unterlagen', exact: true }) })
-  await card.locator('a[href^="/angebote/"]', { hasText: 'Ansehen' }).click()
+  await page.locator('a[href^="/auftraege/"][href$="/angebote"]').click()
+  await page.locator('section a[href^="/angebote/"]').first().click()
   await page.waitForURL(/\/angebote\//)
   await screen(page, 'angebot')
 })
