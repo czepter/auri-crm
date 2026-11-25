@@ -18,7 +18,7 @@
     "@editorjs/list": "^2.0.9",
     "@editorjs/quote": "^2.7.6",
     "@editorjs/table": "^2.4.5",
-    "@inertiajs/vue3": "^2.0.0",
+    "@inertiajs/vue3": "^3.11.0",
     "@internationalized/date": "^3.12.3",
     "@vueuse/core": "^14.4.0",
     "class-variance-authority": "^0.7.1",
@@ -33,7 +33,7 @@
     "vue-sonner": "^2.0.9"
   },
   "devDependencies": {
-    "@inertiajs/core": "^2.3.27",
+    "@inertiajs/core": "^3.11.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@playwright/test": "^1.49.0",
     "@storybook/vue3-vite": "^10.6.0",
