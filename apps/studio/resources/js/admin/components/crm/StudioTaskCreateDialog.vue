@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import ContactTypeahead from '@/admin/components/crm/ContactTypeahead.vue'
 import { Button } from '@/ui/button'
@@ -16,6 +16,9 @@ import {
 } from '@/ui/dialog'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import { parseQuickAdd } from '@/admin/lib/quickAdd'
+import { dayWithWeekday } from '@/admin/lib/dates'
+import Chip from '@/ui/page/Chip.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 defineProps<{ staffOptions: { value: string; label: string }[]; label?: string }>()
@@ -25,11 +28,15 @@ const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
 
 const form = useForm({ title: '', due_on: '', assignee: 'none' })
 
+const quick = computed(() => parseQuickAdd(form.title))
+const parsedDue = computed(() => (form.due_on === '' ? quick.value.dueOn : null))
+
 function submit() {
   form
     .transform((data) => ({
       ...data,
-      due_on: data.due_on === '' ? null : data.due_on,
+      title: parsedDue.value ? quick.value.title : data.title,
+      due_on: parsedDue.value ?? (data.due_on === '' ? null : data.due_on),
       assignee: data.assignee === 'none' ? null : data.assignee,
       contact: contact.value?.id ?? null,
     }))
@@ -66,6 +73,7 @@ function submit() {
         >
           <Field v-slot="{ id }" wide :label="$t('project.taskTitle')" :error="form.errors.title">
             <Input :id="id" v-model="form.title" type="text" />
+            <Chip v-if="parsedDue" class="mt-1.5">{{ dayWithWeekday(parsedDue) }}</Chip>
           </Field>
 
           <Field wide :label="$t('project.taskDue')" :error="form.errors.due_on">

@@ -20,6 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+import { parseQuickAdd } from '@/admin/lib/quickAdd'
+import Chip from '@/ui/page/Chip.vue'
 import { taskGroupLabel, taskGroups } from '@/admin/lib/projectOverview'
 import { useLiveProps } from '@/admin/lib/liveReload'
 
@@ -71,8 +73,16 @@ const doneSummary = computed(() => done.value.map((task) => task.title).join(', 
 
 const form = useForm({ title: '', audience: 'internal', due_on: '', assignee: 'none' })
 
+const quick = computed(() => parseQuickAdd(form.title))
+const parsedDue = computed(() => (form.due_on === '' ? quick.value.dueOn : null))
+
 function add() {
-  form.transform((data) => ({ ...data, assignee: data.assignee === 'none' ? null : data.assignee })).post(`/auftraege/${props.header.id}/aufgaben`, {
+  form.transform((data) => ({
+    ...data,
+    title: parsedDue.value ? quick.value.title : data.title,
+    due_on: parsedDue.value ?? data.due_on,
+    assignee: data.assignee === 'none' ? null : data.assignee,
+  })).post(`/auftraege/${props.header.id}/aufgaben`, {
     preserveScroll: true,
     onSuccess: () => form.reset(),
   })
@@ -142,6 +152,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
               class="min-w-[220px] flex-1"
               type="text"
             />
+            <Chip v-if="parsedDue">{{ dayWithWeekday(parsedDue) }}</Chip>
             <DatePicker v-model="form.due_on" class="w-[150px]" />
             <Select v-if="!$page.props.soloStudio" v-model="form.assignee">
               <SelectTrigger class="w-44" :aria-label="$t('project.taskAssignee')"><SelectValue /></SelectTrigger>
