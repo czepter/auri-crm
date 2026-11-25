@@ -45,6 +45,8 @@ const sendFirst = computed(() => live.value && unpaid.value && !row.value.sentOn
             <InstallmentPaidDialog
               v-if="live && unpaid"
               :installment-id="row.openInstallments[0].id"
+              :subject="row.number"
+              :recipient="invoice.recipient"
               :remaining="row.openInstallments[0].remaining"
               :primary="!sendFirst"
             />
@@ -118,7 +120,7 @@ const sendFirst = computed(() => live.value && unpaid.value && !row.value.sentOn
             </section>
 
             <section v-if="live && (row.paidAmount === 0 || row.paidAmount > row.credited)" class="flex flex-wrap gap-2">
-              <InstallmentStornoDialog v-if="row.paidAmount === 0" :invoice-id="row.id" />
+              <InstallmentStornoDialog v-if="row.paidAmount === 0" :invoice-id="row.id" :number="row.number" :recipient="invoice.recipient" :amount="row.amount" />
               <Button v-if="row.paidAmount > row.credited" :as="Link" variant="outline" :href="`/rechnungen/${row.id}/gutschrift/neu`">{{ $t(hasCreditNoteDraft ? 'payments.creditNoteDraft' : 'payments.creditNote') }}</Button>
             </section>
           </aside>

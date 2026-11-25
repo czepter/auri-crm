@@ -217,9 +217,11 @@ const shown = computed(() =>
                       bare
                       v-bind="bind('paid', invoice.id)"
                       :installment-id="invoice.openInstallments[0].id"
+                      :subject="invoice.number"
+                      :recipient="invoice.contact"
                       :remaining="invoice.openInstallments[0].remaining"
                     />
-                    <InstallmentStornoDialog v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" bare v-bind="bind('storno', invoice.id)" :invoice-id="invoice.id" />
+                    <InstallmentStornoDialog v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" bare v-bind="bind('storno', invoice.id)" :invoice-id="invoice.id" :number="invoice.number" :recipient="invoice.contact" :amount="invoice.amount" />
                   </TableCell>
                 </TableRow>
                 <TableRow v-for="note in invoice.creditNotes" :key="note.id">

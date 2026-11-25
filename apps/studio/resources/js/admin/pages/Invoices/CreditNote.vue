@@ -46,7 +46,7 @@ function saveDraft() {
 
 <template>
   <AdminLayout active="rechnungen">
-    <FormShell :title="$t(props.draft ? 'creditNoteBuilder.draftTitle' : 'creditNoteBuilder.title')" :kicker="$t('invoiceDetail.title', { number: row.number })" :kicker-href="`/rechnungen/${row.id}`" wide>
+    <FormShell :title="$t(props.draft ? 'creditNoteBuilder.draftTitle' : 'creditNoteBuilder.title', { number: row.number })" :kicker="$t('invoiceDetail.title', { number: row.number })" :kicker-href="`/rechnungen/${row.id}`" wide>
       <template #head>
         <ChoiceGroup
           class="ml-auto"
