@@ -3,22 +3,16 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Contracts\Models\Contract;
-use App\Crm\Enums\FormFieldType;
-use App\Crm\Enums\StageAnchor;
-use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
-use App\Crm\Models\FormInstance;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Enums\ContractMode;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
-use App\Payments\Data\PaymentInstallmentData;
 use App\Payments\Data\PaymentPlanData;
-use App\Payments\Enums\PaymentInstallmentStatus;
-use App\Payments\Models\Invoice;
 use App\Portal\Actions\UpdateCaseDetails;
+use App\Portal\Screens\ReadClientNextStep;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
@@ -50,7 +44,7 @@ use Inertia\Response;
  */
 class CaseController extends Controller
 {
-    public function __invoke(string $case, PortalSettings $settings, PortalOffers $offers): Response
+    public function __invoke(string $case, PortalSettings $settings, PortalOffers $offers, ReadClientNextStep $next): Response
     {
         $contact = auth('portal')->user();
 
@@ -70,10 +64,10 @@ class CaseController extends Controller
         ];
 
         return $editable
-            ? Inertia::render('Projects/Inquiry', [...$shared, 'project' => $this->inquiry($found)])
+            ? Inertia::render('Projects/Inquiry', [...$shared, 'project' => $this->inquiry($found, $next)])
             : Inertia::render('Projects/Show', [
                 ...$shared,
-                'project' => $this->booking($found, $settings),
+                'project' => $this->booking($found, $settings, $next),
                 // Die Übersicht überspringt, wer genau eine Buchung hat —
                 // ohne diese Stelle bliebe „Weitere Leistungen" für den
                 // häufigsten Fall unsichtbar.
@@ -103,31 +97,6 @@ class CaseController extends Controller
         return back();
     }
 
-    /**
-     * P-03 (#222): the questionnaires the studio actually shared. Absent
-     * until one is — a studio's own checklists live on the same table and
-     * are nobody else's business. openCount is what the row says instead of
-     * a progress bar: how many questions still have no answer.
-     */
-    private function questionnaires(ClientCase $found): array
-    {
-        return FormInstance::query()
-            ->shared()
-            ->where('case_id', $found->id)
-            ->with('fields.currentAnswer')
-            ->get()
-            ->map(fn (FormInstance $instance) => [
-                'id' => $instance->public_id,
-                'name' => $instance->name,
-                'count' => $instance->fields->where('type', '!=', FormFieldType::Section)->count(),
-                'openCount' => $instance->fields
-                    ->where('type', '!=', FormFieldType::Section)
-                    ->filter(fn ($field) => $field->currentAnswer?->value === null)
-                    ->count(),
-            ])
-            ->all();
-    }
-
     private function find(string $case): ClientCase
     {
         return auth('portal')->user()->visibleProjects()
@@ -136,7 +105,7 @@ class CaseController extends Controller
     }
 
     /** What the client told us, as they can still change it. */
-    private function inquiry(ClientCase $found): array
+    private function inquiry(ClientCase $found, ReadClientNextStep $next): array
     {
         $shoot = $found->primaryShoot ?? $found->shoots()->orderBy('sort_order')->first();
         $quote = $found->latestQuote;
@@ -155,7 +124,7 @@ class CaseController extends Controller
                 'validUntil' => $quote->valid_until?->format('Y-m-d'),
                 'acceptedOn' => $quote->accepted_at?->format('Y-m-d'),
             ] : null,
-            'questionnaires' => $this->questionnaires($found),
+            'questionnaires' => $next->questionnaires($found),
             'contact' => [
                 'email' => auth('portal')->user()->email,
                 'phone' => auth('portal')->user()->phone,
@@ -164,7 +133,7 @@ class CaseController extends Controller
     }
 
     /** The booked booking: cover, one sentence, pictures, dates, paperwork. */
-    private function booking(ClientCase $found, PortalSettings $settings): array
+    private function booking(ClientCase $found, PortalSettings $settings, ReadClientNextStep $next): array
     {
         $found->load([
             'shoots' => fn ($query) => $query->uncancelled()->orderByRaw('date is null, date'),
@@ -175,13 +144,9 @@ class CaseController extends Controller
         $gallery = $found->galleries->first(fn (Gallery $one) => $one->currentVersion !== null);
         $version = $gallery?->currentVersion;
 
-        // The two positions the three states are read against: at or past
-        // "fertig" the work is done, past the entry stage it is under way.
-        // Positions rather than a list of statuses, so a studio's own extra
-        // stage lands in the right state without being named here.
         $stages = app(CrmVocabulary::class);
-        $ready = $stages->anchored(StagePipeline::Project, StageAnchor::Ready)?->sort_order;
-        $started = $stages->anchored(StagePipeline::Project, StageAnchor::Entry)?->sort_order;
+        $plan = PaymentPlanData::forCase($found);
+        $questionnaires = $next->questionnaires($found);
 
         return [
             'id' => $found->public_id,
@@ -195,20 +160,10 @@ class CaseController extends Controller
                 'date' => $shoot->date?->format('Y-m-d'),
                 'callTime' => $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
                 'venue' => $shoot->venue(),
-                // The client is told where their shoot stands, in the same
-                // words the studio uses. The temperature differs, not the
-                // fact: nothing here is coloured as a warning, because the
-                // studio chases and the client is not chased in their own
-                // portal.
-                'status' => $shoot->status->name,
-                // The same fact as a mark the eye reads before the word.
-                // Three states, because colour on this surface is a signal
-                // and a fourth would make it decoration again.
-                'state' => match (true) {
-                    $ready !== null && $shoot->status->sort_order >= $ready => 'done',
-                    $started !== null && $shoot->status->sort_order > $started => 'open',
-                    default => 'neutral',
-                },
+                // Three fixed states instead of the studio's own stage names:
+                // those are internal vocabulary, and renaming one must not
+                // change what the client reads.
+                'phase' => $stages->phase($shoot->status),
             ])->all(),
             // The entry point that was missing entirely: a strip of the
             // delivered pictures and a way into all of them.
@@ -222,8 +177,10 @@ class CaseController extends Controller
                     ->values()->all(),
             ],
             'documents' => $this->documents($found, $settings),
-            'invoices' => $this->invoices($found, $settings),
-            'questionnaires' => $this->questionnaires($found),
+            'payments' => $this->payments($plan, $settings),
+            'questionnaires' => $questionnaires,
+            'steps' => $next($found, auth('portal')->user(), $plan, $questionnaires),
+            'appointment' => $next->appointment($found),
             'details' => [
                 'date' => $found->primaryShoot?->date?->format('Y-m-d'),
                 'callTime' => $found->primaryShoot?->call_time === null
@@ -244,23 +201,6 @@ class CaseController extends Controller
     private function documents(ClientCase $found, PortalSettings $settings): array
     {
         $rows = [];
-        $plan = PaymentPlanData::forCase($found);
-
-        if ($plan !== null && $settings->paymentStatusEnabled(auth('portal')->user())) {
-            $next = collect($plan->installments)
-                ->first(fn (PaymentInstallmentData $one) => in_array($one->status, array_column(PaymentInstallmentStatus::open(), 'value'), true));
-
-            $rows[] = [
-                'kind' => 'payments',
-                'href' => "/projekte/{$found->public_id}/zahlungen",
-                'label' => $next?->label,
-                'dueOn' => $next?->dueOn,
-                'overdue' => $next?->isLate ?? false,
-                'amount' => $next?->remaining,
-                'openTotal' => $plan->openTotal,
-                'settled' => $next === null,
-            ];
-        }
 
         if ($found->latestContract !== null && StudioSettings::current()->contractMode() !== ContractMode::Off) {
             $rows[] = [
@@ -307,31 +247,17 @@ class CaseController extends Controller
     }
 
     /**
-     * #415: every invoice this project has issued, newest number last — the
-     * client's own copy of the sequence. Behind the same switch the Zahlungen
-     * row is, because both lead into the payment screens.
+     * One list for the money: a row per rate with its invoice number, and
+     * under it what happened to that invoice. Behind the switch the payment
+     * screens are behind.
      */
-    private function invoices(ClientCase $found, PortalSettings $settings): array
+    private function payments(?PaymentPlanData $plan, PortalSettings $settings): ?array
     {
-        if (! $settings->paymentStatusEnabled(auth('portal')->user())) {
-            return [];
+        if ($plan === null || ! $settings->paymentStatusEnabled(auth('portal')->user())) {
+            return null;
         }
 
-        return Invoice::query()
-            ->where('case_id', $found->id)
-            ->with('installments')
-            ->orderBy('number')
-            ->get()
-            ->map(fn (Invoice $one) => [
-                'id' => $one->public_id,
-                'number' => $one->number,
-                'issuedOn' => $one->issued_at->format('Y-m-d'),
-                'amount' => $one->amount(),
-                'status' => __("payments.invoiceStatus.{$one->status()}"),
-                'settled' => $one->isPaid(),
-            ])
-            ->values()
-            ->all();
+        return ['openTotal' => $plan->openTotal, 'rows' => $plan->installments];
     }
 
     private function signedOn(Contract $contract): ?string

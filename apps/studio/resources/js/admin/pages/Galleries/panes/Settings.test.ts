@@ -42,6 +42,7 @@ const gallery = {
   downloadSizes: ['original', 'web'] as ('original' | 'web')[],
   expiryReminder: false,
   invoices: [{ id: 'inv1', number: 'R-2026-004', status: 'open' }],
+  followsPlan: false,
 }
 
 const base = { gallery, siblings: [], versions: [], lists: [] }

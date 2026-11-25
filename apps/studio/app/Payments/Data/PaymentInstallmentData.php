@@ -43,6 +43,9 @@ class PaymentInstallmentData extends Data
         // that column only dedupes the one-time notification event and is
         // never a second source of truth for whether a row is late.
         public bool $isLate,
+        // #408: the day the rate was cancelled with its invoice, for the
+        // "Storniert" line the client reads.
+        public ?string $cancelledOn,
         // M-06: the issued invoice. `invoiceNumber` is also the Verwendungszweck
         // the client transfers under — T-07's plan-level reference stopped
         // being allocated once real invoice numbers existed, because every
@@ -83,6 +86,7 @@ class PaymentInstallmentData extends Data
             paidAmount: (int) $installment->paid_amount,
             remaining: $installment->remaining(),
             isLate: $installment->isLate(),
+            cancelledOn: $installment->cancelled_at?->format('Y-m-d'),
             invoiceId: $installment->invoice?->public_id,
             invoiceNumber: $installment->invoice?->number,
             invoicedOn: $installment->invoice?->issued_at->format('Y-m-d'),

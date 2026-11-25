@@ -8,10 +8,9 @@ use App\Engagement\Models\Thread;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Data\PaymentPlanData;
-use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Portal\Screens\ReadClientNextStep;
 use App\Portal\Support\PortalOffers;
 use App\Portal\Support\PortalSettings;
-use App\Quotes\Enums\QuoteStatus;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,7 +35,7 @@ use Inertia\Response;
  */
 class HomeController extends Controller
 {
-    public function __invoke(PortalSettings $settings, PortalOffers $offers): Response|RedirectResponse
+    public function __invoke(PortalSettings $settings, PortalOffers $offers, ReadClientNextStep $next): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -44,6 +43,7 @@ class HomeController extends Controller
             ->with([
                 'primaryShoot',
                 'latestQuote',
+                'latestContract.signature',
                 'paymentPlan.installments',
                 'galleries.currentVersion',
             ])
@@ -55,7 +55,9 @@ class HomeController extends Controller
             return redirect()->route('portal.projects.show', $projects->first()->public_id);
         }
 
-        $bookings = $projects->map(fn (ClientCase $project) => $this->booking($project))
+        $plans = $projects->mapWithKeys(fn (ClientCase $project) => [$project->id => PaymentPlanData::forCase($project)]);
+
+        $bookings = $projects->map(fn (ClientCase $project) => $this->booking($project, $plans[$project->id]))
             ->sortBy(fn (array $booking) => [$booking['year'] ?? PHP_INT_MAX, $booking['date'] ?? ''])
             ->values();
 
@@ -63,7 +65,7 @@ class HomeController extends Controller
             'contact' => ['name' => $contact->name],
             'welcomeText' => $settings->welcomeText($contact, $this->welcomeState($bookings->all())),
             'welcomeState' => $this->welcomeState($bookings->all()),
-            'pending' => $this->pending($contact, $projects, $settings),
+            'pending' => $this->pending($contact, $projects, $plans, $settings, $next),
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),
             'galleries' => $this->galleries($projects),
@@ -101,7 +103,7 @@ class HomeController extends Controller
      * date still ahead, and everything else is still being settled. Three
      * words a client already understands, off facts that already exist.
      */
-    private function booking(ClientCase $project): array
+    private function booking(ClientCase $project, ?PaymentPlanData $plan): array
     {
         $date = $project->primaryShoot?->date;
         $delivered = $project->galleries->contains(fn (Gallery $gallery) => $gallery->currentVersion !== null);
@@ -118,7 +120,7 @@ class HomeController extends Controller
                 $date !== null && $date->isFuture() => 'upcoming',
                 default => 'open',
             },
-            'openAmount' => $this->openAmount($project),
+            'openAmount' => $this->openAmount($plan),
             // A booking with a delivered picture wears it. One without gets
             // its year set in the display face instead of an empty grey
             // rectangle, which on paper reads as an image that failed.
@@ -141,9 +143,9 @@ class HomeController extends Controller
         return null;
     }
 
-    private function openAmount(ClientCase $project): ?int
+    private function openAmount(?PaymentPlanData $plan): ?int
     {
-        $open = PaymentPlanData::forCase($project)?->openTotal ?? 0;
+        $open = $plan?->openTotal ?? 0;
 
         return $open > 0 ? $open : null;
     }
@@ -153,41 +155,26 @@ class HomeController extends Controller
      * booking it came from, because the whole point is that the client does
      * not have to open three projects to find out whether anything is open.
      *
-     * Both money rows and the message row respect T-08's own switches: an
-     * item the client cannot open is not something to put in front of them.
+     * One step per booking, from the same action the project page reads, so
+     * nothing is listed that the client cannot do. The message row respects
+     * T-08's own switch.
      */
-    private function pending(Contact $contact, $projects, PortalSettings $settings): array
+    private function pending(Contact $contact, $projects, $plans, PortalSettings $settings, ReadClientNextStep $next): array
     {
         $rows = [];
+        $questionnaires = $next->questionnairesFor($projects);
 
         foreach ($projects as $project) {
-            if ($settings->paymentStatusEnabled($contact)) {
-                foreach (PaymentPlanData::forCase($project)?->installments ?? [] as $installment) {
-                    if (! in_array($installment->status, array_column(PaymentInstallmentStatus::open(), 'value'), true)) {
-                        continue;
-                    }
+            $step = ($next($project, $contact, $plans[$project->id], $questionnaires[$project->id] ?? []))[0] ?? null;
 
-                    $rows[] = [
-                        'kind' => 'installment',
-                        'amount' => $installment->remaining,
-                        'dueOn' => $installment->dueOn,
-                        'overdue' => $installment->isLate,
-                        'booking' => $project->name,
-                        'href' => "/projekte/{$project->public_id}/zahlungen",
-                    ];
-                }
-            }
-
-            $quote = $project->latestQuote;
-
-            if ($quote?->status === QuoteStatus::Sent) {
+            if ($step !== null) {
                 $rows[] = [
-                    'kind' => 'quote',
-                    'amount' => $quote->gross(),
-                    'dueOn' => $quote->valid_until?->format('Y-m-d'),
-                    'overdue' => false,
+                    'kind' => $step['kind'],
+                    'amount' => $step['amount'],
+                    'dueOn' => $step['dueOn'],
+                    'overdue' => $step['overdue'],
                     'booking' => $project->name,
-                    'href' => "/projekte/{$project->public_id}/angebot",
+                    'href' => $step['href'],
                 ];
             }
         }

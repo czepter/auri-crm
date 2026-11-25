@@ -63,6 +63,7 @@ const props = withDefaults(defineProps<{
     downloadSizes: ('original' | 'web')[]
     expiryReminder: boolean
     invoices: { id: string; number: string; status: string }[]
+    followsPlan: boolean
     deviates: boolean
     withdrawn: boolean
     prerelease: boolean

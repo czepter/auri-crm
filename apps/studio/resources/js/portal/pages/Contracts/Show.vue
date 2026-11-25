@@ -96,7 +96,6 @@ function sign() {
               ? $t('portal.signedOn', { date: dayDate(contract.signature.consentedAt) })
               : $t('portal.notSignedYet') }}
           </span>
-          <p v-if="!canSign && !contract.signature" class="w-full text-[13.5px] text-muted-foreground">{{ $t('portal.signUnavailable') }}</p>
           <a v-if="contract.downloadUrl" class="ml-auto inline-flex min-h-11 items-center text-[13.5px] text-muted-foreground underline underline-offset-4 hover:text-foreground" :href="contract.downloadUrl" download>
             {{ $t('portal.contractDownload') }}
           </a>
@@ -111,7 +110,6 @@ function sign() {
         <div v-else-if="contract.downloadUrl" class="h-[74vh] min-h-[520px] bg-sunk">
           <iframe class="block size-full border-0" :src="contract.downloadUrl" :title="$t('portal.contractTitle')" />
         </div>
-        <p v-else class="py-24 text-center text-[15px] text-muted-foreground">{{ $t('portal.contractPending') }}</p>
 
         <!-- T-08: signing is offered only while the switch is on and nothing
              is recorded yet; a recorded signature is a fact and shows above

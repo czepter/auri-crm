@@ -2034,7 +2034,6 @@
     "shootCount": "ein Termin | {count} Termine",
     "dateOpen": "Termin noch offen",
     "noShoots": "Keine Termine.",
-    "nothingShared": "Nichts freigegeben.",
     "accountTitle": "Einstellungen",
     "yourData": "Eure Daten",
     "nameLabel": "Name",
@@ -2079,19 +2078,13 @@
     "reachUs": "Kontakt",
     "requestChange": "Änderung anfragen",
     "documentsTitle": "Unterlagen",
-    "invoicesTitle": "Rechnungen",
     "viewAllImages": "Alle {count} Bilder ansehen",
     "viewAll": "Alle ansehen",
     "imagesTitle": "Bilder",
-    "daysUntil": "Noch {days} Tage.",
-    "today": "Heute ist es so weit.",
-    "tomorrow": "Morgen ist es so weit.",
     "signedOn": "Unterschrieben am {date}",
     "notSignedYet": "Noch nicht unterschrieben",
     "quoteOpen": "Offen",
-    "allSettled": "Alles beglichen",
     "document": {
-      "payments": "Zahlungen",
       "contract": "Vertrag",
       "quote": "Angebot",
       "messages": "Nachrichten"
@@ -2109,6 +2102,11 @@
     "dueOn": "fällig am {date}",
     "validUntil": "gültig bis {date}",
     "validDays": "Läuft heute ab|Gültig noch ein Tag|Gültig noch {count} Tage",
+    "shootPhase": {
+      "upcoming": "Geplant",
+      "editing": "Bearbeitung",
+      "delivered": "Geliefert"
+    },
     "phase": {
       "open": "Offen",
       "upcoming": "Anstehend",
@@ -2117,6 +2115,8 @@
     "pending": {
       "installment": "Rate",
       "quote": "Angebot",
+      "contract": "Vertrag",
+      "questionnaire": "Fragebogen",
       "message": "Antwort vom Studio"
     },
     "contractTitle": "Vertrag",
@@ -2125,17 +2125,13 @@
       "contract": { "title": "Vertrag", "line": "Kein Vertrag" }
     },
     "contractDownload": "PDF herunterladen",
-    "contractPending": "Der Vertrag wird erstellt.",
-    "contractNone": "Kein Vertrag vorhanden.",
-    "signUnavailable": "Online-Unterschrift nicht freigeschaltet. Unterschrift beim Studio.",
     "signTitle": "Unterschreiben",
-    "signName": "Ihr vollständiger Name",
+    "signName": "Dein vollständiger Name",
     "signNameHint": "Wie im Vertrag",
     "signConsent": "Ich habe den Vertrag gelesen",
     "signSubmit": "Vertrag unterschreiben",
     "signedConfirmation": "Unterschrieben von {name}.",
     "quoteTitle": "Angebot",
-    "quoteNone": "Kein Angebot vorhanden.",
     "quoteExpired": "Die Gültigkeit dieses Angebots ist abgelaufen.",
     "quoteAccept": "Angebot annehmen",
     "quoteTermsAnd": "und",
@@ -2149,7 +2145,6 @@
     "messagesNew": "Neue Nachricht",
     "messagesNoBooking": "Allgemein",
     "messagesAbout": "Betrifft",
-    "messagesNone": "Keine Nachrichten.",
     "messagesSubjectPlaceholder": "Worum geht's?",
     "messagesBodyPlaceholder": "Eure Nachricht …",
     "messagesSend": "Senden",
@@ -2172,9 +2167,9 @@
     "invoiceServiceTotal": "Gesamtbetrag der Leistung",
     "invoiceDeduction": "Abzüglich {title}",
     "invoiceDeposit": "Rechnung {number} vom {date}",
-    "creditNoteDownload": "Gutschrift {number}",
+    "creditNote": "Gutschrift {number}",
+    "cancelledOn": "Storniert am {date}",
     "payNowTitle": "Kartenzahlung",
-    "payNowButton": "Jetzt zahlen",
     "payNowRemaining": "{amount} zahlen",
     "payNowSuccess": "Zahlung eingegangen.",
     "payNowCancelled": "Zahlung abgebrochen.",
@@ -2237,7 +2232,8 @@
     "pendingTitle": "Das wartet auf Sie",
     "contactTitle": "Ihr Kontakt",
     "messagesBodyPlaceholder": "Ihre Nachricht …",
-    "backMessages": "Zu Ihren Nachrichten"
+    "backMessages": "Zu Ihren Nachrichten",
+    "signName": "Ihr vollständiger Name"
   },
   "galleries": {
     "title": "Galerien",
@@ -2665,6 +2661,7 @@
     "watermarkText": "Text",
     "invoice": "Rechnung",
     "invoiceAll": "Alle Rechnungen des Projekts",
+    "invoicePlan": "Zahlungsplan",
     "invoiceStatus": {
       "open": "Offen",
       "partial": "Teilweise bezahlt",

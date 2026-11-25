@@ -42,6 +42,7 @@ const props = defineProps<{
     downloadSizes: ('original' | 'web')[]
     expiryReminder: boolean
     invoices: { id: string; number: string; status: string }[]
+    followsPlan: boolean
     listedOnHome: boolean
     homePinned: boolean
     homeBlocker: 'locked' | 'draft' | 'withdrawn' | 'expired' | 'external' | null
@@ -312,6 +313,7 @@ function day(iso: string | null) {
       :placeholder="gallery.studioName"
       :invoices="gallery.invoices"
       :invoice-id="download.download_invoice_id"
+      :follows-plan="gallery.followsPlan"
       @change="applyRelease"
     />
     </div>
