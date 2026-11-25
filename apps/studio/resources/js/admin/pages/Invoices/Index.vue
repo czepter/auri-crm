@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 import { EllipsisVertical } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
@@ -18,14 +18,17 @@ import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDi
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
 import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 import { formatEuros } from '@/lib/money'
-import { dayWithWeekday } from '@/admin/lib/dates'
+import { dayWithWeekday, monthDate } from '@/admin/lib/dates'
 import { useLiveProps } from '@/admin/lib/liveReload'
-import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
+import Chip from '@/ui/page/Chip.vue'
+import { invoiceStatusDetail } from '@/admin/lib/invoiceStatus'
 
 type Draft = { id: string; recipient: string | null; projectName: string | null; updatedOn: string; dueOn: string | null; amount: number }
 
-const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], exportYears: number[] }>()
-useLiveProps(['invoices', 'drafts', 'exportYears'])
+type CreditNoteDraft = { invoiceId: string; updatedOn: string; amount: number }
+
+const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], creditNoteDrafts: CreditNoteDraft[], exportYears: number[] }>()
+useLiveProps(['invoices', 'drafts', 'creditNoteDrafts', 'exportYears'])
 
 const { t } = useI18n()
 const remove = (url: string) => deleteWithUndo(url, { deleted: t('common.deleted'), undo: t('common.undo'), failed: t('common.deleteFailed') })
@@ -34,11 +37,11 @@ const query = ref('')
 
 const OPEN = ['open', 'partial', 'overdue']
 const matches = (value: string, status: string) => value === 'all' || (value === 'open' ? OPEN.includes(status) : status === value)
-const filter = ref('all')
+const FILTERS = ['all', 'drafts', 'open', 'paid', 'cancelled', 'credits']
+const requested = new URLSearchParams(usePage().url.split('?')[1]).get('filter') ?? ''
+const filter = ref(FILTERS.includes(requested) ? requested : 'all')
 
-const filters = computed(() => ['all', 'drafts', 'open', 'paid', 'cancelled'].map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
-
-const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue: 'danger', paid: 'success', cancelled: 'neutral' }
+const filters = computed(() => FILTERS.map((value) => ({ value, label: t(`invoicesOverview.${value}`) })))
 
 const euros = (rows: App.Payments.Data.InvoiceRowData[]) => formatEuros(rows.reduce((sum, row) => sum + row.amount - row.paidAmount, 0))
 const openRows = computed(() => props.invoices.filter((invoice) => OPEN.includes(invoice.status)))
@@ -61,12 +64,15 @@ const shownDrafts = computed(() =>
     ? props.drafts.filter((draft) => !isHidden(`/rechnungen/entwuerfe/${draft.id}`) && (!needle.value || `${draft.projectName ?? ''} ${draft.recipient ?? ''}`.toLocaleLowerCase('de').includes(needle.value)))
     : [])
 
+const creditDraft = (invoice: App.Payments.Data.InvoiceRowData) =>
+  isHidden(`/rechnungen/${invoice.id}/gutschrift/entwurf`) ? undefined : props.creditNoteDrafts.find((draft) => draft.invoiceId === invoice.id)
+
 const shown = computed(() =>
   filter.value === 'drafts'
     ? []
     : props.invoices.filter((invoice) =>
-      matches(filter.value, invoice.status)
-      && (!needle.value || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''}`.toLocaleLowerCase('de').includes(needle.value))))
+      (filter.value === 'credits' ? invoice.creditNotes.length > 0 || creditDraft(invoice) !== undefined : matches(filter.value, invoice.status))
+      && (!needle.value || `${invoice.number} ${invoice.projectName ?? ''} ${invoice.contact ?? ''} ${invoice.creditNotes.map((note) => note.number).join(' ')}`.toLocaleLowerCase('de').includes(needle.value))))
 </script>
 
 <template>
@@ -166,24 +172,18 @@ const shown = computed(() =>
                   <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ invoice.dueOn ? dayWithWeekday(invoice.dueOn) : '' }}</TableCell>
                   <TableCell align="right" class="whitespace-nowrap">
                     {{ formatEuros(invoice.amount) }}
-                    <span v-if="invoice.status === 'partial' || (invoice.status === 'overdue' && invoice.paidAmount)" class="block text-small text-ink-2">
-                      {{ $t('payments.open', { amount: formatEuros(invoice.amount - invoice.paidAmount) }) }}
-                    </span>
                   </TableCell>
                   <TableCell class="whitespace-nowrap">
-                    <Chip :tone="CHIP[invoice.status]">{{ invoice.status === 'overdue' ? $t(invoice.paidAmount ? 'invoicesOverview.partial' : 'invoicesOverview.open') : invoice.statusLabel }}</Chip>
-                    <span v-if="invoice.overdueDays" class="ml-2 text-small text-destructive">{{ $t('invoicesOverview.overdueDays', invoice.overdueDays) }}</span>
-                    <Popover v-if="invoice.views.length">
-                      <PopoverTrigger class="ml-2 cursor-pointer border-0 bg-transparent p-0 text-small text-ink-2 underline decoration-dotted">
-                        {{ $t(invoice.viewedOn ? 'invoicesOverview.viewed' : 'documentViews.title') }}
+                    <Popover>
+                      <PopoverTrigger :disabled="!invoice.views.length" class="block border-0 bg-transparent p-0 text-left enabled:cursor-pointer">
+                        <Chip :tone="invoice.status === 'overdue' ? 'danger' : 'neutral'">{{ invoice.statusLabel }}</Chip>
+                        <span v-if="invoiceStatusDetail(invoice, t)" class="block pt-0.5 text-small text-ink-2">{{ invoiceStatusDetail(invoice, t) }}</span>
                       </PopoverTrigger>
                       <PopoverContent class="w-[420px]">
+                        <p v-if="invoice.sentOn" class="m-0 pb-2 text-small text-ink-2">{{ $t('invoicesOverview.sent') }} {{ monthDate(invoice.sentOn) }}</p>
                         <DocumentViews :views="invoice.views" />
                       </PopoverContent>
                     </Popover>
-                    <span v-else-if="invoice.sentOn" class="ml-2 text-small text-ink-2">
-                      {{ $t('invoicesOverview.sent') }}
-                    </span>
                   </TableCell>
                   <TableCell align="right">
                     <div class="flex items-center justify-end gap-1.5">
@@ -217,9 +217,46 @@ const shown = computed(() =>
                       bare
                       v-bind="bind('paid', invoice.id)"
                       :installment-id="invoice.openInstallments[0].id"
+                      :subject="invoice.number"
+                      :recipient="invoice.contact"
                       :remaining="invoice.openInstallments[0].remaining"
                     />
-                    <InstallmentStornoDialog v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" bare v-bind="bind('storno', invoice.id)" :invoice-id="invoice.id" />
+                    <InstallmentStornoDialog v-if="invoice.status !== 'cancelled' && invoice.paidAmount === 0" bare v-bind="bind('storno', invoice.id)" :invoice-id="invoice.id" :number="invoice.number" :recipient="invoice.contact" :amount="invoice.amount" />
+                  </TableCell>
+                </TableRow>
+                <TableRow v-for="note in invoice.creditNotes" :key="note.id">
+                  <TableCell class="whitespace-nowrap pl-8">
+                    <a v-if="note.hasDocument" :href="`/rechnungen/${invoice.id}/gutschrift/${note.id}`" target="_blank">{{ note.number }}</a>
+                    <template v-else>{{ note.number }}</template>
+                  </TableCell>
+                  <TableCell tone="muted">{{ note.reason }}</TableCell>
+                  <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(note.issuedOn) }}</TableCell>
+                  <TableCell class="max-[640px]:hidden" />
+                  <TableCell align="right" class="whitespace-nowrap">−{{ formatEuros(note.amount) }}</TableCell>
+                  <TableCell class="whitespace-nowrap"><Chip>{{ $t('invoicesOverview.creditNote') }}</Chip></TableCell>
+                  <TableCell />
+                </TableRow>
+                <TableRow v-if="creditDraft(invoice)">
+                  <TableCell class="whitespace-nowrap pl-8">—</TableCell>
+                  <TableCell />
+                  <TableCell class="whitespace-nowrap max-[640px]:hidden">{{ dayWithWeekday(creditDraft(invoice)!.updatedOn) }}</TableCell>
+                  <TableCell class="max-[640px]:hidden" />
+                  <TableCell align="right" class="whitespace-nowrap">−{{ formatEuros(creditDraft(invoice)!.amount) }}</TableCell>
+                  <TableCell class="whitespace-nowrap"><Chip>{{ $t('invoicesOverview.draft') }}</Chip></TableCell>
+                  <TableCell align="right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <Button :as="Link" variant="outline" :href="`/rechnungen/${invoice.id}/gutschrift/neu`">{{ $t('common.edit') }}</Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                          <Button variant="ghost" size="icon" type="button" class="hover:bg-sunk-2" :aria-label="$t('project.more')" :title="$t('project.more')">
+                            <EllipsisVertical />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem class="text-destructive" @select="remove(`/rechnungen/${invoice.id}/gutschrift/entwurf`)">{{ $t('common.delete') }}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               </template>

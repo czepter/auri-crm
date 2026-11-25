@@ -34,6 +34,8 @@ const meta = {
         status: 'paid',
         statusLabel: 'Bezahlt',
         overdueDays: null,
+        settledOn: null,
+        cancelledOn: null,
         sentOn: '2026-11-02',
         viewedOn: null,
         views: [],

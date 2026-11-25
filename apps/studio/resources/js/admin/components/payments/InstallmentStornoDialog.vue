@@ -6,11 +6,13 @@
  */
 import { useForm } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
+import { formatEuros } from '@/lib/money'
 import {
   Dialog,
   DialogBody,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -20,7 +22,7 @@ import { Field } from '@/ui/field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Textarea } from '@/ui/textarea'
 
-const props = defineProps<{ invoiceId: string; bare?: boolean }>()
+const props = defineProps<{ invoiceId: string; number: string; recipient?: string | null; amount: number; bare?: boolean }>()
 
 const open = defineModel<boolean>('open', { default: false })
 const form = useForm({ kind: 'correction', reason: '' })
@@ -44,7 +46,8 @@ function submit() {
 
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>{{ $t('payments.stornoTitle') }}</DialogTitle>
+        <DialogTitle>{{ $t('payments.stornoTitle', { number }) }}</DialogTitle>
+        <DialogDescription>{{ [recipient, formatEuros(amount)].filter(Boolean).join(' · ') }}</DialogDescription>
       </DialogHeader>
 
       <DialogBody>
@@ -66,7 +69,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button class="ml-auto" type="submit" form="installment-storno-form" :disabled="!form.reason || form.processing">
+        <Button class="ml-auto" type="submit" form="installment-storno-form" :disabled="form.processing">
           {{ $t('payments.stornoSubmit') }}
         </Button>
         <DialogClose as-child>

@@ -274,11 +274,11 @@ function submit() {
               </p>
 
               <Field :label="$t('settings.retentionPassword')" id="retention-password" :error="form.errors.current_password">
-                <Input id="retention-password" v-model="form.current_password" type="password" autocomplete="current-password" />
+                <Input id="retention-password" v-model="form.current_password" type="password" autocomplete="current-password" required />
               </Field>
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button type="submit" tone="destructive" class="ml-0" :disabled="form.processing || form.current_password === ''">
+              <Button type="submit" tone="destructive" class="ml-0" :disabled="form.processing">
                 {{ $t('settings.retentionRun') }}
               </Button>
               <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>

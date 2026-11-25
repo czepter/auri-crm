@@ -649,7 +649,7 @@ const workflowAllowed = computed(() =>
 
                         <AlertDialogFooter>
                             <AlertDialogAction
-                                :disabled="!closeForm.reason || closeForm.processing"
+                                :disabled="closeForm.processing"
                                 @click="closeLead"
                             >{{ $t("board.close") }}</AlertDialogAction>
                             <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>

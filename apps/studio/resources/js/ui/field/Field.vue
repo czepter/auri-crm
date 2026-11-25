@@ -72,6 +72,8 @@ const id = () => props.id ?? fallback
 
 <template>
   <div
+    data-field
+    :data-invalid="message ? '' : undefined"
     :class="cn('flex min-w-0 flex-col gap-1.5', dense && 'gap-1', wide && 'col-span-full', props.class)"
     @input="checkNative"
     @focusout="checkNative"

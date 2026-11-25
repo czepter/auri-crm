@@ -22,7 +22,7 @@ const form = useForm({
 })
 
 function submit() {
-  form.patch('/einstellungen/belege', { preserveScroll: true, onSuccess: () => emit('saved') })
+  form.patch('/einstellungen/layout', { preserveScroll: true, onSuccess: () => emit('saved') })
 }
 
 defineExpose({ form, submit })

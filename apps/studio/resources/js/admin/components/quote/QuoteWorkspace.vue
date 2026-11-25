@@ -348,6 +348,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       <InstallmentPaidDialog
         v-if="canManagePaymentPlan && !installment.invoiceId && installment.status !== 'cancelled' && installment.remaining > 0"
         :installment-id="installment.id"
+        :subject="installment.label"
         :remaining="installment.remaining"
       />
     </div>

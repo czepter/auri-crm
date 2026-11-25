@@ -37,7 +37,7 @@ export const studioKeys = ['pakete', 'vorlagen', 'team', 'einstellungen']
 // "Kalender" buendelt Termine, Abwesenheiten und Schliesszeiten: was das
 // Studio an einem Tag bindet oder sperrt.
 //
-// "Unterlagen" buendelt Angebote, Vertraege, Rechnungen und Gutschriften.
+// "Unterlagen" buendelt Angebote, Vertraege und Rechnungen.
 // Der Vertrag steht zwischen Angebot und Rechnung, weil er dort entsteht,
 // und ist der einzige Eintrag, den kein Ablauf verlangt: #441 hat ihn
 // abgeschafft, #441 bringt ihn als Moeglichkeit zurueck.
@@ -162,13 +162,6 @@ export function navItems(can: Capability[], counts: NavCounts = {}): NavEntry[] 
                     href: '/rechnungen',
                     needs: 'manage_contracts',
                     icon: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
-                },
-                {
-                    key: 'gutschriften',
-                    label: 'Gutschriften',
-                    href: '/gutschriften',
-                    needs: 'manage_contracts',
-                    icon: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 12h6"/>',
                 },
             ],
         },

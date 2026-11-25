@@ -3,6 +3,7 @@ import { createInertiaApp, router } from '@inertiajs/vue3'
 import { createI18n } from 'vue-i18n'
 import de from '../locales/de.json'
 import { followLiveUpdates } from './lib/liveReload'
+import { focusFirstError, focusInvalid } from './lib/focusInvalid'
 import '../../css/admin.css'
 import 'vue-sonner/style.css'
 
@@ -35,7 +36,14 @@ const pages = import.meta.glob<{ default: DefineComponent }>('./pages/**/*.vue')
 router.on('navigate', (event) => followLiveUpdates(event.detail.page.props.live))
 
 // The browser's validation bubble stays off; Field words the reason itself.
-document.addEventListener('invalid', (event) => event.preventDefault(), true)
+// Cancelling the event also cancels the browser's focus on the first invalid
+// control, so that is done here.
+document.addEventListener('invalid', (event) => {
+  event.preventDefault()
+  focusInvalid(event.target as Element)
+}, true)
+
+router.on('error', () => requestAnimationFrame(focusFirstError))
 
 createInertiaApp({
   title: (title) => (title ? `${title} · Studio` : 'Studio'),

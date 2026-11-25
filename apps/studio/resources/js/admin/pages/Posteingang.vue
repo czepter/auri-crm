@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
@@ -14,6 +14,7 @@ import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 import { useLiveProps } from '@/admin/lib/liveReload'
+import { focusFirstError } from '@/admin/lib/focusInvalid'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import Chip from '@/ui/page/Chip.vue'
 import StudioTaskCreateDialog from '@/admin/components/crm/StudioTaskCreateDialog.vue'
@@ -70,9 +71,10 @@ useLiveProps(['groups', 'open', 'catchAll', 'pending', 'threads', 'unfiled', 'dr
 // card uses for marking an installment paid.
 const attaching = ref<string | null>(null)
 const chosenThread = ref<string | null>(null)
+const unchosen = ref<string | null>(null)
 
 function attach(id: string) {
-  if (!chosenThread.value) return
+  if (!chosenThread.value) return lack(id)
 
   router.post(`/posteingang/${id}/zuordnen`, { thread: chosenThread.value }, {
     preserveScroll: true,
@@ -89,7 +91,7 @@ const filing = ref<string | null>(null)
 const chosenProject = ref<string | null>(null)
 
 function file(id: string) {
-  if (!chosenProject.value) return
+  if (!chosenProject.value) return lack(id)
 
   router.post(`/posteingang/unterhaltung/${id}/zuordnen`, { project: chosenProject.value }, {
     preserveScroll: true,
@@ -98,6 +100,11 @@ function file(id: string) {
       chosenProject.value = null
     },
   })
+}
+
+function lack(id: string) {
+  unchosen.value = id
+  nextTick(focusFirstError)
 }
 
 // Long enough to notice. Below that the wait is the normal course of a
@@ -209,10 +216,10 @@ function receivedAt(iso: string) {
 
           <form class="mt-4 pt-1 pb-0.5" @submit.prevent="send">
             <Field v-slot="{ id }" dense :label="$t('inbox.reply')">
-              <Textarea :id="id" v-model="reply.body" rows="3" class="mb-3" />
+              <Textarea :id="id" v-model="reply.body" rows="3" class="mb-3" required />
             </Field>
             <div class="mt-2.5 flex items-center gap-3">
-              <Button variant="default" class="ml-auto" type="submit" :disabled="reply.processing || !reply.body" :state="reply.processing ? 'loading' : 'idle'">
+              <Button variant="default" class="ml-auto" type="submit" :disabled="reply.processing" :state="reply.processing ? 'loading' : 'idle'">
                 {{ $t('inbox.send') }}
               </Button>
             </div>
@@ -282,15 +289,17 @@ function receivedAt(iso: string) {
 
             <div class="mt-2.5 flex items-center gap-2">
               <template v-if="filing === row.id">
-                <Select v-model="chosenProject">
-                  <SelectTrigger size="sm" class="w-64"><SelectValue :placeholder="$t('inbox.chooseProject')" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="project in projects" :key="project.id" :value="project.id">
-                      {{ project.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="default" type="button" :disabled="!chosenProject" @click="file(row.id)">
+                <Field v-slot="{ id }" dense :error="unchosen === row.id && !chosenProject ? $t('common.invalid.valueMissing') : undefined">
+                  <Select v-model="chosenProject">
+                    <SelectTrigger :id="id" size="sm" class="w-64"><SelectValue :placeholder="$t('inbox.chooseProject')" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="project in projects" :key="project.id" :value="project.id">
+                        {{ project.label }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Button variant="default" type="button" @click="file(row.id)">
                   {{ $t('inbox.file') }}
                 </Button>
                 <Button variant="ghost" type="button" @click="filing = null">{{ $t('common.cancel') }}</Button>
@@ -322,15 +331,17 @@ function receivedAt(iso: string) {
                  by hand instead of automatically. -->
             <div v-if="row.state !== 'quarantined'" class="mt-2.5 flex items-center gap-2">
               <template v-if="attaching === row.id">
-                <Select v-model="chosenThread">
-                  <SelectTrigger size="sm" class="w-64"><SelectValue :placeholder="$t('inbox.chooseThread')" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="thread in threads" :key="thread.id" :value="thread.id">
-                      {{ thread.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="default" type="button" :disabled="!chosenThread" @click="attach(row.id)">
+                <Field v-slot="{ id }" dense :error="unchosen === row.id && !chosenThread ? $t('common.invalid.valueMissing') : undefined">
+                  <Select v-model="chosenThread">
+                    <SelectTrigger :id="id" size="sm" class="w-64"><SelectValue :placeholder="$t('inbox.chooseThread')" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="thread in threads" :key="thread.id" :value="thread.id">
+                        {{ thread.label }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Button variant="default" type="button" @click="attach(row.id)">
                   {{ $t('inbox.attach') }}
                 </Button>
                 <Button variant="ghost" type="button" @click="attaching = null">{{ $t('common.cancel') }}</Button>

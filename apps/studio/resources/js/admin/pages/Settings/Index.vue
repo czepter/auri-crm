@@ -7,6 +7,7 @@ import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import ProfileForm from './panes/ProfileForm.vue'
 import VatForm from './panes/VatForm.vue'
 import PaymentForm from './panes/PaymentForm.vue'
+import StripeForm from './panes/StripeForm.vue'
 import ReceiptsForm from './panes/ReceiptsForm.vue'
 import EmailForm from './panes/EmailForm.vue'
 import PortalFrame from './previews/PortalFrame.vue'
@@ -24,8 +25,10 @@ const props = defineProps<{
   mailSenderFromEnv: { name: boolean; address: boolean }
   mailTemplates: { id: string; name: string }[]
   settings: App.Settings.Data.StudioSettingsData
+  stripe: App.Settings.Data.PaymentSettingsData | null
+  stripeStatus: { lastWebhookAt: string | null; lastPaidOn: string | null } | null
 }>()
-useLiveProps(['settings', 'mailSenderFromEnv', 'mailTemplates'])
+useLiveProps(['settings', 'mailSenderFromEnv', 'mailTemplates', 'stripe', 'stripeStatus'])
 
 // Template refs onto the extracted panes — each exposes { form, submit }
 // (see panes/ProfileForm.vue and its siblings). Only the panes of the current
@@ -33,6 +36,7 @@ useLiveProps(['settings', 'mailSenderFromEnv', 'mailTemplates'])
 const profileRef = ref<InstanceType<typeof ProfileForm>>()
 const vatRef = ref<InstanceType<typeof VatForm>>()
 const paymentRef = ref<InstanceType<typeof PaymentForm>>()
+const stripeRef = ref<InstanceType<typeof StripeForm>>()
 const receiptsRef = ref<InstanceType<typeof ReceiptsForm>>()
 const emailRef = ref<InstanceType<typeof EmailForm>>()
 
@@ -42,11 +46,11 @@ const emailRef = ref<InstanceType<typeof EmailForm>>()
 // would reach for too if either needed a dirty state.
 // Allgemein und Zahlung zeigen zwei Formulare — Stammdaten und Bankverbindung
 // schreiben nach /einstellungen, die Umsatzsteuer nach /einstellungen/ust und
-// die Fristen nach /einstellungen/zahlung. Der Kopf speichert deshalb, was
+// die Fristen nach /einstellungen/zahlung und Stripe nach /einstellungen/zahlung/stripe. Der Kopf speichert deshalb, was
 // schmutzig ist, statt ein einzelnes form-Attribut zu tragen.
 const activePanes = computed(() => {
   if (props.pane === 'general') return [profileRef.value, vatRef.value]
-  if (props.pane === 'payment') return [profileRef.value, paymentRef.value]
+  if (props.pane === 'payment') return [profileRef.value, paymentRef.value, stripeRef.value]
   if (props.pane === 'receipts') return [receiptsRef.value]
   return [emailRef.value]
 })
@@ -162,6 +166,7 @@ const mailPreview = computed(() => {
       <template v-else-if="pane === 'payment'">
         <ProfileForm ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="['bank']" />
         <PaymentForm ref="paymentRef" :settings="settings" />
+        <StripeForm v-if="stripe && stripeStatus" ref="stripeRef" :stripe="stripe" :status="stripeStatus" />
       </template>
 
       <ReceiptsForm v-else-if="pane === 'receipts'" ref="receiptsRef" :settings="settings" />

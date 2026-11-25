@@ -261,7 +261,7 @@ usePageCommands(() => {
             </Field>
           </AlertDialogBody>
           <AlertDialogFooter>
-            <AlertDialogAction :disabled="!closeForm.reason || closeForm.processing" @click.prevent="close">
+            <AlertDialogAction :disabled="closeForm.processing" @click.prevent="close">
               {{ $t('board.close') }}
             </AlertDialogAction>
             <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>

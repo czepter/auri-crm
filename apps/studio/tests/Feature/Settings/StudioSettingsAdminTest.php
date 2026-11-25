@@ -86,7 +86,7 @@ it('serves every settings pane on its own path', function (string $path, string 
     ['/einstellungen/allgemein', 'general'],
     ['/einstellungen/email', 'email'],
     ['/einstellungen/zahlung', 'payment'],
-    ['/einstellungen/belege', 'receipts'],
+    ['/einstellungen/layout', 'receipts'],
 ]);
 
 it('sends the former billing addresses to their new pages', function (string $from, string $to) {
@@ -95,7 +95,8 @@ it('sends the former billing addresses to their new pages', function (string $fr
         ->assertRedirect($to);
 })->with([
     ['/einstellungen/rechnungsdaten', '/einstellungen/zahlung'],
-    ['/einstellungen/dokumente', '/einstellungen/belege'],
+    ['/einstellungen/dokumente', '/einstellungen/layout'],
+    ['/einstellungen/belege', '/einstellungen/layout'],
 ]);
 
 it('updates the display name, redirects, and leaves an audit row naming the owner', function () {

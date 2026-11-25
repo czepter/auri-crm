@@ -30,7 +30,7 @@ const items: { group?: string; key?: string; href?: string; label?: string; exte
 
   { group: 'settings.groupBilling' },
   { key: 'payment', href: '/einstellungen/zahlung', label: 'settings.navPayment' },
-  { key: 'receipts', href: '/einstellungen/belege', label: 'settings.navDocuments' },
+  { key: 'receipts', href: '/einstellungen/layout', label: 'settings.navDocuments' },
   { key: 'numbering', href: '/einstellungen/nummernkreise', label: 'settings.navNumbering' },
 
   { group: 'settings.groupWork' },
@@ -47,9 +47,6 @@ const items: { group?: string; key?: string; href?: string; label?: string; exte
   { key: 'imprint-terms', href: '/einstellungen/impressum-agb', label: 'settings.navImprintTerms' },
 
   { group: 'settings.groupInterfaces' },
-  // Schlüssel, Test- und Live-Umschaltung: eine Anbindung wie die beiden
-  // darunter, keine Rechnungsangabe.
-  { key: 'payments', href: '/einstellungen/zahlungen', label: 'paymentSettings.title' },
   { key: 'export', href: '/einstellungen/export', label: 'settings.navExport' },
 
   // Ganz unten, abgesetzt von allen Gruppen und nur für den Inhaber.

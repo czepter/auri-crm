@@ -95,9 +95,23 @@ class InvoiceController extends Controller
                 'amount' => $this->draft($draft->payload)->amount(),
             ]);
 
+        $creditNoteDrafts = CreditNoteDraft::query()
+            ->whereIn('invoice_id', $invoices->modelKeys())
+            ->with(['invoice.items.installment'])
+            ->latest('updated_at')
+            ->get()
+            ->map(fn (CreditNoteDraft $draft) => [
+                'invoiceId' => $draft->invoice->public_id,
+                'updatedOn' => $draft->updated_at->toDateString(),
+                'amount' => $draft->invoice->items->map(fn (InvoiceItem $item, int $index) => ($draft->payload['taken'][$index] ?? true)
+                    ? ($item->installment !== null ? (int) $item->installment->amount : InvoiceFigures::forPositions(collect([$item]), null, null)->gross)
+                    : 0)->sum(),
+            ]);
+
         return Inertia::render('Invoices/Index', [
             'invoices' => InvoiceRowData::collect($invoices->map(InvoiceRowData::fromModel(...))),
             'drafts' => $drafts,
+            'creditNoteDrafts' => $creditNoteDrafts,
             // The export route is gated by ManageSettings, so the years appear only for roles it lets in.
             'exportYears' => $viewer->can(Capability::ManageSettings->value)
                 ? Invoice::query()->pluck('issued_at')->map(fn ($at) => (int) $at->format('Y'))->unique()->sortDesc()->values()

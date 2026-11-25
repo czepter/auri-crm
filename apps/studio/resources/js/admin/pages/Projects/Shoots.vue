@@ -368,7 +368,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
             <DialogFooter>
               <!-- the reason is not optional: it is what the row and the client's
                    portal show in place of the shoot afterwards -->
-              <Button class="ml-auto" type="submit" form="shoot-cancel-form" tone="destructive" :disabled="!cancelReason.trim()">
+              <Button class="ml-auto" type="submit" form="shoot-cancel-form" tone="destructive">
                 {{ $t('project.cancel') }}
               </Button>
               <DialogClose as-child>

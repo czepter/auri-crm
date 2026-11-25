@@ -46,7 +46,7 @@ function saveDraft() {
 
 <template>
   <AdminLayout active="rechnungen">
-    <FormShell :title="$t(props.draft ? 'creditNoteBuilder.draftTitle' : 'creditNoteBuilder.title')" :kicker="$t('invoiceDetail.title', { number: row.number })" :kicker-href="`/rechnungen/${row.id}`" wide>
+    <FormShell :title="$t(props.draft ? 'creditNoteBuilder.draftTitle' : 'creditNoteBuilder.title', { number: row.number })" :kicker="$t('invoiceDetail.title', { number: row.number })" :kicker-href="`/rechnungen/${row.id}`" wide>
       <template #head>
         <ChoiceGroup
           class="ml-auto"
@@ -55,7 +55,7 @@ function saveDraft() {
           @update:model-value="(value) => (previewing = value === 'preview')"
         />
         <Button type="button" variant="outline" :disabled="form.processing" @click="saveDraft">{{ $t('invoicesCreate.saveDraft') }}</Button>
-        <Button type="submit" form="credit-note" :disabled="!amount || over || !form.reason || form.processing">{{ $t('creditNoteBuilder.submit') }}</Button>
+        <Button type="submit" form="credit-note" :disabled="form.processing">{{ $t('creditNoteBuilder.submit') }}</Button>
       </template>
 
       <InvoicePreviewPane v-if="previewing" class="mx-auto max-w-[900px]" :payload="payload" :url="`/rechnungen/${row.id}/gutschrift/vorschau`" :portal="false" />

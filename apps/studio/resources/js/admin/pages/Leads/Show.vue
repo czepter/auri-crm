@@ -489,6 +489,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                     type="text"
                                     :placeholder="$t('lead.taskTitle')"
                                     :aria-label="$t('lead.taskTitle')"
+                                    required
                                 />
                                 <div class="flex items-center gap-4 px-3 pb-2.5">
                                     <DatePicker v-model="task.due_on" class="w-[150px] [&_input]:h-10 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-0" />
@@ -499,7 +500,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                             <SelectItem value="client">{{ $t("lead.audienceClient") }}</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <Button class="ml-auto" variant="default" type="submit" :disabled="!task.title || task.processing">
+                                    <Button class="ml-auto" variant="default" type="submit" :disabled="task.processing">
                                         {{ $t("lead.addTask") }}
                                     </Button>
                                 </div>

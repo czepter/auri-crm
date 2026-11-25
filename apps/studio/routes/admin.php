@@ -66,7 +66,6 @@ use App\Integration\Http\Controllers\OAuthTokenController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Media\Http\Controllers\UploadPrecheckController;
-use App\Payments\Http\Controllers\CreditNoteController;
 use App\Payments\Http\Controllers\InvoiceController;
 use App\Payments\Http\Controllers\InvoiceExportController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
@@ -445,16 +444,17 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen/allgemein', [StudioSettingsController::class, 'edit'])->defaults('pane', 'general')->name('settings.general');
         Route::get('/einstellungen/email', [StudioSettingsController::class, 'edit'])->defaults('pane', 'email');
         Route::redirect('/einstellungen/rechnungsdaten', '/einstellungen/zahlung');
-        Route::redirect('/einstellungen/dokumente', '/einstellungen/belege');
+        Route::redirect('/einstellungen/dokumente', '/einstellungen/layout');
+        Route::redirect('/einstellungen/belege', '/einstellungen/layout');
         Route::get('/einstellungen/zahlung', [StudioSettingsController::class, 'edit'])->defaults('pane', 'payment')->name('settings.payment');
-        Route::get('/einstellungen/belege', [StudioSettingsController::class, 'edit'])->defaults('pane', 'receipts');
+        Route::get('/einstellungen/layout', [StudioSettingsController::class, 'edit'])->defaults('pane', 'receipts');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/anrede-vorschau', [StudioSettingsController::class, 'registerPreview'])->name('settings.register-preview');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
         Route::patch('/einstellungen/zahlung', [StudioSettingsController::class, 'updatePayment'])->name('settings.payment.update');
-        Route::patch('/einstellungen/belege', [StudioSettingsController::class, 'updateReceipts'])->name('settings.receipts.update');
-        Route::get('/einstellungen/belege/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
+        Route::patch('/einstellungen/layout', [StudioSettingsController::class, 'updateReceipts'])->name('settings.receipts.update');
+        Route::get('/einstellungen/layout/angebot-vorschau', [StudioSettingsController::class, 'previewQuoteLayout'])
             ->name('settings.receipts.quote-layout-preview');
         Route::get('/einstellungen/zahlung/rechnung-vorschau', [StudioSettingsController::class, 'previewInvoice'])
             ->name('settings.payment.invoice-preview');
@@ -516,9 +516,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'destroy'])
             ->name('automations.destroy');
 
-        Route::get('/einstellungen/zahlungen', [PaymentSettingsController::class, 'edit'])
-            ->name('settings.payments.edit');
-        Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
+        Route::redirect('/einstellungen/zahlungen', '/einstellungen/zahlung');
+        Route::patch('/einstellungen/zahlung/stripe', [PaymentSettingsController::class, 'update'])
             ->name('settings.payments.update');
 
         // The studio's own funnel and the kinds of work it does. No page of
@@ -1014,9 +1013,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/rechnungen/{invoice}/gutschrift/entwurf', [InvoiceController::class, 'destroyCreditNoteDraft'])->name('invoices.credit-note-draft.destroy');
         Route::post('/rechnungen/{invoice}/gutschrift/vorschau', [InvoiceController::class, 'creditNotePreview'])->name('invoices.credit-note.preview');
 
-        // Die Gutschriften des ganzen Buchs. Eine Gutschrift haengt an ihrer
-        // Rechnung, die Frage nach allen stellt aber der Jahresabschluss.
-        Route::get('/gutschriften', CreditNoteController::class)->name('credit-notes.index');
+        Route::redirect('/gutschriften', '/rechnungen?filter=credits');
 
         // Ausgaben, Belege, Anlagen und die EÜR. Alles hinter ManageFinances,
         // das als 404 antwortet. /ausgaben/neu bleibt über /ausgaben/{expense}.

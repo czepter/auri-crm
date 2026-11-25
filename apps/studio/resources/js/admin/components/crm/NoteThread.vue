@@ -162,7 +162,7 @@ function destroy(note: string) {
                             variant="secondary"
                             size="icon"
                             :aria-label="$t('common.save')"
-                            :disabled="!edit.body.trim() || edit.processing"
+                            :disabled="edit.processing"
                             @click="save"
                         >
                             <Check />

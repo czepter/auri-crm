@@ -13,6 +13,8 @@ const rechnung = (
     credited: 0,
     dueOn: null,
     overdueDays: null,
+    settledOn: null,
+    cancelledOn: null,
     sentOn: null,
     viewedOn: null,
     views: [],
@@ -31,7 +33,7 @@ const anzahlung = rechnung({
     credited: 20000,
     status: 'paid',
     statusLabel: 'Bezahlt',
-    creditNotes: [{ id: 'cn-1', number: 'G-2026-003', amount: 20000, issuedOn: '2026-07-10', hasDocument: true }],
+    creditNotes: [{ id: 'cn-1', number: 'G-2026-003', amount: 20000, issuedOn: '2026-07-10', reason: null, hasDocument: true }],
 })
 
 const rest = rechnung({

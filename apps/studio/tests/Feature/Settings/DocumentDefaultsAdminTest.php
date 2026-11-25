@@ -26,7 +26,7 @@ it('hands the payment and receipt defaults to their pages', function (string $pa
         ));
 })->with([
     ['/einstellungen/zahlung', 'payment'],
-    ['/einstellungen/belege', 'receipts'],
+    ['/einstellungen/layout', 'receipts'],
 ]);
 
 it('updates the payment defaults, redirects, and audits the owner', function () {
@@ -51,14 +51,14 @@ it('updates the payment defaults, redirects, and audits the owner', function () 
 
 it('updates the receipt settings and leaves the payment fields alone', function () {
     $this->actingAs(staffMember(StaffRole::Admin), 'staff')
-        ->from('/einstellungen/belege')
-        ->patch('/einstellungen/belege', [
+        ->from('/einstellungen/layout')
+        ->patch('/einstellungen/layout', [
             'quote_validity_days' => 30,
             'document_layout' => 'minimal',
             'document_letterhead_html' => '<header>Nordlicht</header>',
             'document_footer_html' => '<footer>Seite 1</footer>',
         ])
-        ->assertRedirect('/einstellungen/belege');
+        ->assertRedirect('/einstellungen/layout');
 
     $row = StudioSettings::query()->sole();
 
@@ -73,7 +73,7 @@ it('updates the receipt settings and leaves the payment fields alone', function 
 it('saves only the fields a page sends', function () {
     $owner = staffMember(StaffRole::Admin);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/belege', ['quote_validity_days' => 30]);
+    $this->actingAs($owner, 'staff')->patch('/einstellungen/layout', ['quote_validity_days' => 30]);
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung', ['payment_term_days' => 7]);
 
     $row = StudioSettings::query()->sole();
@@ -94,7 +94,7 @@ it('rejects a negative payment_term_days or quote_validity_days', function () {
     $owner = staffMember(StaffRole::Admin);
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen/zahlung', ['payment_term_days' => -1])->assertInvalid(['payment_term_days']);
-    $this->actingAs($owner, 'staff')->patch('/einstellungen/belege', ['quote_validity_days' => -1])->assertInvalid(['quote_validity_days']);
+    $this->actingAs($owner, 'staff')->patch('/einstellungen/layout', ['quote_validity_days' => -1])->assertInvalid(['quote_validity_days']);
 });
 
 it('gives every non-owner role the same response on the payment route as a route that does not exist', function (StaffRole $role, int $status) {
@@ -121,4 +121,4 @@ it('declares an audience on the payment and receipt routes, same as every other 
 
     expect($route)->not->toBeNull()
         ->and(collect($route->gatherMiddleware())->contains(fn ($m) => str_starts_with((string) $m, 'audience:')))->toBeTrue();
-})->with(['einstellungen/zahlung', 'einstellungen/belege']);
+})->with(['einstellungen/zahlung', 'einstellungen/layout']);

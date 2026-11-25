@@ -11,6 +11,7 @@ import {
   DialogBody,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -21,9 +22,9 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
-import { centsToEuros, eurosToCents } from '@/lib/money'
+import { centsToEuros, eurosToCents, formatEuros } from '@/lib/money'
 
-const props = defineProps<{ installmentId: string; remaining: number; primary?: boolean; triggerClass?: string; bare?: boolean }>()
+const props = defineProps<{ installmentId: string; subject: string; recipient?: string | null; remaining: number; primary?: boolean; triggerClass?: string; bare?: boolean }>()
 
 const open = defineModel<boolean>('open', { default: false })
 const form = useForm({
@@ -54,7 +55,8 @@ function submit() {
 
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>{{ $t('payments.markPaid') }}</DialogTitle>
+        <DialogTitle>{{ $t('payments.markPaidTitle', { subject }) }}</DialogTitle>
+        <DialogDescription>{{ [recipient, formatEuros(remaining)].filter(Boolean).join(' · ') }}</DialogDescription>
       </DialogHeader>
 
       <DialogBody>

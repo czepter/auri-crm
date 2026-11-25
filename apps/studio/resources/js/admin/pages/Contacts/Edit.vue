@@ -686,6 +686,7 @@ function eraseDsgvoData() {
                   <form v-if="offerablePackages.length" class="mt-4 flex flex-col gap-3" @submit.prevent="saveSuggestion">
                     <Field id="s-package" :label="$t('contacts.suggestionPackage')" :error="suggestion.errors.package">
                       <Select
+                        required
                         :model-value="suggestion.package || undefined"
                         @update:model-value="(v) => (suggestion.package = String(v))"
                       >
@@ -699,7 +700,7 @@ function eraseDsgvoData() {
                       <Textarea id="s-note" v-model="suggestion.note" rows="3" />
                     </Field>
                     <div>
-                      <Button type="submit" variant="default" :disabled="!suggestion.package || suggestion.processing">
+                      <Button type="submit" variant="default" :disabled="suggestion.processing">
                         {{ $t('contacts.suggest') }}
                       </Button>
                     </div>

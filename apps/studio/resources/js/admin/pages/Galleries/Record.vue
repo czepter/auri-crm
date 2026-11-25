@@ -505,13 +505,13 @@ function saveFocal(focal: { x: number; y: number }) {
           <DialogBody>
             <form id="gallery-preset-form" class="flex flex-col gap-1.5" @submit.prevent="saveAsPreset">
               <Label for="preset-name">{{ $t('galleryPresets.nameField') }}</Label>
-              <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" />
+              <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" required />
               <p v-if="presetForm.errors.name" class="text-small leading-[1.45] text-destructive">{{ presetForm.errors.name }}</p>
             </form>
           </DialogBody>
 
           <DialogFooter>
-            <Button class="ml-auto" type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
+            <Button class="ml-auto" type="submit" form="gallery-preset-form" :disabled="presetForm.processing">
               {{ $t('common.save') }}
             </Button>
             <DialogClose as-child>
@@ -530,7 +530,7 @@ function saveFocal(focal: { x: number; y: number }) {
           <DialogBody>
             <form id="gallery-preset-apply-form" class="flex flex-col gap-1.5" @submit.prevent="applyPreset">
               <Label for="preset-apply">{{ $t('galleryRecord.applyPresetField') }}</Label>
-              <Select v-model="applyForm.gallery_preset_id">
+              <Select v-model="applyForm.gallery_preset_id" required>
                 <SelectTrigger id="preset-apply"><SelectValue :placeholder="$t('galleryRecord.applyPresetPlaceholder')" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem v-for="preset in presets" :key="preset.id" :value="preset.id">{{ preset.name }}</SelectItem>
@@ -543,7 +543,7 @@ function saveFocal(focal: { x: number; y: number }) {
           </DialogBody>
 
           <DialogFooter>
-            <Button class="ml-auto" type="submit" form="gallery-preset-apply-form" :disabled="applyForm.processing || applyForm.gallery_preset_id === ''">
+            <Button class="ml-auto" type="submit" form="gallery-preset-apply-form" :disabled="applyForm.processing">
               {{ $t('galleryRecord.applyPreset') }}
             </Button>
             <DialogClose as-child>
