@@ -46,8 +46,8 @@ function saveEmailGate() {
         <Link
           v-for="sibling in siblings"
           :key="sibling.id"
-          class="inline-flex items-baseline gap-1.5 rounded-[var(--r-sm)] px-3 py-1.5 text-small no-underline"
-          :class="sibling.open ? 'bg-paper font-medium text-foreground shadow-[inset_0_0_0_1px_var(--faint)]' : 'bg-sunk text-foreground'"
+          class="inline-flex items-baseline gap-1.5 rounded-[var(--r-sm)] border border-transparent px-3 py-1.5 text-small no-underline"
+          :class="sibling.open ? 'bg-paper font-medium text-foreground border-faint' : 'bg-sunk text-foreground'"
           :href="`/galerien/${sibling.id}`"
         >
           {{ sibling.title ?? '—' }}<span

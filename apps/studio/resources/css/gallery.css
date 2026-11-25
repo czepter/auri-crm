@@ -156,8 +156,7 @@
 
 [data-theme="gallery"] .lists {
         position:absolute; top:48px; right:10px; z-index:5; width:216px; padding:var(--s2);
-        background:var(--hover); border:1px solid var(--line); border-radius:var(--r);
-        box-shadow:0 20px 48px -16px rgba(0,0,0,.6); }
+        background:var(--hover); border:1px solid var(--line-hover); border-radius:var(--r); }
 [data-theme="gallery"] .lists label {
         display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:var(--r-sm);
         cursor:pointer; font:500 13px/1 var(--font); color:var(--ink); }
@@ -213,8 +212,8 @@
 /* The same checkbox set the grid tile opens — one picture reaches a list
    from wherever the client happens to be looking at it. */
 [data-theme="gallery"] .listmenu { position:absolute; top:28px; left:0; z-index:5; width:216px;
-        padding:var(--s2); background:var(--hover); border:1px solid var(--line);
-        border-radius:var(--r); box-shadow:0 20px 48px -16px rgba(0,0,0,.6); }
+        padding:var(--s2); background:var(--hover); border:1px solid var(--line-hover);
+        border-radius:var(--r); }
 [data-theme="gallery"] .listmenu label { display:flex; align-items:center; gap:10px; padding:9px 10px;
         border-radius:var(--r-sm); cursor:pointer; font:500 13px/1 var(--font); color:var(--ink); }
 [data-theme="gallery"] .listmenu label:hover { background:rgba(255,255,255,.06); }

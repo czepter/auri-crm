@@ -157,7 +157,7 @@ function submit() {
               </span>
             </a>
 
-            <a class="block rounded-[12px] px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--rule)]" href="#" @click.prevent="chooseBlank">
+            <a class="block rounded-[12px] border border-rule px-4 py-3.5" href="#" @click.prevent="chooseBlank">
               <span class="block text-ui leading-[1.3] font-semibold tracking-[-0.016em]">{{ $t('documentTemplates.starterBlank') }}</span>
               <span class="mt-[7px] block text-small leading-[1.45] text-ink-2">{{ $t('documentTemplates.starterBlankHint') }}</span>
             </a>

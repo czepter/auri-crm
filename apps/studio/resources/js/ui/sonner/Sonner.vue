@@ -13,24 +13,24 @@ const props = defineProps<ToasterProps>()
     :style="{
       '--normal-bg': 'var(--bg)',
       '--normal-text': 'var(--ink)',
-      '--normal-border': 'var(--line)',
+      '--normal-border': 'var(--line-hover)',
       '--border-radius': 'var(--r)',
 
       '--success-bg': 'var(--ok-bg)',
       '--success-text': 'var(--ok)',
-      '--success-border': 'var(--ok-bg)',
+      '--success-border': 'var(--line-hover)',
 
       '--warning-bg': 'var(--due-bg)',
       '--warning-text': 'var(--due)',
-      '--warning-border': 'var(--due-bg)',
+      '--warning-border': 'var(--line-hover)',
 
       '--error-bg': 'var(--late-bg)',
       '--error-text': 'var(--late)',
-      '--error-border': 'var(--late-bg)',
+      '--error-border': 'var(--line-hover)',
 
       '--info-bg': 'var(--accent-bg)',
       '--info-text': 'var(--accent)',
-      '--info-border': 'var(--accent-bg)',
+      '--info-border': 'var(--line-hover)',
     }"
     v-bind="props"
   >

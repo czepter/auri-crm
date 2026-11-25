@@ -138,7 +138,7 @@ function destroy(note: string) {
 
                 <div v-else-if="editing !== null && editing === entry.note">
                     <div
-                        class="flex items-end gap-2 rounded-[16px] bg-sunk-2 py-1.5 pr-1.5 pl-3.5 shadow-[inset_0_0_0_2px_var(--accent)]"
+                        class="flex items-end gap-2 rounded-[16px] bg-sunk-2 py-1.5 pr-1.5 pl-3.5 border-2 border-accent"
                     >
                         <Textarea
                             v-model="edit.body"

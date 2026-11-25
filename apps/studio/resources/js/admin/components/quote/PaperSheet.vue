@@ -42,7 +42,7 @@ const sheet = computed(() => {
     :style="{ height: `${SHEET_HEIGHT * scale + PAD * 2}px`, padding: `${PAD}px` }"
   >
     <iframe
-      class="block border border-border bg-white shadow-[0_18px_40px_-24px_rgba(20,16,14,.28)]"
+      class="block border border-rule bg-white"
       :srcdoc="sheet"
       sandbox=""
       :style="{

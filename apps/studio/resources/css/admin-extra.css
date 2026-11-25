@@ -238,8 +238,8 @@
 .fontpairs label { display:block; cursor:pointer; }
 .fontpairs input { position:absolute; opacity:0; pointer-events:none; }
 .fontpairs .pv { display:block; padding:var(--s4) var(--s4) var(--s5); border-radius:var(--r);
-        background:var(--hover); box-shadow:inset 0 0 0 1px transparent; }
-.fontpairs input:checked + .pv { box-shadow:inset 0 0 0 2px var(--accent); }
+        background:var(--hover); }
+.fontpairs input:checked + .pv { outline:2px solid var(--accent); outline-offset:-2px; }
 .fontpairs .pv b { display:block; font:400 26px/var(--display-leading) var(--font-display);
         letter-spacing:var(--display-tracking); color:var(--ink); }
 .fontpairs .pv em { display:block; margin-top:8px; font:400 var(--text-small)/1.5 var(--font);

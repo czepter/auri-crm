@@ -165,6 +165,9 @@
 [data-slot="context-menu-panel"][data-state="open"] { animation: nl-menu-in .2s cubic-bezier(.23, 1, .32, 1); }
 [data-slot="context-menu-panel"][data-state="closed"] { animation: nl-menu-out .14s cubic-bezier(.4, 0, 1, 1) forwards; }
 
+/* vue-sonner draws its own shadow; the focus ring stays. */
+[data-sonner-toast][data-styled="true"]:not(:focus-visible) { box-shadow: none; }
+
 @media (prefers-reduced-motion: reduce) {
   [data-slot="context-menu-panel"] { animation: none !important; }
   [data-slot="dialog-overlay"][data-state="open"],

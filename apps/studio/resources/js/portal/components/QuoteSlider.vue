@@ -216,11 +216,11 @@ function accept() {
         <button
           v-for="item in blocks"
           :key="item.id"
-          class="overflow-hidden rounded-[14px] bg-background text-left transition-[filter,box-shadow] duration-[250ms] ease-out"
+          class="overflow-hidden rounded-[14px] bg-background text-left transition-[filter,outline-color] duration-[250ms] ease-out"
           :class="
             chosen.has(item.id)
-              ? 'shadow-[0_0_0_1.5px_var(--accent)]'
-              : 'shadow-[0_0_0_1px_var(--line)] [filter:grayscale(1)_contrast(.92)]'
+              ? 'outline outline-[1.5px] outline-accent'
+              : 'outline outline-1 outline-border [filter:grayscale(1)_contrast(.92)]'
           "
           type="button"
           :aria-pressed="chosen.has(item.id)"

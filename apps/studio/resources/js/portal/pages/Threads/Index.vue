@@ -239,7 +239,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                 <Button
                   type="button"
                   variant="portal-chip"
-                  class="-translate-y-full bg-background shadow-md motion-reduce:transition-none"
+                  class="-translate-y-full bg-background motion-reduce:transition-none"
                   @click="jump"
                 >
                   {{ $t('portal.messagesUnseen', unseen) }} ↓

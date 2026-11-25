@@ -91,7 +91,7 @@ function classes(entry: ReturnType<typeof cell>, height: string) {
     'block rounded-[3px]',
     entry.shoots.length ? `${TONE[entry.shoots[0].phase]} flex justify-center` : entry.away ? '' : entry.past ? 'bg-sunk' : 'border border-rule',
     entry.away && !entry.shoots.length && entry.past && 'opacity-50',
-    entry.double && !entry.now && 'shadow-[0_0_0_2px_var(--bg),0_0_0_3.5px_var(--late)]',
+    entry.double && !entry.now && 'outline outline-[1.5px] outline-offset-2 outline-late',
     entry.now && 'outline outline-[1.5px] outline-offset-1 outline-foreground',
   ]
 }
@@ -173,7 +173,7 @@ function classes(entry: ReturnType<typeof cell>, height: string) {
       <span v-for="(tone, phase) in TONE" :key="phase" class="flex items-center gap-1.5"><i class="size-3 rounded-[3px]" :class="tone" />{{ $t(`projects.phase.${phase}`) }}</span>
       <span class="flex items-center gap-1.5"><i class="size-3 rounded-[3px] border border-rule" />{{ $t('calendar.free') }}</span>
       <span class="flex items-center gap-1.5"><i class="size-3 rounded-[3px]" :style="{ background: HATCH }" />{{ $t('calendar.away') }}</span>
-      <span class="flex items-center gap-1.5"><i class="size-3 rounded-[3px] bg-foreground shadow-[0_0_0_1.5px_var(--bg),0_0_0_3px_var(--late)]" />{{ $t('calendar.double') }}</span>
+      <span class="flex items-center gap-1.5"><i class="size-3 rounded-[3px] bg-foreground outline outline-[1.5px] outline-offset-2 outline-late" />{{ $t('calendar.double') }}</span>
       <span class="flex items-center gap-1.5"><i class="size-3 rounded-[3px] border border-rule outline outline-[1.5px] outline-offset-1 outline-foreground" />{{ $t('calendar.thisWeek') }}</span>
     </div>
   </div>

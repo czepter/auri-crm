@@ -628,7 +628,7 @@ const COVER_INPUT = [
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
           </button>
 
-          <span v-if="menu === asset.key" data-list-menu class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]" @click.stop="menuClick">
+          <span v-if="menu === asset.key" data-list-menu class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-line-hover bg-muted p-1.5" @click.stop="menuClick">
             <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
               <Checkbox
                 :model-value="onList(list, asset.key)"

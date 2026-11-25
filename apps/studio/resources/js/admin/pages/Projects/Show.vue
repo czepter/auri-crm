@@ -229,7 +229,7 @@ const timeline = computed(() => timelineWindow(props.shoots, current.value));
 
 const STATE = {
     done: { text: "text-ok", dot: "bg-action", line: "bg-action" },
-    now: { text: "font-semibold text-ring", dot: "bg-background shadow-[inset_0_0_0_3px_var(--accent)]", line: "bg-rule" },
+    now: { text: "font-semibold text-ring", dot: "border-[3px] border-accent bg-background", line: "bg-rule" },
     next: { text: "text-ink-2", dot: "bg-line-hover", line: "bg-rule" },
     off: { text: "text-faint", dot: "bg-line-hover", line: "bg-rule" },
 };
@@ -710,7 +710,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                          work happens anyway. -->
                     <Section v-if="scope.items.length && (!quote || scope.delta || scope.items.some((item) => item.state))" :title="$t('project.scope')">
                         <LineItems
-                            class="[&>div]:py-[9px] [&>div]:shadow-none"
+                            class="[&>div]:py-[9px] [&>div]:border-t-0"
                             :items="scope.items"
                         >
                             <template #note="{ item }">

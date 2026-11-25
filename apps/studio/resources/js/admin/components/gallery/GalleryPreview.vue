@@ -69,7 +69,7 @@ const titleStyle = computed(() => ({ fontFamily: font.value.family, fontWeight: 
     />
 
     <div
-      class="mx-auto overflow-hidden rounded-[10px] border border-line-hover bg-background shadow-[0_12px_32px_rgb(20_16_14_/_0.10)] transition-[max-width] duration-200"
+      class="mx-auto overflow-hidden rounded-[10px] border border-line-hover bg-background transition-[max-width] duration-200"
       :class="phone ? 'max-w-[220px]' : 'max-w-full'"
     >
       <div class="flex h-[30px] items-center gap-2 border-b border-border bg-sunk-2 px-2.5">

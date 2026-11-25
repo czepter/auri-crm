@@ -205,7 +205,7 @@ function receivedAt(iso: string) {
 
           <div v-for="message in open.messages" :key="message.id" class="py-3 border-t border-rule" :class="
               message.own &&
-                'pl-3.5 shadow-[inset_0_1px_0_var(--rule),inset_2px_0_0_var(--sunk-2)]'
+                'border-l-2 border-l-sunk-2 pl-3'
             ">
             <div class="flex items-baseline gap-[9px]">
               <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.who }}</span>

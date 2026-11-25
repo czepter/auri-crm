@@ -409,7 +409,7 @@ function time(iso: string) {
               {{ onLists.length ? $t('gallery.onLists', onLists.length) : $t('gallery.addToList') }}
             </button>
 
-            <div v-if="listsOpen" class="absolute top-7 left-0 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]">
+            <div v-if="listsOpen" class="absolute top-7 left-0 z-5 w-[216px] rounded-md border border-line-hover bg-muted p-1.5">
               <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
                 <Checkbox
                   :model-value="list.keys.includes(asset.key)"

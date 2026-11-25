@@ -89,7 +89,7 @@ function cancelScheduled(messageId: string) {
       v-for="message in thread?.messages ?? []"
       :key="message.id"
       class="py-3"
-      :class="message.fromStaff && 'pl-3.5 shadow-[inset_2px_0_0_var(--sunk-2)]'"
+      :class="message.fromStaff && 'border-l-2 border-l-sunk-2 pl-3'"
     >
       <div class="flex items-baseline gap-[9px]">
         <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.author }}</span>
