@@ -128,7 +128,7 @@ function initials(name: string) {
             <div
               v-for="invitation in invitations"
               :key="invitation.id"
-              class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+              class="flex items-center gap-3 py-2.5 border-t border-rule first-of-type:border-t-0"
             >
               <span class="flex size-8 flex-none items-center justify-center rounded-full bg-sunk-2 text-small leading-none font-semibold text-ink-2">{{ initials(invitation.name) }}</span>
               <span class="min-w-0 flex-1">
@@ -158,7 +158,7 @@ function initials(name: string) {
             <div
               v-for="member in staff"
               :key="member.id"
-              class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+              class="flex items-center gap-3 py-2.5 border-t border-rule first-of-type:border-t-0"
             >
               <span class="flex size-8 flex-none items-center justify-center rounded-full bg-sunk-2 text-small leading-none font-semibold text-ink-2">{{ initials(member.name) }}</span>
               <span class="min-w-0 flex-1">

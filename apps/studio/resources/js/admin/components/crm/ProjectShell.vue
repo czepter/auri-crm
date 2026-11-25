@@ -189,7 +189,7 @@ usePageCommands(() => {
         <!-- The track scrolls once the tabs outgrow the column; a local
              background paints its whole scroll width, not only what shows. -->
         <div class="mt-4 max-[640px]:sticky max-[640px]:top-0 max-[640px]:z-[5] max-[640px]:-mx-4 max-[640px]:mt-2 max-[640px]:bg-background max-[640px]:px-4 max-[640px]:py-2">
-        <nav ref="tabNav" class="relative flex max-w-full overflow-x-auto text-small font-medium shadow-[inset_0_-1px_0_var(--rule)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
+        <nav ref="tabNav" class="relative flex max-w-full overflow-x-auto text-small font-medium border-b border-rule [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
           <SlidingIndicator
             :rect="tabRect"
             :animate="tabAnimate"

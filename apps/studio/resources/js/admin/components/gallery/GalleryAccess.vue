@@ -34,7 +34,7 @@ function saveEmailGate() {
 <template>
   <h2 class="mt-0">{{ $t('galleryRecord.access') }}</h2>
 
-  <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+  <div class="mb-5 flex items-start gap-[26px] pb-5 border-b border-rule">
     <div class="flex min-w-0 flex-1 flex-col gap-2">
       <div class="text-small text-ink-2">{{ $t('galleryRecord.link') }}</div>
       <div class="mt-1.5 flex items-center gap-2.5">

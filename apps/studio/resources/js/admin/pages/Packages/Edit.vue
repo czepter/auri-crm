@@ -306,7 +306,7 @@ watch(() => form.data(), autosave, { deep: true })
         <div
           v-for="request in requests"
           :key="request.id"
-          class="flex items-baseline gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+          class="flex items-baseline gap-4 py-2.5 border-t border-rule first-of-type:border-t-0"
         >
           <span class="w-[64px] flex-none text-small tabular-nums text-ink-2">{{ request.requestedOn ? day(request.requestedOn) : '—' }}</span>
           <span class="min-w-0 flex-1 text-small">

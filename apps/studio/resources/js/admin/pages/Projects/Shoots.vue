@@ -243,7 +243,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
               <span v-if="day.items.length > 1" class="text-small text-ink-2">{{ $t('project.dayCount', day.items.length) }}</span>
             </header>
 
-            <div v-for="shoot in day.items" :key="shoot.id" class="shadow-[inset_0_1px_0_var(--rule)]">
+            <div v-for="shoot in day.items" :key="shoot.id" class="border-t border-rule">
               <div class="flex items-center gap-3.5 px-6 py-1.5 max-[640px]:flex-wrap max-[640px]:px-4">
                 <button
                   type="button"
@@ -306,7 +306,7 @@ const STATIC_TONE: Record<string, ChipTone> = { done: 'success', now: 'warn', ne
                 </div>
               </div>
 
-              <div v-if="!soloStudio" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
+              <div v-if="!soloStudio" class="mt-4 pt-3 border-t border-rule">
                 <div class="text-small leading-none font-semibold text-faint">{{ $t('project.crew') }}</div>
 
                 <div v-for="member in shoot.crew" :key="member.id" class="mt-1.5 flex items-center gap-2.5">

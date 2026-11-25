@@ -53,7 +53,7 @@ function add() {
         <form
           v-for="closure in closures"
           :key="closure.id"
-          class="flex flex-col gap-2 py-3 shadow-[inset_0_1px_0_var(--rule)]"
+          class="flex flex-col gap-2 py-3 border-t border-rule"
           @submit.prevent="save(closure.id)"
         >
           <div class="flex items-center gap-2">

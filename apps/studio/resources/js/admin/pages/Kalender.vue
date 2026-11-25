@@ -155,7 +155,7 @@ function shortDate(date: string | null) {
           <div
             v-for="day in days"
             :key="day.date"
-            class="min-h-[104px] overflow-hidden px-2 pt-2 pb-2.5 max-[640px]:px-1 shadow-[inset_0_1px_0_var(--rule),inset_1px_0_0_var(--rule)] [&:nth-child(7n+1)]:shadow-[inset_0_1px_0_var(--rule)]"
+            class="min-h-[104px] overflow-hidden px-2 pt-2 pb-2.5 max-[640px]:px-1 border-t border-l border-rule [&:nth-child(7n+1)]:border-l-0"
           >
             <span
               class="text-small tabular-nums"

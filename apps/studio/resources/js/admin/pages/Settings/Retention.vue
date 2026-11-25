@@ -182,7 +182,7 @@ function submit() {
               <div
                 v-for="part in PARTS"
                 :key="part"
-                class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
+                class="flex items-center gap-4 py-3 border-b border-rule"
                 :class="chosen.order && part !== 'order' && 'opacity-55'"
                 :inert="chosen.order && part !== 'order'"
               >
@@ -207,7 +207,7 @@ function submit() {
         <FormSection v-if="due.length" :title="$t('settings.retentionDue')" :class="enabled ? '' : 'pointer-events-none'" :inert="!enabled">
           <div class="min-w-0">
             <div>
-              <div class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold text-ink-2 shadow-[inset_0_-1px_0_var(--rule)]">
+              <div class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold text-ink-2 border-b border-rule">
                 <span>{{ $t('settings.retentionColContact') }}</span>
                 <span>{{ $t('settings.retentionColRequest') }}</span>
                 <span>{{ $t('settings.retentionColOutcome') }}</span>
@@ -217,7 +217,7 @@ function submit() {
                 <div
                   v-for="candidate in due"
                   :key="candidate.id"
-                  class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] items-center gap-3 py-2 shadow-[inset_0_-1px_0_var(--rule)]"
+                  class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] items-center gap-3 py-2 border-b border-rule"
                 >
                   <div class="min-w-0">
                     <div class="truncate text-ui font-semibold" :class="effective.name && 'font-normal text-ink-2 italic'">
@@ -257,13 +257,13 @@ function submit() {
             </AlertDialogHeader>
             <AlertDialogBody>
               <div>
-                <div v-for="part in removedParts" :key="part" class="flex justify-between gap-4 py-2 text-ui shadow-[inset_0_-1px_0_var(--rule)]">
+                <div v-for="part in removedParts" :key="part" class="flex justify-between gap-4 py-2 text-ui border-b border-rule">
                   <span class="font-medium">{{ $t(`settings.retentionPart${part[0].toUpperCase()}${part.slice(1)}`) }}</span>
                   <span class="tabular-nums text-ink-2">
                     {{ $t(part === 'name' ? 'settings.retentionDoneAnonymized' : 'settings.retentionDoneDeleted', { count: counts[part] }) }}
                   </span>
                 </div>
-                <div v-if="removedLeads" class="flex justify-between gap-4 py-2 text-ui font-semibold text-destructive shadow-[inset_0_-1px_0_var(--rule)]">
+                <div v-if="removedLeads" class="flex justify-between gap-4 py-2 text-ui font-semibold text-destructive border-b border-rule">
                   <span>{{ $t('settings.retentionRate') }}</span>
                   <span class="tabular-nums">{{ rateBefore }} % → {{ rateAfter }} %</span>
                 </div>
@@ -296,7 +296,7 @@ function submit() {
           <div
             v-for="row in expiring"
             :key="row.candidate.id"
-            class="flex items-center gap-4 py-2 shadow-[inset_0_-1px_0_var(--rule)]"
+            class="flex items-center gap-4 py-2 border-b border-rule"
           >
             <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.candidate.name }}</span>
             <span class="text-small text-ink-2">{{ row.candidate.type }}</span>

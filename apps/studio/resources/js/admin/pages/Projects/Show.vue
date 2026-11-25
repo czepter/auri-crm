@@ -465,7 +465,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             :more-href="`${base}/aufgaben`"
                             :total="showDone ? done.length : open.length"
                         >
-                            <div class="flex min-h-11 items-center gap-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+                            <div class="flex min-h-11 items-center gap-3 border-t border-rule first:border-t-0">
                                 <span
                                     v-if="row.isDone"
                                     class="grid size-6 flex-none place-items-center rounded-full bg-ok-bg text-ok"
@@ -510,7 +510,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <div
                             v-for="row in installments"
                             :key="row.id"
-                            class="grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            class="grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-rule first:border-t-0"
                         >
                             <div class="min-w-0">
                                 <b class="block truncate font-semibold">{{ row.label }}</b>
@@ -547,7 +547,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             <div
                                 v-for="(person, index) in kontakte.people"
                                 :key="person.id"
-                                class="flex items-end gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
+                                class="flex items-end gap-3 py-2 border-t border-rule first:border-t-0 max-[640px]:flex-wrap"
                             >
                                 <span class="min-w-[148px] flex-1 pb-2.5 font-semibold">{{ header.people[index].name }}</span>
                                 <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
@@ -564,7 +564,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <div
                             v-for="person in header.people"
                             :key="person.id"
-                            class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 border-t border-rule first:border-t-0"
                         >
                             <Link class="min-w-[200px] flex-1 font-semibold text-foreground no-underline hover:underline" :href="`/kontakte/${person.id}`">
                                 {{ person.name }}

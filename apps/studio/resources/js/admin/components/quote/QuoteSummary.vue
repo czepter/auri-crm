@@ -42,12 +42,12 @@ const totals = computed(() => {
 
     <div>
       <LineItems :items="top.shown" />
-      <div v-if="top.rest" class="py-2 text-small leading-[1.47] text-ink-2 shadow-[inset_0_1px_0_var(--rule)]">
+      <div v-if="top.rest" class="py-2 text-small leading-[1.47] text-ink-2 border-t border-rule">
         {{ $t('quotes.more', { count: top.rest }) }}
       </div>
     </div>
 
-    <div class="pt-2.5 shadow-[inset_0_1px_0_var(--line-hover)]">
+    <div class="border-t border-line-hover pt-2.5">
       <div
         v-for="row in totals"
         :key="row.label"

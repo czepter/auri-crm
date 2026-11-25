@@ -149,7 +149,7 @@ function submit() {
               <span class="block text-ui leading-[1.3] font-semibold tracking-[-0.016em]">{{ starter.name }}</span>
               <span class="mt-0.5 block text-small leading-[1.47] text-ink-2">{{ types.find((t) => t.value === form.type)?.label }}</span>
               <span class="mt-[7px] block text-small leading-[1.45] text-ink-2">{{ starter.description }}</span>
-              <span class="mt-[9px] block pt-2 text-small text-ink-2 shadow-[inset_0_1px_0_var(--rule)]">
+              <span class="mt-[9px] block pt-2 text-small text-ink-2 border-t border-rule">
                 {{ $t('documentTemplates.starterScope', {
                   blocks: scopeOf(starter).blocks,
                   fields: scopeOf(starter).fields,

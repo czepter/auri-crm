@@ -110,7 +110,7 @@ const LONG = ['text', 'name_list', 'group_photos']
             <Card :title="$t('formTemplates.fieldsLabel')">
               <FormFieldsEditor v-model="form.fields" :field-types="fieldTypes" />
 
-              <div class="mt-4 flex items-center gap-2.5 pt-3.5 shadow-[inset_0_1px_0_var(--rule)]">
+              <div class="mt-4 flex items-center gap-2.5 pt-3.5 border-t border-rule">
                 <Switch id="form-share" :model-value="Boolean(instance.sharedAt)" @update:model-value="share" />
                 <Label variant="inline" for="form-share">{{ $t('formInstances.share') }}</Label>
               </div>

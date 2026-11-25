@@ -25,7 +25,7 @@ defineProps<{ shoot: EditableShoot }>();
 </script>
 
 <template>
-    <div class="pt-3.5 pb-4 shadow-[inset_0_1px_0_var(--rule)]">
+    <div class="pt-3.5 pb-4 border-t border-rule">
         <div class="flex gap-3 [&+&]:mt-3">
             <Field v-slot="{ id }" dense :label="$t('project.shootDate')">
                 <DatePicker :id="id" v-model="shoot.date" class="w-[148px] [&_input]:pr-8" />

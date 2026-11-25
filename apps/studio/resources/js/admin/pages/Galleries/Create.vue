@@ -125,7 +125,7 @@ function submit() {
             v-for="row in siblings"
             :key="row.id"
             :href="`/galerien/${row.id}`"
-            class="flex justify-between gap-4 py-2 text-ui text-foreground no-underline shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+            class="flex justify-between gap-4 py-2 text-ui text-foreground no-underline border-t border-rule first:border-t-0"
           >
             <span class="min-w-0 truncate">{{ row.title }}</span>
             <span class="flex-none text-ink-2">{{ row.assetCount }}</span>

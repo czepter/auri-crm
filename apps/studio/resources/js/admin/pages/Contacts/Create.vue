@@ -90,7 +90,7 @@ function submit() {
           <ContactPortalFields :portal="form.portal" :defaults="portalDefaults" choice />
         </Card>
 
-        <div class="mt-2 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
+        <div class="mt-2 flex items-center gap-3 pt-4 border-t border-rule [&>button:last-child]:ml-auto">
           <Link
             class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
             href="/kontakte"

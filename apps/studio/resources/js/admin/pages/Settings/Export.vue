@@ -52,12 +52,12 @@ function create(gallery: string | null) {
 
       <div class="min-w-0">
         <FormSection title="CSV">
-        <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
+        <div class="flex items-center gap-4 py-3 border-b border-rule">
           <span class="flex-1 text-ui font-semibold">{{ $t('contacts.title') }}</span>
           <span class="text-small tabular-nums text-ink-2">{{ contacts }}</span>
           <Button as="a" variant="outline" href="/einstellungen/export/kontakte">CSV</Button>
         </div>
-        <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
+        <div class="flex items-center gap-4 py-3 border-b border-rule">
           <span class="flex-1 text-ui font-semibold">{{ $t('projects.title') }}</span>
           <span class="text-small tabular-nums text-ink-2">{{ projects }}</span>
           <Button as="a" variant="outline" href="/einstellungen/export/projekte">CSV</Button>
@@ -70,7 +70,7 @@ function create(gallery: string | null) {
           <div
             v-for="row in rows"
             :key="row.gallery ?? 'daten'"
-            class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
+            class="flex items-center gap-4 py-3 border-b border-rule"
           >
             <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.title }}</span>
             <span v-if="row.size !== null" class="text-small tabular-nums text-ink-2">{{ size(row.size) }}</span>
@@ -94,7 +94,7 @@ function create(gallery: string | null) {
         <div
           v-for="row in recent"
           :key="row.gallery ?? 'daten'"
-          class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+          class="flex items-center gap-3 py-2.5 border-t border-rule first:border-t-0"
         >
           <span class="min-w-0 flex-1">
             <span class="block truncate text-ui">{{ row.title }}</span>

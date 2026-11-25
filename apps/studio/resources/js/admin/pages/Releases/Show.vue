@@ -144,7 +144,7 @@ function toggle(key: string, index: number) {
                             :key="change.commit + index"
                         >
                             <button
-                                class="-mx-2.5 flex w-[calc(100%+20px)] cursor-pointer items-baseline gap-2.5 border-0 bg-transparent px-2.5 py-[9px] text-left shadow-[inset_0_1px_0_var(--rule)] hover:bg-sunk"
+                                class="-mx-2.5 flex w-[calc(100%+20px)] cursor-pointer items-baseline gap-2.5 bg-transparent px-2.5 py-[9px] text-left border-t border-rule hover:bg-sunk"
                                 type="button"
                                 @click="toggle(section.key, index)"
                             >

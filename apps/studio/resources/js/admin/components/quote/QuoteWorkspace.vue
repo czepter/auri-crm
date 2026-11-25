@@ -288,7 +288,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
           v-for="(row, index) in summaryRows(quote)"
           :key="`${row.label}-${index}`"
           class="flex gap-3 py-1.5"
-          :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-small'"
+          :class="row.last ? 'mt-1.5 pt-2.5 font-semibold border-t border-border' : 'text-small'"
         >
           <span class="flex-1" :class="{ 'text-ui': row.last }">
             {{ row.rate === undefined ? $t(row.label) : $t('quotes.vat', { rate: formatPercent(row.rate) }) }}

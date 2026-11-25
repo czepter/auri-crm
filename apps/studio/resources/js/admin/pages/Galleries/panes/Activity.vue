@@ -75,7 +75,7 @@ function createTask() {
           <li
             v-for="(event, index) in group.events"
             :key="index"
-            class="flex items-start gap-3 py-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+            class="flex items-start gap-3 py-3 border-t border-rule first:border-t-0"
           >
             <template v-if="event.type === 'comment'">
               <img :src="event.photo.src" alt="" class="size-12 flex-none rounded-[var(--r-sm)] bg-sunk object-cover" loading="lazy">
@@ -135,10 +135,10 @@ function createTask() {
         </thead>
         <tbody>
           <tr v-for="build in builds" :key="build.id">
-            <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_var(--rule)]">{{ $t(`gallery.size.${build.size}`) }}</td>
-            <td class="px-6 py-2.5 align-baseline text-small text-ink-2 shadow-[inset_0_1px_0_var(--rule)]">{{ build.parts }}</td>
-            <td class="px-6 py-2.5 text-right align-baseline text-small tabular-nums shadow-[inset_0_1px_0_var(--rule)]">{{ megabytes(build.bytes) }}</td>
-            <td class="px-6 py-2.5 align-baseline text-small text-ink-2 shadow-[inset_0_1px_0_var(--rule)]">{{ build.status }}</td>
+            <td class="px-6 py-2.5 align-baseline text-ui font-semibold tracking-[-0.014em] border-t border-rule">{{ $t(`gallery.size.${build.size}`) }}</td>
+            <td class="px-6 py-2.5 align-baseline text-small text-ink-2 border-t border-rule">{{ build.parts }}</td>
+            <td class="px-6 py-2.5 text-right align-baseline text-small tabular-nums border-t border-rule">{{ megabytes(build.bytes) }}</td>
+            <td class="px-6 py-2.5 align-baseline text-small text-ink-2 border-t border-rule">{{ build.status }}</td>
           </tr>
         </tbody>
       </table>
@@ -147,7 +147,7 @@ function createTask() {
       <template v-if="lists.length">
         <h2 class="mt-9">{{ $t('galleryRecord.settingsNav.listen') }}</h2>
         <div>
-          <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+          <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 border-t border-rule first:border-t-0">
             <span class="text-small font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
             <span class="w-14 flex-none text-small text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
             <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>
@@ -157,7 +157,7 @@ function createTask() {
 
       <template v-if="versions.length">
         <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
-        <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+        <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 border-t border-rule first:border-t-0">
           <span class="w-[62px] flex-none text-small font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
           <span class="text-small font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
           <span class="ml-auto text-small whitespace-nowrap text-ink-2">{{ version.publishedAt ? day(version.publishedAt) : '—' }}</span>
@@ -184,7 +184,7 @@ function createTask() {
       <section v-if="activity.hidden.length">
         <h3 class="m-0 mb-2 text-ui font-semibold">{{ $t('galleryRecord.activity.hidden') }}</h3>
         <ul class="m-0 list-none p-0">
-          <li v-for="row in activity.hidden" :key="row.id" class="flex items-center gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+          <li v-for="row in activity.hidden" :key="row.id" class="flex items-center gap-3 py-2 border-t border-rule first:border-t-0">
             <img :src="row.photo.src" alt="" class="size-10 flex-none rounded-[var(--r-sm)] bg-sunk object-cover" loading="lazy">
             <span class="min-w-0 flex-1 text-small">{{ $t('galleryRecord.activity.photo', { n: row.photo.n }) }}</span>
             <Button type="button" variant="ghost" @click="restore(row.id)">{{ $t('galleryRecord.activity.restore') }}</Button>

@@ -53,13 +53,13 @@ function cancel() {
       <template #nav><SettingsNav active="deletion" /></template>
 
       <div class="min-w-0 rounded-[var(--r)] border border-destructive/40 p-5">
-        <div v-if="page.props.studioDeletion" class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
+        <div v-if="page.props.studioDeletion" class="flex items-center gap-4 py-3 border-b border-rule">
           <span class="flex-1 text-ui font-semibold">{{ $t('settings.deletionOn', { date: page.props.studioDeletion }) }}</span>
           <Button variant="outline" @click="cancel">{{ $t('common.cancel') }}</Button>
         </div>
 
         <template v-else>
-          <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
+          <div class="flex items-center gap-4 py-3 border-b border-rule">
             <span class="flex-1 text-ui">{{ $t('settings.deletionGrace', { days: graceDays }) }}</span>
             <Button variant="outline" tone="destructive" @click="requestCode">
               {{ codeSent ? $t('settings.deletionNewCode') : $t('settings.deletionRequest') }}

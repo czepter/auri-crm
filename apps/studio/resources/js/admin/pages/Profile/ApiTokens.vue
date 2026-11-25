@@ -131,7 +131,7 @@ function revoke() {
           <div
             v-for="client in clients"
             :key="client.name"
-            class="flex items-start gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
+            class="flex items-start gap-4 py-3 border-b border-rule"
           >
             <div class="min-w-0 flex-1">
               <div class="text-ui font-semibold">{{ client.name }}</div>
@@ -146,7 +146,7 @@ function revoke() {
           <div
             v-for="connection in connections"
             :key="connection.id"
-            class="flex items-start gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
+            class="flex items-start gap-4 py-3 border-b border-rule"
           >
             <div class="min-w-0 flex-1">
               <div class="truncate text-ui font-semibold">{{ connection.name ?? connection.clientId }}</div>
@@ -226,7 +226,7 @@ function revoke() {
         <div
           v-for="token in tokens"
           :key="token.id"
-          class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+          class="flex items-center gap-3 py-2.5 border-t border-rule first:border-t-0"
         >
           <div class="min-w-0 flex-1">
             <div class="truncate text-ui font-semibold">{{ token.name }}</div>

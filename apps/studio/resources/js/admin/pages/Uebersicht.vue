@@ -272,7 +272,7 @@ const CREATE = [
     { label: "create.gallery", href: "/galerien/neu" },
 ];
 
-const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
+const ROW = "border-t border-rule first:border-t-0";
 const CHIP = {
     late: "bg-late-bg text-destructive",
     due: "bg-due-bg text-due",
