@@ -11,6 +11,7 @@ use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\MailPreview;
+use App\Payments\Models\PaymentInstallment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -58,9 +59,11 @@ class AutomationDraftController extends Controller
 
         abort_if($claimed === 0, 404);
 
+        $invoice = $automationRun->anchorable instanceof PaymentInstallment ? $automationRun->anchorable->invoice : null;
+
         try {
             foreach ($automationRun->contacts() as $contact) {
-                $notifications->send($contact, new AutomationReminder($validated['subject'], $validated['message']));
+                $notifications->send($contact, new AutomationReminder($validated['subject'], $validated['message'], $invoice));
             }
         } catch (Throwable $e) {
             $automationRun->update(['status' => AutomationRunStatus::Failed, 'error' => $e->getMessage()]);
@@ -94,6 +97,7 @@ class AutomationDraftController extends Controller
         $project = FireAutomationRule::projectOf($run->anchorable);
         if ($project !== null) {
             $this->authorize('manageMessages', $project);
+            abort_unless($run->paymentDraftOpenFor(auth('staff')->user(), $project), 403);
         }
     }
 }

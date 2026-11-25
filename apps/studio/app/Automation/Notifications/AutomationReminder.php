@@ -3,6 +3,8 @@
 namespace App\Automation\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
+use App\Payments\Concerns\AttachesInvoicePdf;
+use App\Payments\Models\Invoice;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\HtmlString;
@@ -17,10 +19,12 @@ use Illuminate\Support\HtmlString;
 class AutomationReminder extends Notification
 {
     use AppliesStudioMailIdentity;
+    use AttachesInvoicePdf;
 
     public function __construct(
         private readonly string $subject,
         private readonly string $body,
+        private readonly ?Invoice $invoice = null,
     ) {}
 
     /** @return list<string> */
@@ -36,6 +40,8 @@ class AutomationReminder extends Notification
         foreach (preg_split('/\n{2,}/', trim($this->body)) as $paragraph) {
             $message->line(new HtmlString(nl2br(e($paragraph))));
         }
+
+        $this->attachInvoicePdf($message, $this->invoice);
 
         return $this->appendStudioMailIdentity($message);
     }

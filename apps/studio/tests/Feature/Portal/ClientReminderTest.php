@@ -1,11 +1,13 @@
 <?php
 
+use App\Automation\Enums\AutomationRunStatus;
+use App\Automation\Models\AutomationRun;
+use App\Automation\Notifications\AutomationReminder;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Task;
-use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -13,6 +15,7 @@ use App\Payments\Notifications\PaymentReminder;
 use App\Portal\Actions\RemindClientTasks;
 use App\Portal\Notifications\TaskDue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
@@ -34,9 +37,10 @@ function planFor(ClientCase $project): PaymentPlan
 }
 
 // Der Kundenweg beginnt auf der zweiten Sprosse: ein Tag Verspaetung ist eine
-// Ueberweisung, die unterwegs ist.
-it('holds the payment reminder until the second rung', function () {
+// Ueberweisung, die unterwegs ist. Er endet im Entwurf, nie im Versand.
+it('files the payment reminder as a draft on the second rung', function () {
     Notification::fake();
+    Mail::fake();
     staffMember();
 
     [$project, $contact] = projectWithClient();
@@ -46,14 +50,21 @@ it('holds the payment reminder until the second rung', function () {
         'due_on' => now()->subDay()->toDateString(),
     ]);
 
-    app(DetectOverdueInstallments::class)();
-    Notification::assertNotSentTo($contact, PaymentReminder::class);
+    $this->artisan('payments:detect-overdue-installments');
+    expect(AutomationRun::count())->toBe(0);
 
     $this->travel(4)->days();
-    app(DetectOverdueInstallments::class)();
+    $this->artisan('payments:detect-overdue-installments');
+    $this->artisan('payments:detect-overdue-installments');
 
-    Notification::assertSentTo($contact, PaymentReminder::class);
-    expect($installment->fresh()->client_reminders_sent)->toBe(2);
+    $draft = AutomationRun::sole();
+    expect($draft->status)->toBe(AutomationRunStatus::AwaitingApproval)
+        ->and($draft->contact_ids)->toBe([$contact->id])
+        ->and($draft->anchorable->is($installment))->toBeTrue()
+        ->and($installment->fresh()->client_reminders_sent)->toBe(2);
+
+    Notification::assertNotSentTo($contact, AutomationReminder::class);
+    Mail::assertNothingSent();
 });
 
 // #414: eine angezahlte Rate wird über den Rest angemahnt, nicht über den
@@ -71,9 +82,7 @@ it('names the remaining amount in the payment reminder', function () {
         'due_on' => now()->subDays(5)->toDateString(),
     ]);
 
-    $mail = (new PaymentReminder($installment))->toMail($contact);
-
-    expect(implode(' ', array_map('strval', $mail->introLines)))->toContain('300,00');
+    expect((new PaymentReminder($installment))->draft($contact)['body'])->toContain('300,00');
 });
 
 it('reminds the client of their own open task on the second rung', function () {

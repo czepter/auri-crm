@@ -1805,7 +1805,7 @@
     "depositPercent": "Anzahlung (%)",
     "zahlungszielDays": "Zahlungsziel (Tage)",
     "remindersSection": "Erinnerungen",
-    "remindersEnabled": "Kunden an offene Raten erinnern",
+    "remindersEnabled": "Erinnerung an offene Raten als Entwurf",
     "remindersCadence": "Ab dem fünften Tag nach Fälligkeit, danach in wachsendem Abstand.",
     "defaultsReadOnlyHint": "Anzahlung und Zahlungsziel werden unter Dokumente gepflegt:"
   },
