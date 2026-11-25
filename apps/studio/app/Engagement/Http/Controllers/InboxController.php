@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Models\User;
 use App\Settings\Actions\RotateInboundSecret;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -62,27 +63,27 @@ class InboxController extends Controller
         return Inertia::render('Posteingang', [
             // C-14 (#250): conversations, grouped by working state. An inbox
             // sorted by clock time hides exactly what it is opened for.
-            'groups' => collect(self::STATES)->map(fn (string $state) => [
+            'groups' => LiveUpdate::live(collect(self::STATES)->map(fn (string $state) => [
                 'key' => $state,
                 'rows' => $threads
                     ->filter(fn (Thread $thread) => $thread->workState() === $state)
                     ->map(fn (Thread $thread) => $this->row($thread))
                     ->values()
                     ->all(),
-            ])->all(),
-            'open' => $open === null ? null : $this->conversation($open),
-            'staffOptions' => User::query()->orderBy('name')->get()
+            ])->all()),
+            'open' => LiveUpdate::live($open === null ? null : $this->conversation($open)),
+            'staffOptions' => LiveUpdate::live(User::query()->orderBy('name')->get()
                 ->map(fn (User $user) => ['value' => $user->public_id, 'label' => $user->name])
-                ->all(),
+                ->all()),
             'configured' => InboundAddress::configured(),
             // The studio's own name in the address, not a generic handle:
             // this is the one inbound address a studio prints on a website
             // or reads out over the phone.
-            'catchAll' => $secret === null
+            'catchAll' => LiveUpdate::live($secret === null
                 ? null
-                : InboundAddress::catchAll(StudioSettings::current()->display_name ?? '', $secret),
+                : InboundAddress::catchAll(StudioSettings::current()->display_name ?? '', $secret)),
             'canRotate' => $user?->can(Capability::ManageSettings->value) ?? false,
-            'pending' => InboundMessage::query()
+            'pending' => LiveUpdate::live(InboundMessage::query()
                 ->whereIn('state', [InboundMessageState::Triage, InboundMessageState::Quarantined])
                 ->where(fn ($query) => $query->whereNull('thread_id')->orWhereHas('thread', $visible))
                 ->with('thread.case')
@@ -101,13 +102,13 @@ class InboxController extends Controller
                     'receivedAt' => $row->created_at->toIso8601String(),
                     'projectName' => $row->thread?->case?->name,
                 ])
-                ->all(),
+                ->all()),
             // P-04 (#223): conversations a client started without naming a
             // booking. They belong in the same tray as an unplaced mail — a
             // thing that arrived and has not been filed — and for the same
             // reason: the alternative is a conversation nobody at the studio
             // ever finds because no project screen lists it.
-            'unfiled' => Thread::query()
+            'unfiled' => LiveUpdate::live(Thread::query()
                 ->whereNull('case_id')
                 ->with('latestMessage')
                 ->latest()
@@ -119,9 +120,9 @@ class InboxController extends Controller
                     'snippet' => $thread->latestMessage?->body,
                     'startedAt' => $thread->created_at->toIso8601String(),
                 ])
-                ->all(),
+                ->all()),
             // #438: client mails an automation drafted, waiting for the studio's send.
-            'drafts' => AutomationRun::awaitingFor($user)
+            'drafts' => LiveUpdate::live(AutomationRun::awaitingFor($user)
                 ->take(100)
                 ->map(fn (AutomationRun $run) => [
                     'id' => $run->public_id,
@@ -130,18 +131,18 @@ class InboxController extends Controller
                     'projectName' => $run->anchorable === null ? null : FireAutomationRule::projectOf($run->anchorable)?->name,
                     'to' => $run->contacts()->pluck('name')->join(', '),
                 ])
-                ->all(),
-            'projects' => ClientCase::query()
+                ->all()),
+            'projects' => LiveUpdate::live(ClientCase::query()
                 ->visibleTo($user)
                 ->latest()
                 ->limit(200)
                 ->get()
                 ->map(fn (ClientCase $project) => ['id' => $project->public_id, 'label' => $project->name])
-                ->all(),
+                ->all()),
             // Only threads a staff member could plausibly attach to: the ones
             // with a client on them. A thread with no contact participant has
             // nobody the mail could have come from.
-            'threads' => Thread::query()
+            'threads' => LiveUpdate::live(Thread::query()
                 ->where($visible)
                 ->whereHas('participants', fn ($query) => $query->whereNotNull('contact_id'))
                 ->with('case')
@@ -152,7 +153,7 @@ class InboxController extends Controller
                     'id' => $thread->public_id,
                     'label' => ($thread->case?->name ?? '—').' · '.$thread->subject,
                 ])
-                ->all(),
+                ->all()),
         ]);
     }
 

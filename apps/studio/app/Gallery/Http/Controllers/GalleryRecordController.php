@@ -36,6 +36,7 @@ use App\Media\Models\MultipartUpload;
 use App\Media\Models\ZipBuild;
 use App\Models\StudioSettings;
 use App\Payments\Models\Invoice;
+use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -169,8 +170,8 @@ class GalleryRecordController extends Controller
             // ohne Ziel — das war R22.
             'activeSetId' => $set?->public_id ?? ($sets->count() === 1 ? $sets->first()->public_id : null),
             'settingsSection' => $abschnitt ?? 'zugang',
-            'nav' => GalleryNavData::build($gallery->loadMissing('coverAsset'), $sets, $version),
-            'gallery' => [
+            'nav' => LiveUpdate::live(GalleryNavData::build($gallery->loadMissing('coverAsset'), $sets, $version)),
+            'gallery' => LiveUpdate::live([
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
                 'slug' => $gallery->slug,
@@ -242,7 +243,7 @@ class GalleryRecordController extends Controller
                     ->where(fn ($query) => $query->where('is_active', true)->orWhere('id', $gallery->project_type_id))
                     ->orderBy('sort_order')->orderBy('id')->get()
                     ->map(fn (ProjectType $type) => ['id' => $type->public_id, 'name' => $type->name])->all(),
-            ],
+            ]),
             // The other galleries of the same booking, as a tab row: they are
             // the ones one flips between.
             'siblings' => $this->inArea(['einstellungen'], $bereich, fn () => $gallery->case_id === null ? [] : Gallery::query()
@@ -261,7 +262,7 @@ class GalleryRecordController extends Controller
             // gallery that already exists (GalleryPresetController::
             // applyToGallery).
             'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),
-            'figures' => [
+            'figures' => LiveUpdate::live([
                 'published' => $version?->version,
                 'assets' => $sets->sum('assets_count'),
                 'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
@@ -270,8 +271,8 @@ class GalleryRecordController extends Controller
                     ->whereIn('zip_build_id', ZipBuild::query()->where('gallery_version_id', $version->id)->select('id'))
                     ->count(),
                 'viewed' => GalleryView::query()->where('gallery_id', $gallery->id)->count(),
-            ],
-            'sets' => $sets->map(fn ($set) => [
+            ]),
+            'sets' => LiveUpdate::live($sets->map(fn ($set) => [
                 'id' => $set->public_id,
                 'name' => $set->name,
                 'count' => $set->assets_count,
@@ -280,7 +281,7 @@ class GalleryRecordController extends Controller
                 'density' => $densities[$set->id] ?? GalleryGridPref::DEFAULT_DENSITY,
                 'access' => $set->access,
                 'url' => $gallery->publicUrl().'?set='.$set->public_id,
-            ])->all(),
+            ])->all()),
             'assets' => $this->inArea(['bilder', 'gestaltung'], $bereich, fn () => $assets()->map(fn (Asset $asset) => [
                 'id' => $asset->public_id,
                 'key' => $asset->key,
@@ -360,7 +361,9 @@ class GalleryRecordController extends Controller
      */
     private function inArea(array $areas, string $current, \Closure $value): mixed
     {
-        return in_array($current, $areas, true) ? $value() : Inertia::optional($value);
+        return in_array($current, $areas, true)
+            ? LiveUpdate::live($value())
+            : Inertia::optional($value)->live(on: LiveUpdate::EVENT, channel: LiveUpdate::topic());
     }
 
     /** The two secrets and the look, set where they are read. */

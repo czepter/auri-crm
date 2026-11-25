@@ -15,7 +15,6 @@ import DocumentPreview from './previews/DocumentPreview.vue'
 import MailPreview from './previews/MailPreview.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { saveState } from '@/admin/lib/autosave'
 import { basisPointsToPercent } from '@/lib/money'
 
@@ -28,7 +27,6 @@ const props = defineProps<{
   stripe: App.Settings.Data.PaymentSettingsData | null
   stripeStatus: { lastWebhookAt: string | null; lastPaidOn: string | null } | null
 }>()
-useLiveProps(['settings', 'mailSenderFromEnv', 'mailTemplates', 'stripe', 'stripeStatus'])
 
 // Template refs onto the extracted panes — each exposes { form, submit }
 // (see panes/ProfileForm.vue and its siblings). Only the panes of the current

@@ -11,7 +11,6 @@ import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   mode: 'internal' | 'external'
@@ -20,8 +19,6 @@ const props = defineProps<{
   address: string
   shootId: string | null
 }>()
-
-useLiveProps([])
 
 // Die Liste und das Präfix gehören zum gewählten Projekt, das nur der Server kennt.
 function loadSiblings(id: string | undefined) {

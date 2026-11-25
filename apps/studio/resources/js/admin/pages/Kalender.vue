@@ -10,7 +10,6 @@ import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
 import { QueueGroup, QueueItem } from '@/ui/queue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { dayWithWeekday } from '@/admin/lib/dates'
 
 const props = defineProps<{
@@ -26,7 +25,6 @@ const props = defineProps<{
   season: InstanceType<typeof CalendarSeason>['$props']['season'] | null
   workingDays: number[] | null
 }>()
-useLiveProps(['days', 'shoots', 'projects', 'mine', 'season', 'workingDays'])
 
 const seasonLabel = ref('')
 

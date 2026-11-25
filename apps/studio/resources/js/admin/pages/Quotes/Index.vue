@@ -16,13 +16,11 @@ import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { quoteTone } from '@/admin/lib/quoteDisplay'
 import Chip from '@/ui/page/Chip.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 
 type Row = App.Quotes.Data.QuoteRowData
 
 const props = defineProps<{ quotes: Row[] }>()
-useLiveProps(['quotes'])
 
 const { t } = useI18n()
 const remove = (url: string) => deleteWithUndo(url, { deleted: t('common.deleted'), undo: t('common.undo'), failed: t('common.deleteFailed') })
