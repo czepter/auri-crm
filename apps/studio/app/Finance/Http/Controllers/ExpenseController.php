@@ -18,6 +18,7 @@ use App\Finance\Support\AfaCategories;
 use App\Finance\Support\Depreciation;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -40,8 +41,8 @@ class ExpenseController extends Controller
         return Inertia::render('Finance/Expenses/Index', [
             'year' => (int) $year,
             'years' => FiscalYear::known((int) $year),
-            'locked' => FiscalYear::query()->where('year', $year)->whereNotNull('locked_at')->exists(),
-            'totals' => $totals,
+            'locked' => LiveUpdate::live(FiscalYear::query()->where('year', $year)->whereNotNull('locked_at')->exists()),
+            'totals' => LiveUpdate::live($totals),
             'filters' => [
                 'kategorie' => $filters['kategorie'] ?? null,
                 'status' => $filters['status'] ?? null,
@@ -49,7 +50,7 @@ class ExpenseController extends Controller
                 'ohneBeleg' => (bool) ($filters['ohne-beleg'] ?? false),
             ],
             'categories' => $this->categories(),
-            'rows' => $rows->map(ExpenseRowData::fromModel(...))->values(),
+            'rows' => LiveUpdate::live($rows->map(ExpenseRowData::fromModel(...))->values()),
         ]);
     }
 

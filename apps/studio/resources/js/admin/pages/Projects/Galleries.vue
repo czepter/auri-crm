@@ -7,7 +7,6 @@ import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { dayAndMonth, weekday } from '@/admin/lib/shoots'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
@@ -15,7 +14,6 @@ const props = defineProps<{
   galleries: App.Crm.Screens.CaseGalleryData[]
   shoots: App.Crm.Data.ShootData[]
 }>()
-useLiveProps(['header', 'galleries', 'shoots'])
 
 const TONE: Record<string, ChipTone> = { draft: 'neutral', prerelease: 'warn', published: 'success', withdrawn: 'neutral' }
 

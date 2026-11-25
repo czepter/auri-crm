@@ -24,6 +24,7 @@ use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\MailPreview;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -67,29 +68,29 @@ class ContractController extends Controller
         }
 
         return Inertia::render('Projects/Contract', [
-            'header' => CaseHeaderData::fromCase(
+            'header' => LiveUpdate::live(CaseHeaderData::fromCase(
                 $case,
                 (new DeriveCasePosition)($case),
-            ),
-            'templates' => DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
+            )),
+            'templates' => LiveUpdate::live(DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
                 ->forShootKind($case->primaryShoot?->kind)
                 ->orderBy('name')->get()
                 ->map(fn (DocumentTemplate $t) => ['value' => $t->public_id, 'label' => "{$t->name} · v{$t->version}"])
-                ->values(),
-            'contract' => $current === null ? null : $this->contractData($current, $case),
-            'versions' => $versions->map(fn (Contract $c) => $this->contractData($c, $case))->values(),
+                ->values()),
+            'contract' => LiveUpdate::live($current === null ? null : $this->contractData($current, $case)),
+            'versions' => LiveUpdate::live($versions->map(fn (Contract $c) => $this->contractData($c, $case))->values()),
             // Only contacts who are not already on the current Fassung — the
             // add-signer select offers what can still be added, nothing else.
-            'contacts' => $case->contacts
+            'contacts' => LiveUpdate::live($case->contacts
                 ->reject(fn ($contact) => $current?->signers->contains('contact_id', $contact->id) ?? false)
                 ->map(fn ($contact) => ['value' => $contact->public_id, 'label' => $contact->name])
-                ->values(),
+                ->values()),
             'palette' => DocumentBlockCatalog::paletteFor(DocumentTemplateType::Contract),
-            'clauses' => ClauseCatalog::forTemplate(
+            'clauses' => LiveUpdate::live(ClauseCatalog::forTemplate(
                 DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
                     ->forShootKind($case->primaryShoot?->kind)
                     ->orderBy('name')->first(),
-            ),
+            )),
             'mergeFields' => collect(MergeFieldVocabulary::samples())
                 ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
                 ->values()->all(),

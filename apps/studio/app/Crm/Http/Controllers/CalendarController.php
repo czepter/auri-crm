@@ -20,6 +20,7 @@ use App\Models\StudioSettings;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Support\LiveUpdate;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -165,20 +166,20 @@ class CalendarController extends Controller
             'label' => $month->translatedFormat('F Y'),
             'previous' => $month->subMonthNoOverflow()->format('Y-m'),
             'next' => $month->addMonthNoOverflow()->format('Y-m'),
-            'days' => CalendarDayData::collect($days),
+            'days' => LiveUpdate::live(CalendarDayData::collect($days)),
             // The list view reads the same month, grouped by week rather than
             // laid out in one — a list answers "what is next", a grid answers
             // "how does the month look".
-            'shoots' => ShootData::collect($shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))),
-            'projects' => $shoots->mapWithKeys(fn (Shoot $shoot) => [
+            'shoots' => LiveUpdate::live(ShootData::collect($shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot)))),
+            'projects' => LiveUpdate::live($shoots->mapWithKeys(fn (Shoot $shoot) => [
                 $shoot->public_id => ['id' => $shoot->case->public_id, 'name' => $shoot->case->name],
-            ]),
-            'mine' => $shoots
+            ])),
+            'mine' => LiveUpdate::live($shoots
                 ->filter(fn (Shoot $shoot) => $shoot->crew->contains('user_id', $user->id))
                 ->pluck('public_id')
-                ->values(),
-            'season' => $view === 'saison' ? $this->season($user, $vocabulary) : null,
-            'workingDays' => $manages ? StudioSettings::current()->workingDays() : null,
+                ->values()),
+            'season' => LiveUpdate::live($view === 'saison' ? $this->season($user, $vocabulary) : null),
+            'workingDays' => LiveUpdate::live($manages ? StudioSettings::current()->workingDays() : null),
         ]);
     }
 

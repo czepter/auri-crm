@@ -29,6 +29,7 @@ use App\Settings\Rules\ValidFormat;
 use App\Settings\Rules\ValidIban;
 use App\Settings\Support\LogoResponse;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -73,20 +74,20 @@ class StudioSettingsController extends Controller
             // empty — an older installation can still carry its own value, and
             // naming the variable would then be a lie. Hence the raw column
             // rather than the resolved value the screen prints.
-            'mailSenderFromEnv' => [
+            'mailSenderFromEnv' => LiveUpdate::live([
                 'name' => $row->mail_from_name === null,
                 'address' => $row->mail_from_address === null,
-            ],
-            'settings' => StudioSettingsData::current(),
-            'stripe' => $pane === 'payment' ? PaymentSettingsData::current() : null,
-            'stripeStatus' => $pane === 'payment' ? [
+            ]),
+            'settings' => LiveUpdate::live(StudioSettingsData::current()),
+            'stripe' => LiveUpdate::live($pane === 'payment' ? PaymentSettingsData::current() : null),
+            'stripeStatus' => LiveUpdate::live($pane === 'payment' ? [
                 'lastWebhookAt' => StripeEvent::query()->max('created_at'),
                 'lastPaidOn' => PaymentInstallment::query()->where('settled_via', SettledVia::Stripe)->max('paid_on'),
-            ] : null,
-            'mailTemplates' => $pane === 'email'
+            ] : null),
+            'mailTemplates' => LiveUpdate::live($pane === 'email'
                 ? DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Mail)->orderBy('name')->get()
                     ->map(fn (DocumentTemplate $template) => ['id' => $template->family_id, 'name' => $template->name])->all()
-                : [],
+                : []),
         ]);
     }
 

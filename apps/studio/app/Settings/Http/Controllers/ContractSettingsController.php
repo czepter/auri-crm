@@ -7,6 +7,7 @@ use App\Enums\ContractMode;
 use App\Http\Controllers\Controller;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\ContractSettingsData;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -21,7 +22,7 @@ class ContractSettingsController extends Controller
     {
         $this->authorizeSettings();
 
-        return Inertia::render('Settings/Contracts', ['settings' => ContractSettingsData::current()]);
+        return Inertia::render('Settings/Contracts', ['settings' => LiveUpdate::live(ContractSettingsData::current())]);
     }
 
     public function update(Request $request): RedirectResponse

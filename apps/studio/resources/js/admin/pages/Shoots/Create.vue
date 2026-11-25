@@ -12,7 +12,6 @@ import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { TimePicker } from '@/ui/time-picker'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { focusFirstError } from '@/admin/lib/focusInvalid'
 import { shortDate } from '@/admin/lib/dates'
 
@@ -21,7 +20,6 @@ const props = defineProps<{
   kinds: string[]
   date: string | null
 }>()
-useLiveProps([])
 
 const { t } = useI18n()
 const project = ref(props.project)

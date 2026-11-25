@@ -42,6 +42,7 @@ use App\Quotes\Screens\ReadQuoteWorkspace;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Carbon\CarbonInterval;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
@@ -71,7 +72,7 @@ class QuoteController extends Controller
             ->get();
 
         return Inertia::render('Quotes/Index', [
-            'quotes' => QuoteRowData::collect($quotes->map(QuoteRowData::fromModel(...))),
+            'quotes' => LiveUpdate::live(QuoteRowData::collect($quotes->map(QuoteRowData::fromModel(...)))),
         ]);
     }
 
@@ -89,21 +90,21 @@ class QuoteController extends Controller
 
         return Inertia::render('Quotes/Show', [
             'projectId' => $quote->case->public_id,
-            'projectName' => $quote->case->name,
-            'projectIsBooked' => $quote->case->isBooked(),
-            'canManageQuotes' => $viewer->can('manageQuotes', $quote->case),
+            'projectName' => LiveUpdate::live($quote->case->name),
+            'projectIsBooked' => LiveUpdate::live($quote->case->isBooked()),
+            'canManageQuotes' => LiveUpdate::live($viewer->can('manageQuotes', $quote->case)),
             // The payment plan is the project's, not this one quote's — it
             // stays on the Angebote tab, not in this quote's own capsule.
             'canManagePaymentPlan' => false,
             'paymentPlan' => null,
-            ...Arr::only($workspace($quote->case, $viewer), ['packages', 'catalogItems', 'contacts', 'canManageCatalog', 'vatSettings']),
-            'quotes' => [QuoteData::fromModel($quote)],
+            ...array_map(LiveUpdate::live(...), Arr::only($workspace($quote->case, $viewer), ['packages', 'catalogItems', 'contacts', 'canManageCatalog', 'vatSettings'])),
+            'quotes' => LiveUpdate::live([QuoteData::fromModel($quote)]),
             // QuoteData carries the recipient only as a contact id (the
             // editor's own preselect value) — this screen has no editor
             // beside it to resolve that id into a name, so it needs the
             // name itself.
-            'recipientName' => $quote->recipientContact?->name,
-            'views' => $quote->views()->latest('viewed_at')->get()->map(DocumentViewData::fromModel(...)),
+            'recipientName' => LiveUpdate::live($quote->recipientContact?->name),
+            'views' => LiveUpdate::live($quote->views()->latest('viewed_at')->get()->map(DocumentViewData::fromModel(...))),
         ]);
     }
 
@@ -195,7 +196,7 @@ class QuoteController extends Controller
             // Mit dem ersten Angebot geht ein Portal-Link hinaus; was das
             // Impressum trägt, muss vorher stehen.
             'missingBusinessData' => app(StudioReadiness::class)->missingForQuote(),
-            ...($case
+            ...array_map(LiveUpdate::live(...), $case
                 ? Arr::except($workspace($case, $viewer), 'paymentPlan')
                 : [
                     'quotes' => [], 'packages' => [], 'catalogItems' => [], 'contacts' => [], 'canManageCatalog' => false,

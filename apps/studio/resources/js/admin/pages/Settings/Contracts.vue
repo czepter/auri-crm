@@ -9,11 +9,9 @@ import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Label } from '@/ui/label'
 import { saveState } from '@/admin/lib/autosave'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ settings: App.Settings.Data.ContractSettingsData }>()
-useLiveProps(['settings'])
 
 const { t } = useI18n()
 

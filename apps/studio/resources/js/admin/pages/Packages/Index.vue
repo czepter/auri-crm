@@ -8,10 +8,8 @@ import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
 import { formatEurosRounded } from '@/lib/money'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ packages: App.Catalog.Data.PackageData[] }>()
-useLiveProps(['packages'])
 
 // Gruppiert nach dem, was die Pakete unterscheidet: die einen sind Leistungen,
 // die ein Bestandskunde selbst anfragen kann, die anderen Vorlagen für

@@ -24,6 +24,7 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Notifications\QuoteSent;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -163,12 +164,12 @@ class DocumentTemplateController extends Controller
         abort_unless($documentTemplate->is_current, 404);
 
         return Inertia::render('DocumentTemplates/Edit', [
-            'template' => DocumentTemplateData::fromModel($documentTemplate),
+            'template' => LiveUpdate::live(DocumentTemplateData::fromModel($documentTemplate)),
             // One palette, not three: a family's type never changes.
             // C-16 (#252): the projects the preview can reckon with. Newest
             // first — a template is written for the work in front of you.
-            'projects' => ClientCase::query()->latest()->limit(50)->get()
-                ->map(fn (ClientCase $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
+            'projects' => LiveUpdate::live(ClientCase::query()->latest()->limit(50)->get()
+                ->map(fn (ClientCase $project) => ['id' => $project->public_id, 'name' => $project->name])->all()),
             'palette' => DocumentBlockCatalog::paletteFor($documentTemplate->type),
             'mergeFields' => $this->mergeFieldOptions(),
         ]);

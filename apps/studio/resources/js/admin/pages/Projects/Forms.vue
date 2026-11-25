@@ -6,7 +6,6 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import FormFieldsEditor from '@/admin/components/templates/FormFieldsEditor.vue'
 import { toPayload, toRow } from '@/admin/lib/formFields'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
@@ -25,7 +24,6 @@ const props = defineProps<{
   formTemplates: { value: string; label: string }[]
   fieldTypes: { value: string; label: string }[]
 }>()
-useLiveProps(['header', 'formInstances', 'formTemplates'])
 
 const { t } = useI18n()
 

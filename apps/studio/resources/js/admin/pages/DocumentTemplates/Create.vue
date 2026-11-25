@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   types: { value: string; label: string }[]
@@ -24,7 +23,6 @@ const props = defineProps<{
   starters: Record<string, Starter[]>
   projects: { id: string; name: string }[]
 }>()
-useLiveProps([])
 
 type Starter = {
   key: string

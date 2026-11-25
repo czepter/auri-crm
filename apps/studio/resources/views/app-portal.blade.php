@@ -12,7 +12,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- A client's own gallery and paperwork, never something to index. --}}
     <meta name="robots" content="noindex, nofollow">
-    <title inertia>{{ \App\Models\StudioSettings::current()->display_name ?? config('app.name', 'Studio') }}</title>
+    <title data-inertia>{{ \App\Models\StudioSettings::current()->display_name ?? config('app.name', 'Studio') }}</title>
     @vite('resources/js/portal/main.ts')
     @inertiaHead
 </head>

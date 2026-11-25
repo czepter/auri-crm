@@ -35,6 +35,7 @@ use App\Portal\Support\PortalSettings;
 use App\Privacy\Models\DsgvoRequest;
 use App\Settings\Rules\ValidFormat;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -104,7 +105,7 @@ class ContactController extends Controller
         $this->authorize('viewAny', Contact::class);
 
         return Inertia::render('Contacts/Index', [
-            'contacts' => $this->rows(),
+            'contacts' => LiveUpdate::live($this->rows()),
         ]);
     }
 
@@ -207,35 +208,35 @@ class ContactController extends Controller
         return Inertia::render('Contacts/Edit', [
             // The pane beside the sheet, as on an inquiry: the whole list,
             // narrowed in the browser.
-            'contacts' => $this->rows(),
-            'contact' => ContactSuggestionData::fromModel($contact->loadCount('cases')),
+            'contacts' => LiveUpdate::live($this->rows()),
+            'contact' => LiveUpdate::live(ContactSuggestionData::fromModel($contact->loadCount('cases'))),
             // M-06's billing address rides beside ContactSuggestionData
             // rather than inside it: that class is also the typeahead's
             // response shape (ContactSearchController), and a client's home
             // address has no business travelling on every keystroke.
-            'billingAddress' => [
+            'billingAddress' => LiveUpdate::live([
                 'street' => $contact->street,
                 'postcode' => $contact->postcode,
                 'city' => $contact->city,
-            ],
-            'socialProfiles' => $contact->social_profiles ?? [],
+            ]),
+            'socialProfiles' => LiveUpdate::live($contact->social_profiles ?? []),
             'socialPlatforms' => $this->socialPlatforms(),
             // E-11: every thread this contact is on, across projects — the
             // question "what have we actually said to this person" has no
             // other place to be answered, because a thread only ever knows
             // its own project.
-            'correspondence' => Message::query()
+            'correspondence' => LiveUpdate::live(Message::query()
                 ->whereHas('thread.participants', fn ($query) => $query->where('contact_id', $contact->id))
                 ->with(['thread.case', 'contact', 'author'])
                 ->latest()
                 ->limit(50)
                 ->get()
                 ->map(MessageData::withProject(...))
-                ->all(),
+                ->all()),
             // C-18 (#254): a project is an order with money and dates, a
             // gallery a delivery with an expiry. Mixed into one list they
             // read as the same thing, so they are two sections.
-            'projects' => $contact->cases()->with(['primaryShoot', 'latestQuote', 'currentQuote'])->get()
+            'projects' => LiveUpdate::live($contact->cases()->with(['primaryShoot', 'latestQuote', 'currentQuote'])->get()
                 ->map(fn (ClientCase $project) => [
                     'id' => $project->public_id,
                     'name' => $project->name,
@@ -245,11 +246,11 @@ class ContactController extends Controller
                     'booked' => $project->isBooked(),
                     'open' => ! $project->isBooked() && ! $project->isClosed(),
                     'quote' => $project->currentQuote === null ? null : ['status' => $project->currentQuote->status->value, 'total' => $project->currentQuote->gross()],
-                ])->all(),
-            'openInvoices' => $this->openInvoices($contact, $user),
-            'openTasks' => $this->openTasks($contact, $user),
-            'nextShoot' => $this->nextShoot($contact, $user),
-            'galleries' => Gallery::query()
+                ])->all()),
+            'openInvoices' => LiveUpdate::live($this->openInvoices($contact, $user)),
+            'openTasks' => LiveUpdate::live($this->openTasks($contact, $user)),
+            'nextShoot' => LiveUpdate::live($this->nextShoot($contact, $user)),
+            'galleries' => LiveUpdate::live(Gallery::query()
                 ->whereIn('case_id', $contact->cases()->select('cases.id'))
                 ->with('currentVersion')
                 ->get()
@@ -265,12 +266,12 @@ class ContactController extends Controller
                         ->where('gallery_id', $gallery->id)
                         ->where('contact_id', $contact->id)
                         ->min('viewed_on'),
-                ])->all(),
+                ])->all()),
             // Everyone else on this contact's projects — the other half of a
             // couple, the planner, whoever pays. Named with the role they
             // hold, because that is the only thing that makes the list
             // readable.
-            'connected' => Contact::query()
+            'connected' => LiveUpdate::live(Contact::query()
                 ->whereKeyNot($contact->id)
                 ->whereHas('cases', fn ($query) => $query->whereIn('cases.id', $contact->cases()->select('cases.id')))
                 ->with(['cases' => fn ($query) => $query->whereIn('cases.id', $contact->cases()->select('cases.id'))])
@@ -279,12 +280,12 @@ class ContactController extends Controller
                     'id' => $other->public_id,
                     'name' => $other->name,
                     'role' => $other->cases->first()?->pivot->role,
-                ])->all(),
+                ])->all()),
             // Was dieses Studio diesem Kunden einzeln vorgeschlagen hat, und
             // woraus es waehlen kann. Beides nur aus dem, was im Portal
             // angeboten wird — ein Vorschlag auf eine zurueckgezogene Leistung
             // waere einer ins Leere.
-            'suggestions' => ServiceSuggestion::query()
+            'suggestions' => LiveUpdate::live(ServiceSuggestion::query()
                 ->where('contact_id', $contact->id)
                 ->with(['package', 'suggestedBy'])
                 ->get()
@@ -296,8 +297,8 @@ class ContactController extends Controller
                     'author' => $suggestion->suggestedBy?->name,
                     'suggestedOn' => $suggestion->created_at?->format('Y-m-d'),
                     'live' => $suggestion->package->portal_offered,
-                ])->all(),
-            'offerablePackages' => Package::query()->portalOffered()->orderBy('name')
+                ])->all()),
+            'offerablePackages' => LiveUpdate::live(Package::query()->portalOffered()->orderBy('name')
                 ->with('items')
                 ->get()
                 ->map(fn (Package $package) => [
@@ -307,31 +308,31 @@ class ContactController extends Controller
                     'priceMode' => ($package->portal_price_mode ?? PortalPriceMode::Exact)->value,
                     'requiresDate' => $package->portal_requires_date,
                 ])
-                ->all(),
+                ->all()),
             // Wann dieser Kunde im Portal war und wie oft. Aus den
             // eingelösten Links: eine Vorschau des Studios ist kein Besuch
             // des Kunden und zählt deshalb nicht mit.
-            'portalLogins' => $this->portalLogins($contact),
-            'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
-            'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
-            'canSendPortalAccess' => filled($contact->email) && ($user?->can('sendPortalAccess', $contact) ?? false),
-            'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),
-            'canManageDsgvo' => $user?->can('eraseDsgvoData', $contact) ?? false,
+            'portalLogins' => LiveUpdate::live($this->portalLogins($contact)),
+            'portalAccessRevokedAt' => LiveUpdate::live($contact->portal_access_revoked_at?->toIso8601String()),
+            'canRevokePortalAccess' => LiveUpdate::live($user?->can('revokePortalAccess', $contact) ?? false),
+            'canSendPortalAccess' => LiveUpdate::live(filled($contact->email) && ($user?->can('sendPortalAccess', $contact) ?? false)),
+            'dsgvoErasedAt' => LiveUpdate::live($contact->dsgvo_erased_at?->toIso8601String()),
+            'canManageDsgvo' => LiveUpdate::live($user?->can('eraseDsgvoData', $contact) ?? false),
             // P-09 (#228): what the portal does for THIS client. Per contact
             // and not per project — a venue with forty dates a year is set up
             // once. Each value is three-valued: absent means inherit, which
             // is why the studio's own value travels beside it.
-            'portalDefaults' => $this->portalDefaults($portal),
-            'portalOverrides' => (object) ($contact->portal_overrides ?? []),
+            'portalDefaults' => LiveUpdate::live($this->portalDefaults($portal)),
+            'portalOverrides' => LiveUpdate::live((object) ($contact->portal_overrides ?? [])),
             // P-09 (#228): may this person open "Vorschau als Kunde"? The
             // link itself is minted on POST, not rendered into the page — a
             // live credential in a prop is a live credential in a browser
             // history and a screenshot.
-            'canPreviewPortal' => $user?->can(Capability::ManageSettings->value) ?? false,
+            'canPreviewPortal' => LiveUpdate::live($user?->can(Capability::ManageSettings->value) ?? false),
             // P-05 (#224): what the client asked for from inside the portal.
             // A request nobody at the studio ever sees is worse than no
             // button at all, and the deadline is legal rather than polite.
-            'dsgvoRequests' => DsgvoRequest::query()->open()
+            'dsgvoRequests' => LiveUpdate::live(DsgvoRequest::query()->open()
                 ->where('contact_id', $contact->id)
                 ->get()
                 ->map(fn (DsgvoRequest $request) => [
@@ -339,7 +340,7 @@ class ContactController extends Controller
                     'kind' => $request->kind,
                     'requestedAt' => $request->created_at->toIso8601String(),
                 ])
-                ->all(),
+                ->all()),
         ]);
     }
 

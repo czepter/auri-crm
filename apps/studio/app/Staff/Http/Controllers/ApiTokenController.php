@@ -7,6 +7,7 @@ use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Integration\Models\ApiToken;
 use App\Integration\Models\OAuthClient;
+use App\Support\LiveUpdate;
 use App\Support\PersonalAccessToken;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,15 +25,15 @@ class ApiTokenController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Profile/ApiTokens', [
-            'tokens' => ApiToken::query()->whereNull('revoked_at')->withMax('tokens', 'last_used_at')->latest()->get()
+            'tokens' => LiveUpdate::live(ApiToken::query()->whereNull('revoked_at')->withMax('tokens', 'last_used_at')->latest()->get()
                 ->map(fn (ApiToken $token) => [
                     'id' => $token->public_id,
                     'name' => $token->name,
                     'scopes' => $token->scopes,
                     'createdAt' => $token->created_at->toIso8601String(),
                     'lastUsedAt' => $token->tokens_max_last_used_at ? Carbon::parse($token->tokens_max_last_used_at)->toIso8601String() : null,
-                ]),
-            'connections' => OAuthClient::query()->latest()->get()
+                ])),
+            'connections' => LiveUpdate::live(OAuthClient::query()->latest()->get()
                 ->map(fn (OAuthClient $client) => [
                     'id' => $client->public_id,
                     'clientId' => $client->client_id,
@@ -40,7 +41,7 @@ class ApiTokenController extends Controller
                     'redirectUris' => $client->redirect_uris,
                     'lastUsedAt' => ($lastUsed = PersonalAccessToken::query()->where('oauth_client_id', $client->client_id)->max('last_used_at'))
                         ? Carbon::parse($lastUsed)->toIso8601String() : null,
-                ]),
+                ])),
             'capabilities' => array_map(
                 fn (Capability $c) => ['value' => $c->value, 'label' => $c->label()],
                 Capability::cases(),

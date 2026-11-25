@@ -3,13 +3,11 @@ import { computed } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import NoteThread from '@/admin/components/crm/NoteThread.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
   thread: App.Crm.Data.ThreadEntryData[]
 }>()
-useLiveProps(['header', 'thread'])
 
 const notes = computed(() => props.thread.filter((entry) => !entry.system).reverse())
 </script>

@@ -6,14 +6,12 @@ import FormShell from '@/ui/page/FormShell.vue'
 import PackageItemsEditor from '@/admin/components/quote/PackageItemsEditor.vue'
 import PackagePriceSummary from '@/admin/components/quote/PackagePriceSummary.vue'
 import { eurosToCents } from '@/lib/money'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Field } from '@/ui/field'
 import { Label } from '@/ui/label'
 
 defineProps<{ catalogItems: App.Catalog.Data.CatalogItemData[] }>()
-useLiveProps([])
 
 const form = useForm({
   name: '',

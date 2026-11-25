@@ -13,7 +13,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { formatEurosRounded } from "@/lib/money";
 import { groupEntries } from "@/admin/lib/groupEntries";
 import { NOTICEABLE_DAYS, since } from "@/admin/lib/leadQueue";
-import { useLiveProps } from "@/admin/lib/liveReload";
 import { dayMonth, longDate, monthLabel } from '@/admin/lib/dates'
 
 type Entry = {
@@ -52,7 +51,6 @@ const props = defineProps<{
     projects: { key: string; rows: App.Crm.Data.CaseQueueRowData[] }[];
     galleries: App.Crm.Data.DomainRowData[];
 }>();
-useLiveProps(["today", "entries", "pipeline", "payments", "quotes", "shoots", "activity", "tasks", "openTasks", "todo", "dunning", "leads", "projects", "galleries"]);
 
 const { t } = useI18n();
 

@@ -13,7 +13,6 @@ import { Queue, QueueGroup, QueueItem } from '@/ui/queue'
 import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { focusFirstError } from '@/admin/lib/focusInvalid'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import Chip from '@/ui/page/Chip.vue'
@@ -65,7 +64,6 @@ const props = defineProps<{
   projects: { id: string; label: string }[]
   staffOptions: { value: string; label: string }[]
 }>()
-useLiveProps(['groups', 'open', 'catchAll', 'pending', 'threads', 'unfiled', 'drafts', 'projects', 'staffOptions'])
 
 // One open picker at a time, keyed by the row — the same shape the payments
 // card uses for marking an installment paid.

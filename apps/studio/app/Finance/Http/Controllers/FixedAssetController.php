@@ -10,6 +10,7 @@ use App\Finance\Enums\ExpenseStatus;
 use App\Finance\Models\FiscalYear;
 use App\Finance\Models\FixedAsset;
 use App\Http\Controllers\Controller;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -35,8 +36,8 @@ class FixedAssetController extends Controller
         return Inertia::render('Finance/Assets/Index', [
             'year' => $year,
             'years' => FiscalYear::known($year),
-            'locked' => FiscalYear::query()->where('year', $year)->whereNotNull('locked_at')->exists(),
-            'rows' => $assets->map(fn (FixedAsset $asset) => FixedAssetRowData::fromModel($asset, $year))->values(),
+            'locked' => LiveUpdate::live(FiscalYear::query()->where('year', $year)->whereNotNull('locked_at')->exists()),
+            'rows' => LiveUpdate::live($assets->map(fn (FixedAsset $asset) => FixedAssetRowData::fromModel($asset, $year))->values()),
         ]);
     }
 

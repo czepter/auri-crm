@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\NotificationService;
 use App\Staff\Notifications\StaffInvited;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,7 @@ class InvitationController extends Controller
         $viewer = auth('staff')->user();
 
         return Inertia::render('Staff/Index', [
-            'staff' => User::query()->orderBy('name')->get()->map(fn (User $user) => [
+            'staff' => LiveUpdate::live(User::query()->orderBy('name')->get()->map(fn (User $user) => [
                 'id' => $user->public_id,
                 'transferable' => $viewer->role === StaffRole::Admin && ! $user->is($viewer),
                 'name' => $user->name,
@@ -37,15 +38,15 @@ class InvitationController extends Controller
                 'role' => $user->role->value,
                 'roleLabel' => $user->role->label(),
                 'mfaConfirmed' => $user->hasConfirmedMfa(),
-            ]),
-            'invitations' => StaffInvitation::query()->pending()->orderBy('email')->get()
+            ])),
+            'invitations' => LiveUpdate::live(StaffInvitation::query()->pending()->orderBy('email')->get()
                 ->map(fn (StaffInvitation $invitation) => [
                     'id' => $invitation->public_id,
                     'email' => $invitation->email,
                     'name' => $invitation->name,
                     'roleLabel' => $invitation->role->label(),
                     'expiresOn' => $invitation->expires_at->format('Y-m-d'),
-                ]),
+                ])),
             'roles' => collect(StaffRole::cases())
                 ->map(fn (StaffRole $role) => [
                     'value' => $role->value,

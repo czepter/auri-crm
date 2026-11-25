@@ -18,7 +18,6 @@ import { TimePicker } from '@/ui/time-picker'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
@@ -28,7 +27,6 @@ const props = defineProps<{
   soloStudio: boolean
   shootKinds: string[]
 }>()
-useLiveProps(['header', 'shoots', 'crewAvailability', 'soloStudio'])
 
 const adding = ref(false)
 const form = useForm({

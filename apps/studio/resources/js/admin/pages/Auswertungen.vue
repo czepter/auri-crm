@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChoiceGroup } from '@/ui/choice-group'
 import { formatEurosRounded } from '@/lib/money'
 import { barHeight, ratePoints as ratePointsFor } from '@/admin/lib/chart'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
 import { monthLabel } from '@/admin/lib/dates'
 
@@ -39,7 +38,6 @@ const props = defineProps<{
   shootsByMonth: { month: string; shoots: number }[]
   leadTimes: { buckets: { key: string; label: string; projects: number }[]; median: string | null; withoutDate: number }
 }>()
-useLiveProps(['funnelByMonth', 'sources', 'referrers', 'lostReasons', 'acceptanceRate', 'acceptanceRatePrior', 'revenue', 'revenuePrior', 'perContact', 'revenueByType', 'cashFlow', 'cashFlowPast', 'steps', 'dwell', 'responseTimes', 'shootsByMonth', 'leadTimes'])
 
 // Zeitraum und Typ stehen in der URL: eine gefilterte Auswertung ist ein Link.
 function filter(next: { zeitraum?: string; typ?: string | null }) {

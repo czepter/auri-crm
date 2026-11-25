@@ -6,6 +6,7 @@ use App\Contracts\Data\ContractRowData;
 use App\Contracts\Models\Contract;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Support\LiveUpdate;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,7 +29,7 @@ class ContractIndexController extends Controller
             ->get();
 
         return Inertia::render('Contracts/Index', [
-            'contracts' => ContractRowData::collect($contracts->map(ContractRowData::fromModel(...))),
+            'contracts' => LiveUpdate::live(ContractRowData::collect($contracts->map(ContractRowData::fromModel(...)))),
         ]);
     }
 }

@@ -23,7 +23,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { formatEuros, formatEurosRounded } from '@/lib/money'
 import { useI18n } from 'vue-i18n'
 import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { filledProfiles, withOpenRow } from '@/admin/lib/socialProfile'
 import { Mail, Phone } from 'lucide-vue-next'
 import { shortDate } from '@/admin/lib/dates'
@@ -104,7 +103,6 @@ const props = defineProps<{
   offerablePackages: { id: string; name: string; price: number | null; priceMode: string; requiresDate: boolean }[]
   portalLogins: { count: number; firstAt: string | null; lastAt: string | null }
 }>()
-useLiveProps(['contacts', 'contact', 'billingAddress', 'socialProfiles', 'correspondence', 'openInvoices', 'openTasks', 'nextShoot', 'projects', 'galleries', 'connected', 'suggestions', 'offerablePackages', 'portalLogins', 'portalAccessRevokedAt', 'canRevokePortalAccess', 'canSendPortalAccess', 'dsgvoErasedAt', 'canManageDsgvo', 'portalDefaults', 'portalOverrides', 'canPreviewPortal', 'dsgvoRequests'])
 
 const { t } = useI18n()
 

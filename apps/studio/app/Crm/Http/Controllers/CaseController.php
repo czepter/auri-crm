@@ -97,17 +97,17 @@ class CaseController extends Controller
 
         return Inertia::render('Projects/Index', [
             'view' => request()->query('ansicht') === 'board' ? 'board' : 'liste',
-            'projects' => CaseRowData::collect(
+            'projects' => LiveUpdate::live(CaseRowData::collect(
                 $projects->map(fn (ClientCase $case) => CaseRowData::fromCase($case, $this->position))
-            ),
+            )),
             // #364: the filter pills and the board's columns, in the studio's
             // own order and names — from the booking to the delivery, since
             // before it a project is an inquiry and after it an archive.
-            'stages' => $vocabulary->ordered(StagePipeline::Project)
+            'stages' => LiveUpdate::live($vocabulary->ordered(StagePipeline::Project)
                 ->filter(fn (Stage $stage) => $stage->is_active && $stage->sort_order >= $booked && $stage->sort_order <= $delivered)
                 ->map(fn (Stage $stage) => ['key' => $stage->key, 'name' => $stage->name, 'phase' => $vocabulary->phase($stage)])
-                ->values(),
-            'stageSettings' => app(StageSettingsPayload::class)(),
+                ->values()),
+            'stageSettings' => LiveUpdate::live(app(StageSettingsPayload::class)()),
             'settingsSelection' => app(StageSettingsPayload::class)->selection(request()),
             'returnTo' => app(StageSettingsPayload::class)->returnTo(request()),
             'workflow' => Inertia::optional(function () {
@@ -144,66 +144,66 @@ class CaseController extends Controller
         );
 
         return Inertia::render('Projects/Show', [
-            'header' => $this->header($case),
-            'shoots' => ShootData::collect($this->shootsOf($case)),
-            'shootKinds' => Shoot::kindSuggestions(),
+            'header' => LiveUpdate::live($this->header($case)),
+            'shoots' => LiveUpdate::live(ShootData::collect($this->shootsOf($case))),
+            'shootKinds' => LiveUpdate::live(Shoot::kindSuggestions()),
             // Open first and by due date, then the done ones: a card whose top
             // row is something already finished buries the work.
-            'tasks' => TaskRowData::collect(
+            'tasks' => LiveUpdate::live(TaskRowData::collect(
                 $case->tasks()
                     ->with(['case', 'shoot', 'assignee'])
                     ->orderByRaw('completed_at is not null')
                     ->byDueDate()
                     ->get()
                     ->map(TaskRowData::fromTask(...))
-            ),
-            'shootOptions' => $this->shootOptions($case),
-            'staffOptions' => $this->staffOptions(),
-            'anchors' => $anchors->forCase($case),
+            )),
+            'shootOptions' => LiveUpdate::live($this->shootOptions($case)),
+            'staffOptions' => LiveUpdate::live($this->staffOptions()),
+            'anchors' => LiveUpdate::live($anchors->forCase($case)),
             // Notes, the whitelisted audit trail and what got done, in one
             // order. Admin-only by omission: the portal's own CaseController
             // does not render this key. An internal trace on a client page
             // would disclose staff names and internal event vocabulary.
-            'thread' => ($this->thread)($case),
+            'thread' => LiveUpdate::live(($this->thread)($case)),
             // The scope as it actually stands, not a copy of the quote. The
             // divergence is the difference between the draft at this project
             // and the accepted quote; nothing is locked, because the order
             // changes in conversation and the document lags behind — forbid
             // it and you get a scope that is wrong while the work happens
             // anyway.
-            'scope' => $this->screen->scope($case),
-            ...app(ReadCaseQuote::class)($case),
+            'scope' => LiveUpdate::live($this->screen->scope($case)),
+            ...array_map(LiveUpdate::live(...), app(ReadCaseQuote::class)($case)),
             // C-25: what this type asks of a project, and what this project
             // answers. Definitions and values apart, because a value under a
             // key the type no longer defines is kept but not shown.
-            'fields' => $case->type?->fields()->active()->get()
-                ->map(StageSettingsPayload::field(...))->values()->all() ?? [],
-            'fieldValues' => (object) ($case->field_values ?? []),
+            'fields' => LiveUpdate::live($case->type?->fields()->active()->get()
+                ->map(StageSettingsPayload::field(...))->values()->all() ?? []),
+            'fieldValues' => LiveUpdate::live((object) ($case->field_values ?? [])),
             // C-12 (#248): what the edit state offers as fixed choices. A
             // booked project stands where its shoots stand, so its Stand
             // offers their statuses.
-            'stages' => app(CrmVocabulary::class)->ordered($case->isBooked() ? StagePipeline::Project : StagePipeline::Lead)
+            'stages' => LiveUpdate::live(app(CrmVocabulary::class)->ordered($case->isBooked() ? StagePipeline::Project : StagePipeline::Lead)
                 ->filter(fn (Stage $stage) => $stage->is_active)
-                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name])->values()->all(),
+                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name])->values()->all()),
             'sources' => collect(LeadSource::cases())
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
             'roles' => collect(CaseContactRole::cases())
                 ->map(fn (CaseContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
-            'presets' => ['source' => OtherSuggestions::for('source')],
-            'stage' => $case->isBooked()
+            'presets' => LiveUpdate::live(['source' => OtherSuggestions::for('source')]),
+            'stage' => LiveUpdate::live($case->isBooked()
                 ? $this->position->leastAdvanced($case->shoots)?->status->key
-                : $case->lead?->stage->key,
-            'source' => $case->lead?->source?->value,
-            'sourceOther' => $case->lead?->source_other,
-            'sourceLabel' => $case->lead?->sourceLabel(),
-            'inquiry' => $case->lead === null ? null : [
+                : $case->lead?->stage->key),
+            'source' => LiveUpdate::live($case->lead?->source?->value),
+            'sourceOther' => LiveUpdate::live($case->lead?->source_other),
+            'sourceLabel' => LiveUpdate::live($case->lead?->sourceLabel()),
+            'inquiry' => LiveUpdate::live($case->lead === null ? null : [
                 'text' => $case->lead->inquiry_text,
                 'typeLabel' => $case->typeLabel(),
                 'sourceLabel' => $case->lead->sourceLabel(),
                 'capturedVia' => $case->lead->capturedViaLabel(),
                 'capturedAt' => $case->lead->captured_at->toIso8601String(),
-            ],
-            'stalled' => $this->stalled($case),
+            ]),
+            'stalled' => LiveUpdate::live($this->stalled($case)),
         ]);
     }
 
@@ -357,8 +357,8 @@ class CaseController extends Controller
         RecordVisit::record($case->isBooked() ? 'projekt' : 'anfrage', $case->public_id, $case->name);
 
         return Inertia::render('Projects/Info', [
-            'header' => $this->header($case),
-            'shoots' => ShootData::collect($this->shootsOf($case)),
+            'header' => LiveUpdate::live($this->header($case)),
+            'shoots' => LiveUpdate::live(ShootData::collect($this->shootsOf($case))),
         ]);
     }
 
@@ -367,11 +367,11 @@ class CaseController extends Controller
         $this->authorize('view', $case);
 
         return Inertia::render('Projects/Shoots', [
-            'header' => $this->header($case),
-            'shoots' => ShootData::collect($this->shootsOf($case)),
+            'header' => LiveUpdate::live($this->header($case)),
+            'shoots' => LiveUpdate::live(ShootData::collect($this->shootsOf($case))),
             // Wer an dem Tag kann, nicht nur wer existiert: frei, abwesend
             // oder auf einem anderen Shooting.
-            'crewAvailability' => $crew->forCase($case),
+            'crewAvailability' => LiveUpdate::live($crew->forCase($case)),
         ]);
     }
 
@@ -384,18 +384,18 @@ class CaseController extends Controller
         $this->authorize('view', $case);
 
         return Inertia::render('Projects/Tasks', [
-            'header' => $this->header($case),
-            'tasks' => TaskRowData::collect(
+            'header' => LiveUpdate::live($this->header($case)),
+            'tasks' => LiveUpdate::live(TaskRowData::collect(
                 $case->tasks()
                     ->with(['case', 'shoot', 'assignee'])
                     ->orderByRaw('completed_at is not null')
                     ->byDueDate()
                     ->get()
                     ->map(TaskRowData::fromTask(...))
-            ),
-            'shootOptions' => $this->shootOptions($case),
-            'staffOptions' => $this->staffOptions(),
-            'anchors' => $anchors->forCase($case),
+            )),
+            'shootOptions' => LiveUpdate::live($this->shootOptions($case)),
+            'staffOptions' => LiveUpdate::live($this->staffOptions()),
+            'anchors' => LiveUpdate::live($anchors->forCase($case)),
         ]);
     }
 
@@ -404,8 +404,8 @@ class CaseController extends Controller
         $this->authorize('view', $case);
 
         return Inertia::render('Projects/History', [
-            'header' => $this->header($case),
-            'thread' => ($this->thread)($case),
+            'header' => LiveUpdate::live($this->header($case)),
+            'thread' => LiveUpdate::live(($this->thread)($case)),
         ]);
     }
 
@@ -414,8 +414,8 @@ class CaseController extends Controller
         $this->authorize('view', $case);
 
         return Inertia::render('Projects/Notes', [
-            'header' => $this->header($case),
-            'thread' => ($this->thread)($case),
+            'header' => LiveUpdate::live($this->header($case)),
+            'thread' => LiveUpdate::live(($this->thread)($case)),
         ]);
     }
 
@@ -428,11 +428,11 @@ class CaseController extends Controller
         $this->authorize('view', $case);
 
         return Inertia::render('Projects/Galleries', [
-            'header' => $this->header($case),
-            'galleries' => CaseGalleryData::collect(
+            'header' => LiveUpdate::live($this->header($case)),
+            'galleries' => LiveUpdate::live(CaseGalleryData::collect(
                 $case->galleries()->with(['shoot', 'currentVersion'])->get()
-            ),
-            'shoots' => ShootData::collect($this->shootsOf($case)),
+            )),
+            'shoots' => LiveUpdate::live(ShootData::collect($this->shootsOf($case))),
         ]);
     }
 
@@ -460,8 +460,8 @@ class CaseController extends Controller
         $this->authorize('view', $case);
 
         return Inertia::render('Projects/Quotes', [
-            'header' => $this->header($case),
-            ...app(ReadQuoteList::class)($case),
+            'header' => LiveUpdate::live($this->header($case)),
+            ...array_map(LiveUpdate::live(...), app(ReadQuoteList::class)($case)),
         ]);
     }
 
@@ -470,13 +470,13 @@ class CaseController extends Controller
         $this->authorize('view', $case);
 
         return Inertia::render('Projects/Forms', [
-            'header' => $this->header($case),
-            'formInstances' => FormInstanceData::collect(
+            'header' => LiveUpdate::live($this->header($case)),
+            'formInstances' => LiveUpdate::live(FormInstanceData::collect(
                 $case->formInstances()->with('fields.currentAnswer')->get()
-            ),
-            'formTemplates' => FormTemplate::active()->orderBy('name')->get()
+            )),
+            'formTemplates' => LiveUpdate::live(FormTemplate::active()->orderBy('name')->get()
                 ->map(fn (FormTemplate $template) => ['value' => $template->public_id, 'label' => $template->name])
-                ->all(),
+                ->all()),
             'fieldTypes' => collect(FormFieldType::cases())
                 ->map(fn (FormFieldType $type) => ['value' => $type->value, 'label' => $type->label()])
                 ->all(),
@@ -488,11 +488,11 @@ class CaseController extends Controller
         $this->authorize('managePaymentPlan', $case);
 
         return Inertia::render('Projects/Invoices', [
-            'header' => $this->header($case),
-            'invoices' => InvoiceRowData::collect(
+            'header' => LiveUpdate::live($this->header($case)),
+            'invoices' => LiveUpdate::live(InvoiceRowData::collect(
                 $case->invoices()->with(['installments', 'creditNotes', 'contact', 'case', 'views'])->get()
                     ->map(InvoiceRowData::fromModel(...))
-            ),
+            )),
         ]);
     }
 
@@ -510,20 +510,20 @@ class CaseController extends Controller
         $thread = $case->latestThread()->with('messages.contact', 'messages.author')->first();
 
         return Inertia::render('Projects/Messages', [
-            'header' => $this->header($case),
-            'thread' => $thread === null ? null : ThreadData::fromModel($thread),
+            'header' => LiveUpdate::live($this->header($case)),
+            'thread' => LiveUpdate::live($thread === null ? null : ThreadData::fromModel($thread)),
             // E-10: T-12's mail templates, resolved against this project.
             // Sent with the screen rather than fetched on selection — there
             // are a handful of them, they share one merge-data build, and a
             // round trip per pick would buy nothing.
-            'mailTemplates' => DocumentTemplate::query()
+            'mailTemplates' => LiveUpdate::live(DocumentTemplate::query()
                 ->current()
                 ->ofType(DocumentTemplateType::Mail)
                 ->forShootKind($case->primaryShoot?->kind)
                 ->orderBy('name')
                 ->get()
                 ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $mergeData->forCase($case)))
-                ->all(),
+                ->all()),
         ]);
     }
 

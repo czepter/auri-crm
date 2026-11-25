@@ -16,6 +16,7 @@ use App\Staff\Notifications\StaffEmailChangeConfirmation;
 use App\Staff\Support\DeviceLabel;
 use App\Staff\Support\StudioEvents;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -49,41 +50,41 @@ class ProfileController extends Controller
 
         return Inertia::render('Profile/Index', [
             'pane' => $pane,
-            'user' => [
+            'user' => LiveUpdate::live([
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role->label(),
-            ],
-            'pendingEmail' => UserEmailChange::query()->live()
+            ]),
+            'pendingEmail' => LiveUpdate::live(UserEmailChange::query()->live()
                 ->where('user_id', $user->id)
                 ->latest()
-                ->first()?->new_email,
-            'mfaConfirmed' => $user->hasConfirmedMfa(),
+                ->first()?->new_email),
+            'mfaConfirmed' => LiveUpdate::live($user->hasConfirmedMfa()),
             // Nur auf der Kalender-Seite: calendarToken() prägt das Geheimnis
             // beim ersten Aufruf, und /profil ruft jeder auf.
-            'calendarFeedUrl' => $pane === 'kalender'
+            'calendarFeedUrl' => LiveUpdate::live($pane === 'kalender'
                 ? url('/kalender/'.$user->calendarToken().'/shootings.ics')
-                : null,
+                : null),
             // Ebenso nur auf der Adressbuch-Seite: carddavSecret() prägt das Geheimnis.
-            'carddav' => $pane === 'adressbuch'
+            'carddav' => LiveUpdate::live($pane === 'adressbuch'
                 ? ['server' => url('/dav'), 'username' => $user->email, 'password' => $user->carddavSecret()]
-                : null,
+                : null),
             'workingDays' => $pane === 'kalender' && $user->can(Capability::ManageSettings->value)
                 ? StudioSettings::current()->workingDays()
                 : null,
-            'sessions' => $pane === 'sicherheit' ? $this->sessionGroups($user, $request->session()->getId()) : [],
-            'passkeys' => $pane === 'sicherheit' ? $user->passkeys()->orderBy('created_at')->get()->map(fn (Passkey $passkey) => [
+            'sessions' => LiveUpdate::live($pane === 'sicherheit' ? $this->sessionGroups($user, $request->session()->getId()) : []),
+            'passkeys' => LiveUpdate::live($pane === 'sicherheit' ? $user->passkeys()->orderBy('created_at')->get()->map(fn (Passkey $passkey) => [
                 'id' => $passkey->public_id,
                 'name' => $passkey->name,
                 'createdAt' => $passkey->created_at->toIso8601String(),
                 'lastUsedAt' => $passkey->last_used_at?->toIso8601String(),
-            ])->all() : [],
-            'recoveryCodesLeft' => count($user->mfa_recovery_codes ?? []),
-            'digestFrequency' => $user->digest_frequency,
-            'events' => collect(StudioEvents::ALL)
+            ])->all() : []),
+            'recoveryCodesLeft' => LiveUpdate::live(count($user->mfa_recovery_codes ?? [])),
+            'digestFrequency' => LiveUpdate::live($user->digest_frequency),
+            'events' => LiveUpdate::live(collect(StudioEvents::ALL)
                 ->map(fn (string $class) => $preferences->mode($user, $class)->value)
-                ->all(),
+                ->all()),
             // T-23: which rows may take the fourth state. The three scans
             // describe a condition that is still true in the morning; the
             // other eight happened at a moment and have the summary already.

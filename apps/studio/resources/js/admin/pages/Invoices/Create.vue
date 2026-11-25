@@ -17,7 +17,6 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { centsToEuros, formatDiscount, formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Rate = { id: string; label: string; amount: number; dueOn: string }
 type DraftPayload = {
@@ -46,7 +45,6 @@ const props = defineProps<{
   firstInvoice: boolean
   draft: { id: string; payload: DraftPayload; contact: App.Crm.Data.ContactSuggestionData | null } | null
 }>()
-useLiveProps([])
 
 // IssueInvoice weist eine Rechnung ohne Steuernummer ohnehin ab; das Fenster
 // steht vor dem Formular statt hinter dem Absenden.

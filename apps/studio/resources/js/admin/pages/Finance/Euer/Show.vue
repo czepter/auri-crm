@@ -10,14 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import LockDialog from '@/admin/components/finance/LockDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   report: App.Finance.Data.EuerReportData
   years: number[]
   lockable: boolean
 }>()
-useLiveProps(['report', 'lockable'])
 
 const lockOpen = ref(false)
 const standard = computed(() => props.report.vatMode === 'standard')

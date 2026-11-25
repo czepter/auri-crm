@@ -1,9 +1,9 @@
 import { createApp, h, type DefineComponent } from 'vue'
-import { createInertiaApp, router } from '@inertiajs/vue3'
+import { createInertiaApp, router, usePage } from '@inertiajs/vue3'
 import { createI18n } from 'vue-i18n'
 import de from '../locales/de.json'
-import { followLiveUpdates } from './lib/liveReload'
 import { focusFirstError, focusInvalid } from './lib/focusInvalid'
+import { mercure } from '../lib/mercureLive'
 import '../../css/admin.css'
 import 'vue-sonner/style.css'
 
@@ -33,8 +33,6 @@ const i18n = createI18n({
 // runtime.
 const pages = import.meta.glob<{ default: DefineComponent }>('./pages/**/*.vue')
 
-router.on('navigate', (event) => followLiveUpdates(event.detail.page.props.live))
-
 // The browser's validation bubble stays off; Field words the reason itself.
 // Cancelling the event also cancels the browser's focus on the first invalid
 // control, so that is done here.
@@ -46,6 +44,7 @@ document.addEventListener('invalid', (event) => {
 router.on('error', () => requestAnimationFrame(focusFirstError))
 
 createInertiaApp({
+  live: mercure(() => usePage().props.live as string | null),
   title: (title) => (title ? `${title} · Studio` : 'Studio'),
   resolve: (name) => {
     const page = pages[`./pages/${name}.vue`]
@@ -57,8 +56,6 @@ createInertiaApp({
     return page().then((module) => module.default)
   },
   setup({ el, App, props, plugin }) {
-    followLiveUpdates(props.initialPage.props.live)
-
     createApp({ render: () => h(App, props) })
       .use(plugin)
       .use(i18n)

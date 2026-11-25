@@ -27,7 +27,6 @@ import {
 } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/lib/money";
 import { daysAgo, TYPE_DOT } from "@/admin/lib/boardCard";
-import { useLiveProps } from "@/admin/lib/liveReload";
 import { Button } from "@/ui/button";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/ui/context-menu";
 import { QueueGroup, QueueItem } from "@/ui/queue";
@@ -59,7 +58,6 @@ const props = defineProps<{
     settingsSelection: InstanceType<typeof ProjectSettings>["$props"]["selection"] | null;
     returnTo: string | null;
 }>();
-useLiveProps(["columns", "groups", "queue", "stageSettings"]);
 
 const view = ref(props.view);
 

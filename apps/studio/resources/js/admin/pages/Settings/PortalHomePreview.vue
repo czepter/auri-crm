@@ -9,7 +9,6 @@ import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 /*
  * Die Portal-Startseite selbst, im Rahmen des Einstellungs-Bildschirms —
@@ -40,8 +39,6 @@ const props = defineProps<{
 }>()
 // Wie portal/main.ts: ein Studio mit Sie bekommt die Sie-Texte.
 if (props.clientRegister === 'formal') useI18n().mergeLocaleMessage('de', { portal: de.portalFormal })
-
-useLiveProps(['welcomeText', 'maintenanceMessage', 'shelf', 'fontPair', 'portalBranding', 'portalLegal'])
 
 // Nach Jahr, wie die Startseite selbst: eine Liste ohne die Jahreszeile
 // zeigte eine Ordnung, die es dort nicht gibt.

@@ -49,6 +49,7 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioReadiness;
+use App\Support\LiveUpdate;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -109,13 +110,13 @@ class InvoiceController extends Controller
             ]);
 
         return Inertia::render('Invoices/Index', [
-            'invoices' => InvoiceRowData::collect($invoices->map(InvoiceRowData::fromModel(...))),
-            'drafts' => $drafts,
-            'creditNoteDrafts' => $creditNoteDrafts,
+            'invoices' => LiveUpdate::live(InvoiceRowData::collect($invoices->map(InvoiceRowData::fromModel(...)))),
+            'drafts' => LiveUpdate::live($drafts),
+            'creditNoteDrafts' => LiveUpdate::live($creditNoteDrafts),
             // The export route is gated by ManageSettings, so the years appear only for roles it lets in.
-            'exportYears' => $viewer->can(Capability::ManageSettings->value)
+            'exportYears' => LiveUpdate::live($viewer->can(Capability::ManageSettings->value)
                 ? Invoice::query()->pluck('issued_at')->map(fn ($at) => (int) $at->format('Y'))->unique()->sortDesc()->values()
-                : [],
+                : []),
         ]);
     }
 
@@ -124,7 +125,7 @@ class InvoiceController extends Controller
         self::authorizeProject($invoice->case);
 
         return Inertia::render('Invoices/Show', [
-            'invoice' => InvoiceDetailData::fromModel($invoice),
+            'invoice' => LiveUpdate::live(InvoiceDetailData::fromModel($invoice)),
             'hasCreditNoteDraft' => $invoice->creditNoteDraft()->exists(),
         ]);
     }

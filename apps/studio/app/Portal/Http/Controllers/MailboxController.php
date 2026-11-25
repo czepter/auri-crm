@@ -61,7 +61,7 @@ class MailboxController extends Controller
             'live' => LiveUpdate::subscribePortal($contact->public_id),
             'studioName' => StudioSettings::current()->display_name,
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
-            'threads' => $threads->map(fn (Thread $thread) => [
+            'threads' => LiveUpdate::liveForContact($threads->map(fn (Thread $thread) => [
                 'id' => $thread->public_id,
                 'subject' => $thread->subject,
                 'reference' => $thread->case?->name,
@@ -72,8 +72,8 @@ class MailboxController extends Controller
                 // owes the next one.
                 'waiting' => $thread->latestMessage !== null
                     && $thread->latestMessage->contact_id === null,
-            ])->all(),
-            'openThread' => $open === null ? null : ThreadData::fromModel($open),
+            ])->all(), $contact->public_id),
+            'openThread' => LiveUpdate::liveForContact($open === null ? null : ThreadData::fromModel($open), $contact->public_id),
             'openReference' => $open?->case?->name,
             'bookings' => $this->bookings($contact),
             'preselected' => $request->query('betrifft'),

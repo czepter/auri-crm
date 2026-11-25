@@ -41,7 +41,6 @@ import { groupEntries } from "@/admin/lib/groupEntries";
 import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
 import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { stepOnArrow } from "@/admin/lib/queueStep";
-import { useLiveProps } from "@/admin/lib/liveReload";
 import { usePageCommands } from "@/admin/lib/paletteCommands";
 
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
@@ -95,7 +94,6 @@ const props = defineProps<{
         since: string | null;
     } | null;
 }>();
-useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
 
 const { t } = useI18n();
 const page = usePage();

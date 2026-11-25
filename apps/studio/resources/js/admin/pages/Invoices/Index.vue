@@ -19,7 +19,6 @@ import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStor
 import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday, monthDate } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
 import { invoiceStatusDetail } from '@/admin/lib/invoiceStatus'
 
@@ -28,7 +27,6 @@ type Draft = { id: string; recipient: string | null; projectName: string | null;
 type CreditNoteDraft = { invoiceId: string; updatedOn: string; amount: number }
 
 const props = defineProps<{ invoices: App.Payments.Data.InvoiceRowData[], drafts: Draft[], creditNoteDrafts: CreditNoteDraft[], exportYears: number[] }>()
-useLiveProps(['invoices', 'drafts', 'creditNoteDrafts', 'exportYears'])
 
 const { t } = useI18n()
 const remove = (url: string) => deleteWithUndo(url, { deleted: t('common.deleted'), undo: t('common.undo'), failed: t('common.deleteFailed') })

@@ -20,6 +20,7 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Screens\ReadInquiryColumn;
 use App\Quotes\Support\QuotePipeline;
 use App\Reporting\Support\QuoteAcceptanceRate;
+use App\Support\LiveUpdate;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
@@ -62,32 +63,32 @@ class DashboardController extends Controller
         $priorShoots = $this->shootCount($viewer, $since->copy()->subYear(), $yearAgo);
 
         return Inertia::render('Uebersicht', [
-            'today' => now()->format('Y-m-d'),
+            'today' => LiveUpdate::live(now()->format('Y-m-d')),
             'range' => $range,
-            'entries' => $this->upcoming($viewer),
-            'pipeline' => [
+            'entries' => LiveUpdate::live($this->upcoming($viewer)),
+            'pipeline' => LiveUpdate::live([
                 'total' => $this->pipeline($viewer),
                 'priorYear' => QuotePipeline::asOf($yearAgo, $this->inPlay($viewer)) ?: null,
-            ],
-            'payments' => $this->payments($viewer),
-            'quotes' => [
+            ]),
+            'payments' => LiveUpdate::live($this->payments($viewer)),
+            'quotes' => LiveUpdate::live([
                 'sent' => $quotes['sent'],
                 'accepted' => $quotes['accepted'],
                 'priorSent' => $priorQuotes['sent'] ?: null,
                 'priorAccepted' => $priorQuotes['sent'] ? $priorQuotes['accepted'] : null,
-            ],
-            'shoots' => [
+            ]),
+            'shoots' => LiveUpdate::live([
                 'count' => $this->shootCount($viewer, $since, now()),
                 'priorYear' => $priorShoots ?: null,
-            ],
-            'activity' => $activity($viewer, $since),
-            'tasks' => $this->tasks($viewer),
-            'openTasks' => Task::query()->open()->visibleTo($viewer)->count(),
-            'todo' => $inquiries($viewer),
-            'dunning' => $payments($viewer),
-            'leads' => $leads->queue(),
-            'projects' => $projects->queue($viewer),
-            'galleries' => $afterDelivery($viewer),
+            ]),
+            'activity' => LiveUpdate::live($activity($viewer, $since)),
+            'tasks' => LiveUpdate::live($this->tasks($viewer)),
+            'openTasks' => LiveUpdate::live(Task::query()->open()->visibleTo($viewer)->count()),
+            'todo' => LiveUpdate::live($inquiries($viewer)),
+            'dunning' => LiveUpdate::live($payments($viewer)),
+            'leads' => LiveUpdate::live($leads->queue()),
+            'projects' => LiveUpdate::live($projects->queue($viewer)),
+            'galleries' => LiveUpdate::live($afterDelivery($viewer)),
         ]);
     }
 

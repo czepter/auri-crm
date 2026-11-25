@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, toRef, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { Link, useForm, usePage } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -7,7 +7,6 @@ import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalSubhead from '@/portal/components/PortalSubhead.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { dayDate } from '@/portal/lib/dates'
-import { useLiveMessages } from '@/portal/lib/liveMessages'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -29,10 +28,7 @@ const props = defineProps<{
   preselected: string | null
   // P-09: with messaging limited to bookings, "Allgemein" is not on offer.
   generalAllowed: boolean
-  live: string | null
 }>()
-
-useLiveMessages(toRef(props, 'live'))
 
 // The compose form doubles as "new conversation" — the mailbox is empty on a
 // contact's first visit, so it opens in that state rather than behind a

@@ -13,7 +13,6 @@ import PackagePortalPreview, { type PreviewItem } from '@/admin/components/quote
 import { PreviewOverlay } from '@/ui/preview-overlay'
 import PackagePriceSummary from '@/admin/components/quote/PackagePriceSummary.vue'
 import { centsToEuros, eurosToCents } from '@/lib/money'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Field } from '@/ui/field'
@@ -43,7 +42,6 @@ const props = defineProps<{
   catalogItems: App.Catalog.Data.CatalogItemData[]
   vatRate: number | null
 }>()
-useLiveProps(['package', 'projectTypes', 'galleryPresets', 'requests', 'catalogItems', 'vatRate'])
 
 function day(iso: string) {
   return shortDate(iso)

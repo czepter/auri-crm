@@ -8,7 +8,6 @@ import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import Empty from '@/ui/page/Empty.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { shortDate } from '@/admin/lib/dates'
 
 type Archive = { id: string; status: 'building' | 'ready' | 'failed'; size: number | null; createdAt: string; expiresAt: string | null; url: string | null }
@@ -18,7 +17,6 @@ const props = defineProps<{
   projects: number
   archives: { daten: Archive | null; galleries: { id: string; title: string; size: number; archive: Archive | null }[] } | null
 }>()
-useLiveProps(['contacts', 'projects', 'archives'])
 
 const { t } = useI18n()
 

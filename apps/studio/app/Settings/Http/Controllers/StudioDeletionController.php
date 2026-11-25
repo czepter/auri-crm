@@ -11,6 +11,7 @@ use App\Media\Models\Asset;
 use App\Models\StudioSettings;
 use App\Privacy\Actions\StudioDeletionConfirmation;
 use App\Settings\Actions\UpdateStudioSetting;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,7 +28,7 @@ class StudioDeletionController extends Controller
         self::authorizeOwner();
 
         return Inertia::render('Settings/StudioDeletion', [
-            'codeSent' => $confirmation->pending(),
+            'codeSent' => LiveUpdate::live($confirmation->pending()),
             'graceDays' => StudioSettings::DELETION_GRACE_DAYS,
             'counts' => [
                 'projects' => ClientCase::query()->booked()->count(),

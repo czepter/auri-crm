@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import DisposalDialog from '@/admin/components/finance/DisposalDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 defineProps<{
   year: number
@@ -21,7 +20,6 @@ defineProps<{
   locked: boolean
   rows: App.Finance.Data.FixedAssetRowData[]
 }>()
-useLiveProps(['rows', 'locked'])
 
 const disposing = ref<string | null>(null)
 const dialog = ref(false)

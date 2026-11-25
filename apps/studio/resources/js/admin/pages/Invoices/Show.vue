@@ -11,10 +11,8 @@ import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDi
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ invoice: App.Payments.Data.InvoiceDetailData; hasCreditNoteDraft: boolean }>()
-useLiveProps(['invoice'])
 
 const { t } = useI18n()
 

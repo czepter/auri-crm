@@ -23,7 +23,6 @@ import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
 import { parseQuickAdd } from '@/admin/lib/quickAdd'
 import Chip from '@/ui/page/Chip.vue'
 import { taskGroupLabel, taskGroups } from '@/admin/lib/projectOverview'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const { t } = useI18n()
 
@@ -34,7 +33,6 @@ const props = defineProps<{
   staffOptions: { value: string; label: string }[]
   anchors: { value: string; label: string; group: string; on: string | null }[]
 }>()
-useLiveProps(['header', 'tasks', 'shootOptions', 'staffOptions', 'anchors'])
 
 const shoot = ref('all')
 const audience = ref('all')

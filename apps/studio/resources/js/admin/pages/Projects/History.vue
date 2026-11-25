@@ -6,13 +6,11 @@ import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { groupEntries } from '@/admin/lib/groupEntries'
 import { groupBy } from '@/admin/lib/projectOverview'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
   thread: App.Crm.Data.ThreadEntryData[]
 }>()
-useLiveProps(['header', 'thread'])
 
 const page = usePage()
 const byline = (author: string | null) =>

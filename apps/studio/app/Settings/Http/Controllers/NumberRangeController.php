@@ -9,6 +9,7 @@ use App\Numbering\Actions\UpdateNumberRange;
 use App\Numbering\Enums\NumberRangeResetRule;
 use App\Numbering\Models\NumberRange;
 use App\Settings\Data\NumberRangeData;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -33,7 +34,7 @@ class NumberRangeController extends Controller
         $ranges = NumberRange::query()->orderBy('document_type')->get();
 
         return Inertia::render('Settings/Numbering', [
-            'ranges' => $ranges->map(fn (NumberRange $range) => NumberRangeData::fromModel($range, $allocator))->all(),
+            'ranges' => LiveUpdate::live($ranges->map(fn (NumberRange $range) => NumberRangeData::fromModel($range, $allocator))->all()),
         ]);
     }
 
