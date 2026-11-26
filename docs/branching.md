@@ -12,7 +12,8 @@ feat/* fix/* chore/* ...  ->  dev  ->  main
 1. Cut work branches from `dev`, never from `main`:
    `git switch dev && git pull && git switch -c feat/lead-board`
 2. Name them `<type>/<slug>`, where type is one of
-   `feat feature fix bugfix hotfix chore docs refactor ci test`.
+   `feat feature fix bugfix hotfix chore docs refactor ci test`. Dependabot's
+   `dependabot/*` branches are the one exception.
 3. Open the pull request against `dev`.
 4. `main` accepts pull requests from `dev`, `hotfix/*` or `release/*` only.
 5. A `hotfix/*` merged into `main` gets merged back into `dev` immediately, so

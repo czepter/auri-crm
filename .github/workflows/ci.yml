@@ -41,7 +41,7 @@ jobs:
               ;;
             dev)
               case "$HEAD" in
-                feat/* | feature/* | fix/* | bugfix/* | hotfix/* | chore/* | docs/* | refactor/* | ci/* | test/*) ;;
+                feat/* | feature/* | fix/* | bugfix/* | hotfix/* | chore/* | docs/* | refactor/* | ci/* | test/* | dependabot/*) ;;
                 *)
                   echo "::error::Branches merged into dev must be named <type>/<slug>, one of feat feature fix bugfix hotfix chore docs refactor ci test. Got '$HEAD'."
                   exit 1
