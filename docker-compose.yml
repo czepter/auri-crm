@@ -248,7 +248,7 @@ services:
   # The page cannot be prerendered because which GalleryVersion is current
   # changes the moment a studio owner republishes (astro.config.mjs).
   gallery:
-    image: node:24-slim
+    image: node:26-slim
     working_dir: /app/apps/gallery
     volumes:
       - .:/app
@@ -347,7 +347,7 @@ services:
   # startup (SENTRY_LARAVEL_DSN empty means the SDK never calls out at all —
   # see config/sentry.php), so neither depends_on's a GlitchTip healthcheck.
   glitchtip-postgres:
-    image: postgres:18-alpine
+    image: postgres:19-alpine
     environment:
       POSTGRES_DB: glitchtip
       POSTGRES_USER: glitchtip
@@ -367,7 +367,7 @@ services:
   # a plain Compose deployment never sets. Without this, glitchtip-worker's
   # first Celery beat tick fails outright — the schema doesn't exist yet.
   glitchtip-migrate:
-    image: glitchtip/glitchtip:6
+    image: glitchtip/glitchtip:7
     command: ./manage.py migrate
     environment: &glitchtip-environment
       DATABASE_URL: postgres://glitchtip:glitchtip@glitchtip-postgres:5432/glitchtip
@@ -387,7 +387,7 @@ services:
         condition: service_healthy
 
   glitchtip-web:
-    image: glitchtip/glitchtip:6
+    image: glitchtip/glitchtip:7
     environment: *glitchtip-environment
     ports:
       - "127.0.0.1:${GLITCHTIP_PORT:-8080}:8000"
@@ -398,7 +398,7 @@ services:
         condition: service_healthy
 
   glitchtip-worker:
-    image: glitchtip/glitchtip:6
+    image: glitchtip/glitchtip:7
     command: ./bin/run-celery-with-beat.sh
     environment: *glitchtip-environment
     depends_on:
@@ -434,7 +434,7 @@ services:
   # has no "create this bucket on boot" env var of its own. aws-cli rather than
   # mc: MinIO pulled its images from Docker Hub and quay.io.
   rustfs-init:
-    image: amazon/aws-cli:2.37.1
+    image: amazon/aws-cli:2.42.3
     environment:
       AWS_ACCESS_KEY_ID: studio
       AWS_SECRET_ACCESS_KEY: studio-media-secret
@@ -447,7 +447,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:18-alpine
+    image: postgres:19-alpine
     environment:
       POSTGRES_DB: studio
       POSTGRES_USER: studio
@@ -463,7 +463,7 @@ services:
       retries: 30
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     ports:
       - "127.0.0.1:${REDIS_PORT:-6380}:6379"
     volumes:
