@@ -371,7 +371,7 @@ onUnmounted(() => {
           class="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-md bg-muted p-1 text-center"
         >
           <span class="text-[8.5px] text-muted-foreground">{{ $t(`media.${upload.stage}`) }}</span>
-          <span class="line-clamp-2 text-[8.5px] text-faint">{{ upload.filename }}</span>
+          <span class="line-clamp-2 w-full break-all text-[8.5px] text-faint">{{ upload.filename }}</span>
         </div>
       </div>
 
