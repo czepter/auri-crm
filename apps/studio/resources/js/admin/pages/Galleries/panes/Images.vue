@@ -287,9 +287,12 @@ watch(transferring, (on) => (on ? window.addEventListener('beforeunload', guardU
 
 // beforeunload only catches the hard exit. Inertia swaps the page without
 // reloading, and the running transfer dies with this component. A visit to the
-// same path (live-update reload, set switch) keeps the component and the upload.
+// same path (live-update reload, set switch) keeps the component and the upload,
+// and so does a mutation (Titelbild, Verschieben) redirecting back here.
 const stopInertiaGuard = router.on('before', (event) =>
-  transferring.value && event.detail.visit.url.pathname !== window.location.pathname
+  transferring.value &&
+  event.detail.visit.method === 'get' &&
+  event.detail.visit.url.pathname !== window.location.pathname
     ? window.confirm(t('media.leaveWhileUploading'))
     : true,
 )
