@@ -22,7 +22,7 @@
         "sentry/sentry-laravel": "^4.27",
         "spatie/laravel-data": "^4.23",
         "spatie/laravel-permission": "^8.3",
-        "stripe/stripe-php": "^21.1",
+        "stripe/stripe-php": "^23.1",
         "symfony/yaml": "^8.1",
         "visus/cuid2": "^6.0",
         "web-auth/webauthn-lib": "^5.3",
