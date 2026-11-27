@@ -64,7 +64,7 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && rm -rf /var/lib/apt/lists/* /root/.npm
 
 # ---------------------------------------------------------------- assets
-FROM node:24-alpine AS assets
+FROM node:26-alpine AS assets
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /build

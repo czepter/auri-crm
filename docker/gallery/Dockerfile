@@ -11,7 +11,7 @@
 # HTML, and it needs a runtime here.
 
 # ---------------------------------------------------------------- build
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /build
@@ -24,7 +24,7 @@ COPY apps/gallery apps/gallery
 RUN pnpm --filter @studio/gallery build
 
 # ---------------------------------------------------------------- runtime
-FROM node:24-alpine AS gallery
+FROM node:26-alpine AS gallery
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /app
