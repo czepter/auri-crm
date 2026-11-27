@@ -292,7 +292,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:18-alpine
+    image: postgres:19-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-studio}
@@ -307,7 +307,7 @@ services:
       retries: 20
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     restart: unless-stopped
     command: redis-server --appendonly yes --requirepass ${SERVICE_PASSWORD_REDIS}
     environment:
@@ -357,7 +357,7 @@ services:
       retries: 20
 
   rustfs-init:
-    image: amazon/aws-cli:2.37.1
+    image: amazon/aws-cli:2.42.3
     restart: "no"
     environment:
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
