@@ -11,3 +11,4 @@ apps/studio/storage/logs/*
 apps/studio/bootstrap/cache/*.php
 mockups
 docs
+!apps/studio/resources/views/vendor
