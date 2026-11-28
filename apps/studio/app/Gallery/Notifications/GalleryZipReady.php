@@ -5,6 +5,7 @@ namespace App\Gallery\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryDownloadLink;
+use App\Notifications\Contracts\IgnoresClientMailSwitch;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -25,7 +26,7 @@ use Illuminate\Notifications\Notification;
  * Bei Gast-Bauten führt der Link auf die Galerie-Adresse und öffnet dort die
  * Teile des Archivs allein mit seinem Token.
  */
-class GalleryZipReady extends Notification
+class GalleryZipReady extends Notification implements IgnoresClientMailSwitch
 {
     use AppliesStudioMailIdentity;
 

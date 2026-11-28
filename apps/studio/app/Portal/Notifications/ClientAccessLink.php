@@ -5,6 +5,7 @@ namespace App\Portal\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Models\Contact;
 use App\Models\StudioSettings;
+use App\Notifications\Contracts\IgnoresClientMailSwitch;
 use App\Notifications\Contracts\Transactional;
 use App\Portal\Models\ClientAccess;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -14,7 +15,7 @@ use Illuminate\Notifications\Notification;
  * T-11: Transactional — the client is waiting on this magic link right now,
  * so no preference ever holds it back.
  */
-class ClientAccessLink extends Notification implements Transactional
+class ClientAccessLink extends Notification implements IgnoresClientMailSwitch, Transactional
 {
     use AppliesStudioMailIdentity;
 

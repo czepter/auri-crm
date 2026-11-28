@@ -5,6 +5,7 @@ namespace App\Staff\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Models\StaffInvitation;
 use App\Models\StudioSettings;
+use App\Notifications\Contracts\IgnoresClientMailSwitch;
 use App\Notifications\Contracts\Transactional;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -17,7 +18,7 @@ use Illuminate\Notifications\Notification;
  * T-11: Transactional — the invited person is waiting on this link right
  * now, so no preference and no quiet-hours window ever holds it back.
  */
-class StaffInvited extends Notification implements Transactional
+class StaffInvited extends Notification implements IgnoresClientMailSwitch, Transactional
 {
     use AppliesStudioMailIdentity;
 

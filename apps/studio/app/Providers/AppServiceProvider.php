@@ -58,17 +58,14 @@ use App\Support\PersonalAccessToken;
 use App\Support\Surface;
 use Aws\S3\S3Client;
 use Dedoc\Scramble\Scramble;
-use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Console\ServeCommand;
-use Illuminate\Http\Request;
 use Illuminate\Notifications\Events\NotificationSending;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -199,11 +196,6 @@ class AppServiceProvider extends ServiceProvider
             /** @var Blueprint $this */
             return $this->char('public_id', 24)->unique();
         });
-
-        // By address, not by user: the signed upload route has no audience, and a
-        // caller that sends its bearer along would hand `throttle:30,1` a token
-        // that is no Authenticatable.
-        RateLimiter::for('finance-uploads', fn (Request $request) => Limit::perMinute(30)->by($request->ip()));
 
         // G-01: the api surface's tokens carry this app's own tenant_id and
         // public_id — see App\Support\PersonalAccessToken's own docblock.
