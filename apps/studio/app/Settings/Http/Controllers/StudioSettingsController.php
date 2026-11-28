@@ -363,9 +363,9 @@ class StudioSettingsController extends Controller
      * T-06's own pane and save action, same reasoning as updateVat() above:
      * E-Mail is its own form with its own "Speichern" button.
      *
-     * The sender is not a field here: it comes from MAIL_FROM_NAME and
+     * The sender is not a field here: the address comes from
      * MAIL_FROM_ADDRESS, so it cannot drift away from the SMTP identity it
-     * has to stay aligned with. mail_sender_reset empties the two columns an
+     * has to stay aligned with, and the name is the studio's display_name. mail_sender_reset empties the two columns an
      * older installation may still carry and hands them back to the .env.
      */
     public function updateMail(Request $request): RedirectResponse
