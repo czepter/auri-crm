@@ -79,7 +79,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
           {{ [project.date ? dayDate(project.date) : $t('portal.dateOpen'), venue].filter(Boolean).join(' · ') }}
         </p>
 
-        <div v-if="project.quote" class="-mx-2 mt-8 rounded-md border border-border p-6">
+        <div v-if="project.quote" class="-mx-2 mt-8 surface-card p-6">
           <PortalLabel>{{ $t('portal.document.quote') }}</PortalLabel>
           <p class="mt-4 font-serif text-[34px] leading-[1.1] tracking-[-0.015em] tabular-nums">{{ formatEuros(project.quote.total) }}</p>
           <p v-if="project.quote.acceptedOn || project.quote.validUntil" class="mt-2 text-[13.5px] text-muted-foreground">
@@ -124,7 +124,7 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
                 <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.reachUs') }}</dt>
                 <dd class="m-0 text-[14.5px]">{{ [project.contact.email, project.contact.phone].filter(Boolean).join(' · ') }}</dd>
               </dl>
-              <blockquote v-if="project.inquiryText" class="mt-6 border-l-2 border-line-hover pl-4 text-[16px] leading-[1.6] whitespace-pre-wrap text-muted-foreground">{{ project.inquiryText }}</blockquote>
+              <blockquote v-if="project.inquiryText" class="mt-6 border-l-2 border-line-hover pl-4 text-body leading-[1.6] whitespace-pre-wrap text-muted-foreground">{{ project.inquiryText }}</blockquote>
             </template>
 
             <!-- Editing is the same block, not a form somewhere else: the rows

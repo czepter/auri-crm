@@ -9,12 +9,10 @@ import { Button } from '@/ui/button'
 import { DropArea } from '@/ui/drop-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Row = { line: number; name: string; email: string | null; status: 'create' | 'existing' | 'repeated' | 'invalid'; reason: string | null }
 
 const props = defineProps<{ socialPlatforms: { value: string; label: string }[] }>()
-useLiveProps([])
 
 const { t } = useI18n()
 
@@ -115,7 +113,7 @@ function submit() {
           <div
             v-for="(header, column) in headers"
             :key="column"
-            class="flex items-center gap-4 py-2 shadow-[inset_0_-1px_0_var(--rule)]"
+            class="flex items-center gap-4 py-2 border-b border-rule"
           >
             <span class="min-w-0 flex-1">
               <span class="block truncate text-ui font-semibold">{{ header }}</span>
@@ -155,7 +153,7 @@ function submit() {
           </Table>
         </Card>
 
-        <div class="mt-2 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
+        <div class="mt-2 flex items-center gap-3 pt-4 border-t border-rule [&>button:last-child]:ml-auto">
           <Link
             class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
             href="/kontakte"

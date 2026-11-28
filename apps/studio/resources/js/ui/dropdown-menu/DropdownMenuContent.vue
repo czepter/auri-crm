@@ -31,7 +31,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       :class="
         cn(
           'z-50 min-w-[180px] rounded-[6px] border border-line-hover bg-background p-1 font-sans text-foreground',
-          'shadow-[0_8px_24px_rgb(20_16_14_/_0.10)] outline-none',
+          'outline-none',
           props.class,
         )
       "

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, toRef, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { Link, useForm, usePage } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -7,7 +7,6 @@ import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalSubhead from '@/portal/components/PortalSubhead.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { dayDate } from '@/portal/lib/dates'
-import { useLiveMessages } from '@/portal/lib/liveMessages'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -29,10 +28,7 @@ const props = defineProps<{
   preselected: string | null
   // P-09: with messaging limited to bookings, "Allgemein" is not on offer.
   generalAllowed: boolean
-  live: string | null
 }>()
-
-useLiveMessages(toRef(props, 'live'))
 
 // The compose form doubles as "new conversation" — the mailbox is empty on a
 // contact's first visit, so it opens in that state rather than behind a
@@ -203,7 +199,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
              PortalSubhead has said the subject and the booking by then, so
              the pane's own head steps aside with the frame. -->
         <div
-          class="flex min-h-0 flex-col overflow-hidden rounded-md border border-border max-[979px]:rounded-none max-[979px]:border-0"
+          class="flex min-h-0 flex-col overflow-hidden surface-card max-[979px]:rounded-none max-[979px]:border-0"
           :class="!subscreen && 'max-[979px]:hidden'"
         >
           <template v-if="openThread && !composing">
@@ -239,7 +235,7 @@ const REF = 'mt-2 inline-flex items-center rounded-[var(--r-pill)] border border
                 <Button
                   type="button"
                   variant="portal-chip"
-                  class="-translate-y-full bg-background shadow-md motion-reduce:transition-none"
+                  class="-translate-y-full bg-background motion-reduce:transition-none"
                   @click="jump"
                 >
                   {{ $t('portal.messagesUnseen', unseen) }} ↓

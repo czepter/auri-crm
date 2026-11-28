@@ -67,3 +67,23 @@ export function monthDate(iso: string | null | undefined): string {
     ? new Date(iso).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })
     : ''
 }
+
+/** "14.06.2026". */
+export function shortDate(date: string | Date): string {
+  return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+/** "Sonntag, 14. Juni 2026". */
+export function longDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+/** "14.06." — mit Jahr "14.06.2026". */
+export function dayMonth(iso: string, withYear = false): string {
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', ...(withYear && { year: 'numeric' as const }) })
+}
+
+/** "Jun." — mit Jahr "Jun. 2026". */
+export function monthLabel(date: Date, withYear = false): string {
+  return date.toLocaleDateString('de-DE', { month: 'short', ...(withYear && { year: 'numeric' as const }) })
+}

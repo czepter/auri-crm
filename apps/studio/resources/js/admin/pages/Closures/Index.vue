@@ -7,12 +7,10 @@ import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   closures: App.Settings.Data.StudioClosureData[]
 }>()
-useLiveProps(['closures'])
 
 const rowForms = Object.fromEntries(
   props.closures.map((closure) => [
@@ -53,7 +51,7 @@ function add() {
         <form
           v-for="closure in closures"
           :key="closure.id"
-          class="flex flex-col gap-2 py-3 shadow-[inset_0_1px_0_var(--rule)]"
+          class="flex flex-col gap-2 py-3 border-t border-rule"
           @submit.prevent="save(closure.id)"
         >
           <div class="flex items-center gap-2">

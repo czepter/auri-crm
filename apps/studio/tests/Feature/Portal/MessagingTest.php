@@ -208,12 +208,19 @@ it('opens the conversation ?unterhaltung= names rather than the newest one', fun
 });
 
 it('hands the contact a subscriber cookie for their own topic only', function () {
-    config(['services.mercure.subscriber_key' => 'subscriber-key', 'session.secure' => true]);
+    config(['services.mercure.subscriber_key' => 'subscriber-key', 'session.secure' => true, 'services.mercure.portal_public_url' => '/hub']);
     [, $contact] = bookedContact();
 
     $response = test()->actingAs($contact, 'portal')->get('/nachrichten')->assertOk();
 
-    expect($response->viewData('page')['props']['live'])
-        ->toContain(rawurlencode(LiveUpdate::contactTopic($contact->public_id)));
+    $page = $response->viewData('page');
+    $listener = [
+        'channel' => ['name' => LiveUpdate::contactTopic($contact->public_id), 'type' => 'public'],
+        'events' => [LiveUpdate::EVENT],
+    ];
+
+    expect($page['props']['live'])->toBe('/hub')
+        ->and($page['liveProps']['threads']['listeners'])->toBe([$listener])
+        ->and($page['liveProps']['openThread']['listeners'])->toBe([$listener]);
     $response->assertCookie('__Secure-mercure_access_token', encrypted: false);
 });

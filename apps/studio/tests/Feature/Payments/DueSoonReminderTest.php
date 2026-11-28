@@ -78,8 +78,8 @@ it('writes the reminder in the studio’s own wording, merge fields resolved', f
     $invoice = app(IssueInvoice::class)($installment);
     $installment->refresh();
 
-    $message = (new PaymentReminder($installment))->toMail($installment->plan->case->primaryContact());
+    $draft = (new PaymentReminder($installment))->draft($installment->plan->case->primaryContact());
 
-    expect($message->subject)->toBe("Erinnerung {$invoice->number}")
-        ->and(implode(' ', $message->introLines))->toContain('sind seit '.$installment->due_on->format('d.m.Y').' offen');
+    expect($draft['subject'])->toBe("Erinnerung {$invoice->number}")
+        ->and($draft['body'])->toContain('sind seit '.$installment->due_on->format('d.m.Y').' offen');
 });

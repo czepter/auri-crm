@@ -11,10 +11,8 @@ import InstallmentPaidDialog from '@/admin/components/payments/InstallmentPaidDi
 import InstallmentStornoDialog from '@/admin/components/payments/InstallmentStornoDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{ invoice: App.Payments.Data.InvoiceDetailData; hasCreditNoteDraft: boolean }>()
-useLiveProps(['invoice'])
 
 const { t } = useI18n()
 
@@ -45,6 +43,8 @@ const sendFirst = computed(() => live.value && unpaid.value && !row.value.sentOn
             <InstallmentPaidDialog
               v-if="live && unpaid"
               :installment-id="row.openInstallments[0].id"
+              :subject="row.number"
+              :recipient="invoice.recipient"
               :remaining="row.openInstallments[0].remaining"
               :primary="!sendFirst"
             />
@@ -52,7 +52,7 @@ const sendFirst = computed(() => live.value && unpaid.value && !row.value.sentOn
         </PageHead>
 
         <div class="grid grid-cols-[minmax(0,1fr)_320px] items-start gap-8 px-6 pt-6 max-[900px]:grid-cols-1">
-          <section class="rounded-lg border border-border p-8 max-[640px]:p-5">
+          <section class="surface-card p-8 max-[640px]:p-5">
             <div class="flex items-start justify-between gap-6">
               <div>
                 <div class="text-small text-ink-2">{{ $t('invoiceDetail.recipient') }}</div>
@@ -118,7 +118,7 @@ const sendFirst = computed(() => live.value && unpaid.value && !row.value.sentOn
             </section>
 
             <section v-if="live && (row.paidAmount === 0 || row.paidAmount > row.credited)" class="flex flex-wrap gap-2">
-              <InstallmentStornoDialog v-if="row.paidAmount === 0" :invoice-id="row.id" />
+              <InstallmentStornoDialog v-if="row.paidAmount === 0" :invoice-id="row.id" :number="row.number" :recipient="invoice.recipient" :amount="row.amount" />
               <Button v-if="row.paidAmount > row.credited" :as="Link" variant="outline" :href="`/rechnungen/${row.id}/gutschrift/neu`">{{ $t(hasCreditNoteDraft ? 'payments.creditNoteDraft' : 'payments.creditNote') }}</Button>
             </section>
           </aside>

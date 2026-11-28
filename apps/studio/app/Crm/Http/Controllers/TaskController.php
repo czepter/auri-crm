@@ -10,6 +10,7 @@ use App\Crm\Actions\SetTaskDependency;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Task;
+use App\Engagement\Models\Thread;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,7 +37,13 @@ class TaskController extends Controller
             // two studios' worth of work.
             'depends_on' => ['nullable', 'string'],
             'assignee' => ['nullable', 'string', Rule::exists('users', 'public_id')],
+            'thread' => ['nullable', 'string', Rule::exists('threads', 'public_id')],
         ]);
+
+        // A thread of this project only: a link may not reach across projects.
+        $validated['thread_id'] = isset($validated['thread'])
+            ? $case->threads()->where('public_id', $validated['thread'])->value('id')
+            : null;
 
         $createTask->forCase($case, $validated);
 
@@ -54,7 +61,13 @@ class TaskController extends Controller
             'due_on' => ['nullable', 'date'],
             'assignee' => ['nullable', 'string', Rule::exists('users', 'public_id')],
             'contact' => ['nullable', 'string', Rule::exists('contacts', 'public_id')],
+            'thread' => ['nullable', 'string', Rule::exists('threads', 'public_id')],
         ]);
+
+        // Studio work links only a conversation that belongs to no project yet.
+        $validated['thread_id'] = isset($validated['thread'])
+            ? Thread::query()->whereNull('case_id')->where('public_id', $validated['thread'])->value('id')
+            : null;
 
         $createTask->forStudio($validated);
 

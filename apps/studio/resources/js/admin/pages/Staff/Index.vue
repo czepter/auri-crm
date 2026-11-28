@@ -12,7 +12,6 @@ import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Member = {
   id: string
@@ -32,7 +31,6 @@ defineProps<{
   roles: { value: string; label: string; capabilities: string[] }[]
   capabilities: { value: string; label: string }[]
 }>()
-useLiveProps(['staff', 'invitations'])
 
 const inviting = ref(false)
 const form = useForm({ name: '', email: '', role: 'contributor' })
@@ -128,7 +126,7 @@ function initials(name: string) {
             <div
               v-for="invitation in invitations"
               :key="invitation.id"
-              class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+              class="flex items-center gap-3 py-2.5 border-t border-rule first-of-type:border-t-0"
             >
               <span class="flex size-8 flex-none items-center justify-center rounded-full bg-sunk-2 text-small leading-none font-semibold text-ink-2">{{ initials(invitation.name) }}</span>
               <span class="min-w-0 flex-1">
@@ -158,7 +156,7 @@ function initials(name: string) {
             <div
               v-for="member in staff"
               :key="member.id"
-              class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+              class="flex items-center gap-3 py-2.5 border-t border-rule first-of-type:border-t-0"
             >
               <span class="flex size-8 flex-none items-center justify-center rounded-full bg-sunk-2 text-small leading-none font-semibold text-ink-2">{{ initials(member.name) }}</span>
               <span class="min-w-0 flex-1">

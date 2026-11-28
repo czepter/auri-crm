@@ -15,7 +15,6 @@ import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import QuoteWorkspace from '@/admin/components/quote/QuoteWorkspace.vue'
 import { useI18n } from 'vue-i18n'
 import { shortDate } from '@/portal/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   projectId: string
@@ -33,7 +32,6 @@ const props = defineProps<{
   views: App.Documents.Data.DocumentViewData[]
   vatSettings: VatSettings
 }>()
-useLiveProps(['projectName', 'projectIsBooked', 'canManageQuotes', 'quotes', 'packages', 'catalogItems', 'contacts', 'canManageCatalog', 'recipientName', 'views', 'vatSettings'])
 
 const { t } = useI18n()
 
@@ -42,7 +40,7 @@ const previewing = ref(false)
 const workspace = ref<InstanceType<typeof QuoteWorkspace>>()
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 const address = computed(() => {

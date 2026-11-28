@@ -13,7 +13,6 @@ import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Row = App.Finance.Data.ExpenseRowData
 
@@ -26,7 +25,6 @@ const props = defineProps<{
   categories: App.Finance.Data.ExpenseCategoryData[]
   rows: Row[]
 }>()
-useLiveProps(['rows', 'totals', 'locked'])
 
 const filtered = computed(() => !!(props.filters.kategorie || props.filters.status || props.filters.anteil || props.filters.ohneBeleg))
 

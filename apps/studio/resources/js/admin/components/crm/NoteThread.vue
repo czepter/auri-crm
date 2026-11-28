@@ -138,7 +138,7 @@ function destroy(note: string) {
 
                 <div v-else-if="editing !== null && editing === entry.note">
                     <div
-                        class="flex items-end gap-2 rounded-[16px] bg-sunk-2 py-1.5 pr-1.5 pl-3.5 shadow-[inset_0_0_0_2px_var(--accent)]"
+                        class="flex items-end gap-2 rounded-[16px] bg-sunk-2 py-1.5 pr-1.5 pl-3.5 border-2 border-accent"
                     >
                         <Textarea
                             v-model="edit.body"
@@ -162,7 +162,7 @@ function destroy(note: string) {
                             variant="secondary"
                             size="icon"
                             :aria-label="$t('common.save')"
-                            :disabled="!edit.body.trim() || edit.processing"
+                            :disabled="edit.processing"
                             @click="save"
                         >
                             <Check />
@@ -176,7 +176,7 @@ function destroy(note: string) {
                     </p>
                 </div>
 
-                <div v-else-if="compact" class="py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+                <div v-else-if="compact" class="py-2 border-t border-rule first:border-t-0">
                     <p class="m-0 max-w-[68ch] whitespace-pre-line">{{ entry.body }}</p>
                     <span class="flex flex-wrap items-center gap-x-3 text-small text-ink-2">
                         {{ [entry.at ? dayWithWeekday(entry.at, '') : null, entry.author && !($page.props.soloStudio && entry.author === me) ? entry.author : null].filter(Boolean).join(" · ") }}

@@ -5,14 +5,12 @@ import MessageThread from '@/admin/components/crm/MessageThread.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import Card from '@/ui/page/Card.vue'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
   thread: App.Engagement.Data.ThreadData | null
   mailTemplates: App.Documents.Data.MailTemplateData[]
 }>()
-useLiveProps(['header', 'thread', 'mailTemplates'])
 
 const summary = computed(() => {
   const last = props.thread?.messages.at(-1)

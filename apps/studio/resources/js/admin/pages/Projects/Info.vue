@@ -5,13 +5,11 @@ import CaseRail from '@/admin/components/crm/CaseRail.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import ProjectStep from '@/admin/components/crm/ProjectStep.vue'
 import { nextStep, paymentCall } from '@/admin/lib/projectNextStep'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   header: App.Crm.Screens.CaseHeaderData
   shoots: App.Crm.Data.ShootData[]
 }>()
-useLiveProps(['header', 'shoots'])
 
 const hasStep = computed(
   () => (props.header.canManageShoots && (nextStep(props.shoots) || (props.header.isBooked && !props.shoots.length))) || paymentCall(props.header.paymentPlan, props.header.people),

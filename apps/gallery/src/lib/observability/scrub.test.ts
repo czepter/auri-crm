@@ -6,6 +6,13 @@ import { scrubEvent } from './scrub'
 // proven by a test on the scrub hook rather than by inspection." This is
 // that test — one event, all three, none surviving.
 describe('scrubEvent', () => {
+  it('strips the token of a download mail link from the path', () => {
+    const token = 'a'.repeat(64)
+    const scrubbed = scrubEvent({ request: { url: `https://gallery.example/x/y/download/${token}` } })
+
+    expect(scrubbed.request?.url).toBe('https://gallery.example/x/y/download/[Filtered]')
+  })
+
   it('strips a guest token, a service key and a signed download URL from the same event', () => {
     const event = {
       request: {

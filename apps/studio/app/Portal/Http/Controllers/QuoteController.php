@@ -7,9 +7,9 @@ use App\Documents\Support\DocumentMergeData;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Http\Controllers\Controller;
-use App\Models\StudioSettings;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Portal\Support\LegalTexts;
+use App\Portal\Support\PortalSettings;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
 use Illuminate\Http\RedirectResponse;
@@ -33,7 +33,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class QuoteController extends Controller
 {
-    public function show(Request $request, string $case, RecordDocumentView $record): Response
+    public function show(Request $request, string $case, RecordDocumentView $record, PortalSettings $settings): Response
     {
         $contact = auth('portal')->user();
 
@@ -60,7 +60,7 @@ class QuoteController extends Controller
             // quotes online", the accept() route below is the authorisation
             // half via `portal.capability:accept_quotes`. Never hides an
             // already-accepted quote — only the button that would accept one.
-            'canAccept' => (bool) StudioSettings::current()->portal_accept_quotes_enabled && ! $found->isBooked(),
+            'canAccept' => $settings->acceptQuotesEnabled($contact) && ! $found->isBooked(),
             // Per stage, in plan order: the accepted quote shows which are settled.
             'stagePaid' => ($found->paymentPlan?->installments ?? collect())
                 ->reject->isCancelled()->sortBy('sort_order')

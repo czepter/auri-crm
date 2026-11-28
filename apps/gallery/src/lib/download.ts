@@ -1,100 +1,67 @@
 import { callApi } from './apiClient'
+import type { GalleryCover } from './design'
 
-const COOKIE_PREFIX = 'gallery_download_'
-
-export function downloadCookieName(galleryId: string): string {
-  return COOKIE_PREFIX + galleryId
-}
-
-export const DOWNLOAD_MAX_AGE_SECONDS = 12 * 60 * 60
-
-export interface DownloadBuild {
+export interface DownloadLinkPage {
+  gallery: {
+    id: string
+    title: string
+    count: number
+    cover: (GalleryCover & { key: string; version: string; pass: string | null }) | null
+  }
   size: 'original' | 'web'
-  status: 'building' | 'ready' | 'failed'
+  bytes: number
   parts: { number: number; bytes: number; path: string }[]
 }
 
-export interface DownloadOffer {
-  step: 'pin' | 'email' | 'ready'
-  gallery: { id: string; title: string; count: number; expiresAt: string | null }
-  sizes: Partial<Record<'original' | 'web', number>>
-  builds: DownloadBuild[]
-}
+export type DownloadLinkResult = 'sent' | 'pin' | 'throttled' | 'failed'
 
-interface Passes {
-  view: string | null
-  guest: string | null
-  download: string | null
-}
-
-function passHeaders(passes: Passes): Record<string, string> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json' }
-
-  if (passes.guest) headers['X-Guest-Pass'] = passes.guest
-  if (passes.download) headers['X-Download-Pass'] = passes.download
-
-  return headers
-}
-
-export async function readOffer(
+/** Startet den Bau; die fertige Mail geht an die Adresse, einen Code gibt es nicht. */
+export async function requestDownloadLink(
   apiBase: string,
   galleryId: string,
   requestId: string,
-  passes: Passes,
-): Promise<{ status: number; offer: DownloadOffer | null }> {
-  const response = await callApi(
-    apiBase,
-    `/api/galleries/${galleryId}/download`,
-    requestId,
-    { headers: passHeaders(passes) },
-    passes.view,
-  )
-
-  return { status: response.status, offer: response.ok ? await response.json() : null }
-}
-
-export async function buyDownloadPass(
-  apiBase: string,
-  galleryId: string,
-  requestId: string,
-  pin: string,
+  payload: { email: string; size: string; pin: string | null },
   viewPass: string | null,
-): Promise<string | null> {
+): Promise<DownloadLinkResult> {
   const response = await callApi(
     apiBase,
-    `/api/galleries/${galleryId}/download/pin`,
+    `/api/galleries/${galleryId}/download/link`,
     requestId,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ pin }),
+      body: JSON.stringify(payload),
     },
     viewPass,
   )
 
-  return response.ok ? ((await response.json()) as { pass: string }).pass : null
+  if (response.ok) return 'sent'
+  if (response.status === 429) return 'throttled'
+
+  if (response.status === 422) {
+    const body: { errors?: Record<string, string[]> } = await response.json().catch(() => ({}))
+
+    return body.errors && 'pin' in body.errors ? 'pin' : 'failed'
+  }
+
+  return 'failed'
 }
 
-export async function prepareDownload(
+/** Die Teile hinter dem Token aus der Mail; null heißt abgelaufen oder unbekannt. */
+export async function readDownloadLink(
   apiBase: string,
   galleryId: string,
   requestId: string,
-  size: string,
-  passes: Passes,
-): Promise<boolean> {
+  token: string,
+): Promise<DownloadLinkPage | null> {
   const response = await callApi(
     apiBase,
-    `/api/galleries/${galleryId}/download/vorbereiten`,
+    `/api/galleries/${galleryId}/download-mail/${encodeURIComponent(token)}`,
     requestId,
-    {
-      method: 'POST',
-      headers: passHeaders(passes),
-      body: JSON.stringify({ size }),
-    },
-    passes.view,
+    { headers: { Accept: 'application/json' } },
   )
 
-  return response.ok
+  return response.ok ? await response.json() : null
 }
 
 export function formatBytes(bytes: number): string {

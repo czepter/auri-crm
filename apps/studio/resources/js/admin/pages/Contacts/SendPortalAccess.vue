@@ -3,14 +3,12 @@ import { router } from '@inertiajs/vue3'
 import SendByMailView from '@/admin/components/templates/SendByMailView.vue'
 import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument } from '@/admin/documents/blocks/types'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   contactId: string
   recipients: { name: string; email: string }[]
   mailHtml: string
 }>()
-useLiveProps([])
 
 const message: EditorDocument = {
   blocks: [

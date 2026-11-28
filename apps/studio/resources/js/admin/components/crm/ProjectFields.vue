@@ -6,6 +6,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Switch } from '@/ui/switch'
 import { Textarea } from '@/ui/textarea'
+import { shortDate } from '@/admin/lib/dates'
 
 export type ProjectFieldValues = Record<string, string | number | boolean | string[] | null>
 
@@ -39,7 +40,7 @@ function read(field: Field): string {
   if (value === undefined || value === null || value === '') return '—'
 
   if (field.type === 'boolean') return value ? 'Ja' : 'Nein'
-  if (field.type === 'date') return new Date(String(value)).toLocaleDateString('de-DE')
+  if (field.type === 'date') return shortDate(String(value))
   if (field.type === 'number') return field.unit ? `${value} ${field.unit}` : String(value)
 
   return String(value)

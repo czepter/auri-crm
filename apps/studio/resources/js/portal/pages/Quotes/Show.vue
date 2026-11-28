@@ -183,7 +183,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             <tr v-for="item in quote.items" :key="item.id" :class="[ROW, (item.isIncluded || (item.selectable && !item.selected)) && '[&>td]:text-muted-foreground']">
               <td>
                 <template v-if="item.selectable && !item.selected">{{ $t('quotes.optional') }}: </template>{{ item.title }}
-                <div v-if="item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
+                <div v-if="item.description" class="text-small leading-[1.45] text-muted-foreground">
                   {{ item.description }}
                 </div>
               </td>
@@ -282,7 +282,6 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           <div v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] [&_p+*]:mt-3 [&_*+p]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" v-html="quote.outro" />
         </div>
 
-        <p v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 text-[15px] text-muted-foreground">{{ $t('portal.quoteNone') }}</p>
       </PortalRail>
     </PortalWrap>
 

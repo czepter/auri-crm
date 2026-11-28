@@ -306,7 +306,7 @@ services:
   # (docker/app/mercure.caddy). Locally the surfaces run `artisan serve`,
   # which carries none, so it stands alone.
   mercure:
-    image: dunglas/mercure:v1.1.1
+    image: dunglas/mercure:v1.1.6
     environment:
       SERVER_NAME: ":80"
       MERCURE_TRUSTED_ISSUERS: https://auri-crm.de
@@ -323,7 +323,7 @@ services:
       - "127.0.0.1:${MERCURE_PORT:-3001}:80"
 
   mercure-portal:
-    image: dunglas/mercure:v1.1.1
+    image: dunglas/mercure:v1.1.6
     environment:
       SERVER_NAME: ":80"
       MERCURE_TRUSTED_ISSUERS: https://auri-crm.de

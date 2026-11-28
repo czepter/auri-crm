@@ -17,7 +17,7 @@ class InvoiceRowData extends Data
     /**
      * @param  list<array{id: string, remaining: int}>  $openInstallments
      * @param  list<DocumentViewData>  $views
-     * @param  list<array{id: string, number: string, amount: int, issuedOn: string, hasDocument: bool}>  $creditNotes
+     * @param  list<array{id: string, number: string, amount: int, issuedOn: string, reason: ?string, hasDocument: bool}>  $creditNotes
      */
     public function __construct(
         public string $id,
@@ -33,6 +33,8 @@ class InvoiceRowData extends Data
         public string $status,
         public string $statusLabel,
         public ?int $overdueDays,
+        public ?string $settledOn,
+        public ?string $cancelledOn,
         public ?string $sentOn,
         public ?string $viewedOn,
         public array $views,
@@ -65,6 +67,8 @@ class InvoiceRowData extends Data
             status: $invoice->status(),
             statusLabel: __("payments.invoiceStatus.{$invoice->status()}"),
             overdueDays: self::overdueDays($invoice),
+            settledOn: $invoice->isPaid() ? $invoice->installments->max('paid_on')?->format('Y-m-d') : null,
+            cancelledOn: $invoice->cancelled_at?->format('Y-m-d'),
             sentOn: $invoice->sent_at?->format('Y-m-d'),
             viewedOn: $invoice->views->where('counts', true)->min('viewed_at')?->format('Y-m-d'),
             views: $invoice->views->sortByDesc('viewed_at')->map(DocumentViewData::fromModel(...))->values()->all(),
@@ -79,6 +83,7 @@ class InvoiceRowData extends Data
                 'number' => $note->number,
                 'amount' => (int) $note->amount,
                 'issuedOn' => $note->issued_at->format('Y-m-d'),
+                'reason' => $note->reason,
                 'hasDocument' => $note->pdf_path !== null,
             ])->all(),
         );

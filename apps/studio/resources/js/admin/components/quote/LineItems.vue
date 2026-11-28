@@ -17,7 +17,7 @@ defineProps<{ items: T[] }>()
     <div
       v-for="item in items"
       :key="item.id"
-      class="flex items-baseline gap-3.5 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+      class="flex items-baseline gap-3.5 py-2 border-t border-rule first:border-t-0"
     >
       <span class="min-w-0 flex-1 text-ui leading-[1.47]">
         {{ item.title }}

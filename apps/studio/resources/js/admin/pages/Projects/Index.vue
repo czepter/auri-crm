@@ -11,10 +11,9 @@ import { Button } from '@/ui/button'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/ui/context-menu'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
-import { isoDate } from '@/admin/lib/dates'
+import { isoDate, shortDate } from '@/admin/lib/dates'
 import { formatEurosRounded } from '@/lib/money'
 import { relative, TYPE_DOT } from '@/admin/lib/boardCard'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Phase = App.Crm.Data.CaseRowData['phase']
 
@@ -27,7 +26,6 @@ const props = defineProps<{
   settingsSelection: InstanceType<typeof ProjectSettings>['$props']['selection'] | null
   returnTo: string | null
 }>()
-useLiveProps(['projects', 'stages', 'stageSettings'])
 
 const workflowAllowed = computed(() => (usePage().props.auth.can ?? []).includes('manage_tasks'))
 
@@ -129,7 +127,7 @@ function onKey(event: KeyboardEvent, project: App.Crm.Data.CaseRowData, column: 
 }
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 // The date passed and nobody has shot it: the one row on this screen that
@@ -269,7 +267,7 @@ function reset() {
               <ContextMenu>
               <ContextMenuTrigger as-child>
               <Link
-                class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
+                class="relative block cursor-grab surface-card p-3.5 text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover hover:bg-accent"
                 :class="moving?.id === project.id && 'cursor-grabbing'"
                 :href="`/auftraege/${project.id}`"
                 draggable="true"

@@ -23,7 +23,7 @@ it('reads back a saved document_layout', function () {
 it('saves document_layout through the Belege page', function () {
     [$user, $project] = studioWithProject();
 
-    $this->actingAs($user, 'staff')->patch('/einstellungen/belege', [
+    $this->actingAs($user, 'staff')->patch('/einstellungen/layout', [
         'document_layout' => 'minimal',
     ])->assertRedirect();
 
@@ -33,7 +33,7 @@ it('saves document_layout through the Belege page', function () {
 it('rejects an unknown document_layout', function () {
     [$user, $project] = studioWithProject();
 
-    $this->actingAs($user, 'staff')->patch('/einstellungen/belege', [
+    $this->actingAs($user, 'staff')->patch('/einstellungen/layout', [
         'document_layout' => 'not-a-layout',
     ])->assertSessionHasErrors('document_layout');
 });

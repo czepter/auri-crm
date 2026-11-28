@@ -6,9 +6,12 @@ use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
 use App\Enums\Capability;
 use App\Models\User;
+use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\PaymentInstallment;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -76,8 +79,19 @@ class AutomationRun extends Model
             ->filter(fn (AutomationRun $run) => $run->anchorable === null
                 ? $user->can(Capability::ViewAllCases->value)
                 : ($project = FireAutomationRule::projectOf($run->anchorable)) === null
-                    || $user->can('view', $project))
+                    || ($user->can('view', $project) && $run->paymentDraftOpenFor($user, $project)))
             ->values();
+    }
+
+    /**
+     * A reminder draft is the client's money chase: it stays with whoever may
+     * manage the payment plan, and ends when the rate is no longer owed.
+     */
+    public function paymentDraftOpenFor(User $user, ClientCase $project): bool
+    {
+        return ! $this->anchorable instanceof PaymentInstallment
+            || (in_array($this->anchorable->status, PaymentInstallmentStatus::open(), true)
+                && $user->can('managePaymentPlan', $project));
     }
 
     public function rule(): BelongsTo

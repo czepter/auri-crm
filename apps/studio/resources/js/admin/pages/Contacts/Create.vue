@@ -9,14 +9,12 @@ import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { filledProfiles, withOpenRow } from '@/admin/lib/socialProfile'
 
 defineProps<{
   portalDefaults: Record<string, string | boolean | null>
   socialPlatforms: { value: string; label: string }[]
 }>()
-useLiveProps([])
 
 // P-09 (#228): '' is Standard, and the sheet's own encoding — the transform
 // below drops it, so a contact is born with only the keys that depart.
@@ -90,7 +88,7 @@ function submit() {
           <ContactPortalFields :portal="form.portal" :defaults="portalDefaults" choice />
         </Card>
 
-        <div class="mt-2 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
+        <div class="mt-2 flex items-center gap-3 pt-4 border-t border-rule [&>button:last-child]:ml-auto">
           <Link
             class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
             href="/kontakte"

@@ -17,6 +17,7 @@ const installment = (id: string, label: string, dueOn: string, amount: number, s
     paidAmount,
     remaining: amount - paidAmount,
     isLate: false,
+    cancelledOn: null,
     invoiceId: null,
     invoiceNumber: null,
     invoicedOn: null,

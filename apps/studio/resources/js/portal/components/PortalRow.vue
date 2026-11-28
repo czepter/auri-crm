@@ -52,7 +52,7 @@ withDefaults(defineProps<{
 
     <span
       v-if="aside"
-      class="col-start-2 row-start-1 text-[15px] leading-none font-semibold tracking-[-0.01em] tabular-nums whitespace-nowrap max-[820px]:col-start-1 max-[820px]:row-start-2 max-[820px]:text-[14px]"
+      class="col-start-2 row-start-1 text-[15px] leading-none font-semibold tracking-[-0.01em] tabular-nums whitespace-nowrap max-[820px]:col-start-1 max-[820px]:row-start-2 max-[820px]:text-ui"
       :class="asideOpen ? 'text-foreground' : 'text-muted-foreground'"
     >{{ aside }}</span>
 

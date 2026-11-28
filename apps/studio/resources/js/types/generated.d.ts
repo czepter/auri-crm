@@ -426,6 +426,7 @@ assigneeId: string | null,
 assigneeName: string | null,
 contactId: string | null,
 contactName: string | null,
+threadId: string | null,
 };
 export type TaskTemplateData = {
 id: string,
@@ -507,6 +508,7 @@ portalVisible: boolean,
 canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
 canManageContracts: boolean,
+canGenerateContract: boolean,
 canManagePaymentPlan: boolean,
 primaryShootCancelled: boolean,
 canManageForms: boolean,
@@ -522,14 +524,6 @@ label: string,
 href: string,
 count: number | null,
 countTo: number | null,
-children: {
-key: string,
-label: string,
-translate: boolean,
-href: string,
-count: number | null,
-reorderable: boolean,
-}[],
 }[],
 track: {
 key: string,
@@ -637,6 +631,7 @@ export type InboundMessageState = 'threaded' | 'triage' | 'quarantined';
 namespace Enums {
 export type AbsenceCategory = 'unavailable' | 'holiday' | 'other';
 export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_cases' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates' | 'manage_dsgvo' | 'manage_finances';
+export type ContractMode = 'always' | 'on_demand' | 'off';
 export type StaffRole = 'admin' | 'manager' | 'contributor' | 'reader';
 }
 namespace Finance {
@@ -1093,6 +1088,8 @@ dueOn: string | null,
 status: string,
 statusLabel: string,
 overdueDays: number | null,
+settledOn: string | null,
+cancelledOn: string | null,
 sentOn: string | null,
 viewedOn: string | null,
 views: App.Documents.Data.DocumentViewData[],
@@ -1106,6 +1103,7 @@ id: string,
 number: string,
 amount: number,
 issuedOn: string,
+reason: string | null,
 hasDocument: boolean,
 }[],
 };
@@ -1124,6 +1122,7 @@ paymentReference: string | null,
 paidAmount: number,
 remaining: number,
 isLate: boolean,
+cancelledOn: string | null,
 invoiceId: string | null,
 invoiceNumber: string | null,
 invoicedOn: string | null,
@@ -1286,6 +1285,10 @@ export type ReportPeriod = '12m' | '6m' | 'jahr';
 }
 namespace Settings {
 namespace Data {
+export type ContractSettingsData = {
+mode: App.Enums.ContractMode,
+signOnline: boolean,
+};
 export type GallerySettingsData = {
 id: string,
 expiryDays: number | null,
@@ -1326,7 +1329,6 @@ agbAttach: boolean,
 widerrufAttach: boolean,
 legalFamilies: Record<string, string | null>,
 acceptQuotesEnabled: boolean,
-signContractsEnabled: boolean,
 paymentStatusEnabled: boolean,
 offersEnabled: boolean,
 messagingMode: string,

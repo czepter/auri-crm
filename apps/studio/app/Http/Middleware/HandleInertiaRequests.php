@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRun;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Stage;
@@ -58,7 +57,7 @@ class HandleInertiaRequests extends Middleware
                 'templates' => app(TemplateHubController::class)->allowedKinds() !== [],
             ],
             // #490: der Löschtag, solange das Studio zum Löschen vorgemerkt ist.
-            'studioDeletion' => fn () => $user === null ? null : StudioSettings::current()->deletionDate()?->format('d.m.Y'),
+            'studioDeletion' => $user === null ? null : $this->live(fn () => StudioSettings::current()->deletionDate()?->format('d.m.Y')),
             // The studio's own name. Shared on every surface rather than only
             // in the portal's branding block: the admin wordmark and the
             // sign-in screens wear it with nobody signed in yet. Falls back
@@ -69,7 +68,7 @@ class HandleInertiaRequests extends Middleware
             // shared rather than passed per page.
             'portalPreview' => $request->session()->get('portal_preview') === true,
             // Crew, assignees and bylines name the only person there is.
-            'soloStudio' => fn () => $user !== null && User::soloStudio(),
+            'soloStudio' => $user === null ? false : $this->live(fn () => User::soloStudio()),
             // #480: what the letter fields of quotes and invoices offer —
             // DocumentBlockCatalog's text blocks and every merge field.
             'letterEditor' => fn () => $user === null ? null : [
@@ -94,7 +93,7 @@ class HandleInertiaRequests extends Middleware
             // ponytail: two counts per authenticated request, unbounded by
             // date. Fine at a studio's volume; if the board ever pages, these
             // become one grouped query instead.
-            'nav' => $user === null ? null : [
+            'nav' => $user === null ? null : $this->live([
                 'leads' => fn () => app(OpenLeads::class)->count(),
                 // T-11's bell. Lazy like its neighbours, so a partial reload
                 // that does not ask for it pays nothing.
@@ -104,11 +103,9 @@ class HandleInertiaRequests extends Middleware
                 'projects' => fn () => app(OpenCases::class)->count($user),
                 // Client mails an automation drafted; the Posteingang row's badge.
                 'drafts' => fn () => $user->can(Capability::ManageMessages->value)
-                    ? (($user->can(Capability::ViewAllCases->value)
-                        ? AutomationRun::query()->where('status', AutomationRunStatus::AwaitingApproval)->count()
-                        : AutomationRun::awaitingFor($user)->count()) ?: null)
+                    ? (AutomationRun::awaitingFor($user)->count() ?: null)
                     : null,
-            ],
+            ]),
             // Die laufende Version und ob release-log eine höhere kennt. Chrome
             // wie die Zähler darüber: die Zeile steht auf jedem Admin-Screen
             // über der Profilzeile. Nur dort — der Portal-Surface hat keine
@@ -123,9 +120,9 @@ class HandleInertiaRequests extends Middleware
             // passed per page, because the palette is chrome and opens over
             // whatever screen is up. Lazy for the same reason as the counts.
             'recent' => $user === null ? null : fn () => RecordVisit::recent(),
-            // #357: where this tab listens for changes. Eager rather than a
-            // closure: it queues the hub's cookie, and a partial reload that
-            // does not ask for this prop still has to refresh that.
+            // #357: the hub this tab listens on. Eager rather than a closure: it
+            // queues the hub's cookie, and a partial reload that does not ask for
+            // this prop still has to refresh that.
             'live' => $user !== null && Surface::current() === Surface::ADMIN ? LiveUpdate::subscribe() : null,
             // Welcher Hilfeartikel zu diesem Screen gehört — null bis zwei,
             // Aufgabe zuerst. Aufgelöst aus dem gecachten Index, also ohne
@@ -185,6 +182,12 @@ class HandleInertiaRequests extends Middleware
                 'clientRegister' => fn () => StudioSettings::current()->client_register,
             ] : []),
         ];
+    }
+
+    /** The admin hub's cookie is minted on the admin surface only, so only there does an event reach the tab. */
+    private function live(mixed $props): mixed
+    {
+        return Surface::current() === Surface::ADMIN ? LiveUpdate::live($props) : $props;
     }
 
     /**

@@ -219,7 +219,7 @@ const open = computed(() => props.suggestions.filter((name) => !shots.value.some
     </div>
 
     <div v-if="shots.length" class="border-t border-border pt-4">
-      <div class="text-[20px] leading-tight font-medium">
+      <div class="text-title leading-tight font-medium">
         {{ $t('groupPhotos.total', { minutes: total }) }}
       </div>
       <div class="mt-1.5 text-[12.5px] leading-[1.45] text-faint">

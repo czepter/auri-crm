@@ -11,7 +11,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 rounded-[var(--r)] bg-paper shadow-card px-6 py-5">
+  <div class="flex flex-col gap-3 surface-card px-6 py-5">
     <span class="text-small leading-none font-medium text-ink-2">{{ label }}</span>
 
     <div class="flex flex-col gap-1.5">

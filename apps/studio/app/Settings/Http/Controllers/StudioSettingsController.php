@@ -11,6 +11,9 @@ use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Notifications\Support\MailPreview;
 use App\Payments\Actions\RenderInvoicePdf;
+use App\Payments\Enums\SettledVia;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\StripeEvent;
 use App\Payments\Support\SampleInvoiceData;
 use App\Portal\Notifications\PortalAccessInvitation;
 use App\Quotes\Actions\RenderQuotePdf;
@@ -19,12 +22,14 @@ use App\Quotes\Support\SampleQuoteData;
 use App\Settings\Actions\AdaptClientRegister;
 use App\Settings\Actions\StoreStudioLogo;
 use App\Settings\Actions\UpdateStudioSetting;
+use App\Settings\Data\PaymentSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Rules\ValidFormat;
 use App\Settings\Rules\ValidIban;
 use App\Settings\Support\LogoResponse;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -69,15 +74,20 @@ class StudioSettingsController extends Controller
             // empty — an older installation can still carry its own value, and
             // naming the variable would then be a lie. Hence the raw column
             // rather than the resolved value the screen prints.
-            'mailSenderFromEnv' => [
+            'mailSenderFromEnv' => LiveUpdate::live([
                 'name' => $row->mail_from_name === null,
                 'address' => $row->mail_from_address === null,
-            ],
-            'settings' => StudioSettingsData::current(),
-            'mailTemplates' => $pane === 'email'
+            ]),
+            'settings' => LiveUpdate::live(StudioSettingsData::current()),
+            'stripe' => LiveUpdate::live($pane === 'payment' ? PaymentSettingsData::current() : null),
+            'stripeStatus' => LiveUpdate::live($pane === 'payment' ? [
+                'lastWebhookAt' => StripeEvent::query()->max('created_at'),
+                'lastPaidOn' => PaymentInstallment::query()->where('settled_via', SettledVia::Stripe)->max('paid_on'),
+            ] : null),
+            'mailTemplates' => LiveUpdate::live($pane === 'email'
                 ? DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Mail)->orderBy('name')->get()
                     ->map(fn (DocumentTemplate $template) => ['id' => $template->family_id, 'name' => $template->name])->all()
-                : [],
+                : []),
         ]);
     }
 
@@ -301,7 +311,7 @@ class StudioSettingsController extends Controller
     {
         $this->authorizeSettings();
 
-        if ($page = $this->framed($request, '/einstellungen/belege')) {
+        if ($page = $this->framed($request, '/einstellungen/layout')) {
             return $page;
         }
 

@@ -11,6 +11,7 @@ import { computed, ref, watch } from 'vue'
 import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
+import { completeTask } from '@/admin/lib/undoable'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import StudioTaskCreateDialog from '@/admin/components/crm/StudioTaskCreateDialog.vue'
 import { Button } from '@/ui/button'
@@ -25,14 +26,12 @@ import Empty from '@/ui/page/Empty.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { daysUntil, dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{
   tasks: App.Crm.Data.TaskRowData[]
   staffOptions: { value: string; label: string }[]
 }>()
-useLiveProps(['tasks', 'staffOptions'])
 
 const solo = usePage().props.soloStudio
 const TABS = solo ? (['all', 'done'] as const) : (['mine', 'all', 'done'] as const)
@@ -96,7 +95,8 @@ function firstName(name: string) {
 }
 
 function complete(task: App.Crm.Data.TaskRowData) {
-  router.post(`/aufgaben/${task.id}/${task.isDone ? 'wieder-oeffnen' : 'erledigt'}`, {}, { preserveScroll: true })
+  if (task.isDone) router.post(`/aufgaben/${task.id}/wieder-oeffnen`, {}, { preserveScroll: true })
+  else completeTask(task, { done: t('common.done'), undo: t('common.undo') })
 }
 
 function assign(task: App.Crm.Data.TaskRowData, value: string) {
@@ -121,7 +121,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
 
           <Empty v-if="shown.length === 0" :text="$t('tasks.empty')" />
 
-          <div v-else class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+          <div v-else class="overflow-hidden surface-card">
             <div
               v-for="task in shown"
               :key="task.id"
@@ -188,7 +188,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
         <DialogBody>
           <form id="task-edit-form" class="mb-5 grid grid-cols-2 gap-x-6 gap-y-4" @submit.prevent="save(selected)">
             <Field v-slot="{ id }" wide :label="$t('project.taskTitle')" :error="form.errors.title">
-              <Input :id="id" v-model="form.title" type="text" />
+              <Input :id="id" v-model="form.title" type="text" required />
             </Field>
             <Field wide :label="$t('project.taskDue')" :error="form.errors.due_on">
               <DatePicker v-model="form.due_on" />
@@ -199,6 +199,10 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
             <template v-if="selected.projectId">
               <dt class="text-ink-2">{{ $t('tasks.project') }}</dt>
               <dd><Link :href="`/auftraege/${selected.projectId}`">{{ selected.projectName }}</Link></dd>
+            </template>
+            <template v-if="selected.threadId">
+              <dt class="text-ink-2">{{ $t('tasks.thread') }}</dt>
+              <dd><Link :href="`/posteingang?unterhaltung=${selected.threadId}`">{{ selected.title }}</Link></dd>
             </template>
             <template v-if="selected.contactId">
               <dt class="text-ink-2">{{ $t('leads.contact') }}</dt>
@@ -238,7 +242,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
         </DialogBody>
 
         <DialogFooter>
-          <Button class="ml-auto" type="submit" form="task-edit-form" :disabled="!form.isDirty || !form.title || form.processing">
+          <Button class="ml-auto" type="submit" form="task-edit-form" :disabled="!form.isDirty || form.processing">
             {{ $t('common.save') }}
           </Button>
           <Button variant="outline" type="button" :disabled="selected.isBlocked && !selected.isDone" @click="complete(selected)">

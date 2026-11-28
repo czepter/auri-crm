@@ -11,11 +11,9 @@ import FormShell from '@/ui/page/FormShell.vue'
 import Empty from '@/ui/page/Empty.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
 
 const props = defineProps<{ rules: App.Automation.Data.AutomationRuleData[]; timezone: string }>()
-useLiveProps(['rules', 'timezone'])
 
 const groups = computed(() => {
   const byGroup = new Map<string, App.Automation.Data.AutomationRuleData[]>()
@@ -42,14 +40,14 @@ const create = () => router.post('/einstellungen/automationen')
       <template #nav><SettingsNav active="automations" /></template>
 
       <div class="min-w-0">
-        <Empty v-if="!rules.length" :text="$t('automations.empty')">
+        <Empty v-if="!rules.length">
           <Button variant="secondary" type="button" @click="create">{{ $t('automations.add') }}</Button>
         </Empty>
 
         <template v-else>
           <section v-for="[group, list] in groups" :key="group" class="mb-6 last:mb-0">
             <h2 class="m-0 mb-2 text-small leading-none font-semibold text-foreground">{{ group }}</h2>
-            <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+            <div class="overflow-hidden surface-card">
               <div
                 v-for="rule in list"
                 :key="rule.id"

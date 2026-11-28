@@ -50,12 +50,11 @@
 .doc-mf {
   display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px;
   background: var(--hover); color: var(--ink); font-weight: 500;
-  box-shadow: inset 0 0 0 1px #F1DCD0; white-space: nowrap;
+  outline: 1px solid #F1DCD0; outline-offset: -1px; white-space: nowrap;
 }
 .doc-mf-picker {
   position: absolute; z-index: 40; width: 288px; padding: var(--s3);
   background: #fff; border: 1px solid var(--line-hover); border-radius: var(--r);
-  box-shadow: 0 12px 32px -8px rgba(20, 16, 14, .18);
 }
 .doc-mf-list { display: flex; flex-direction: column; margin-top: var(--s2); max-height: 260px; overflow: auto; }
 .doc-mf-option {

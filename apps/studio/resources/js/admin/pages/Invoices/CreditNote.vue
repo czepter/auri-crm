@@ -13,7 +13,7 @@ import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
 import { Textarea } from '@/ui/textarea'
 import { formatEuros } from '@/lib/money'
-import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+import { dayWithWeekday, isoDate, shortDate } from '@/admin/lib/dates'
 
 type Draft = { taken?: boolean[]; issued_on?: string | null; reason?: string | null; intro?: string | null; outro?: string | null; send?: boolean }
 
@@ -46,7 +46,7 @@ function saveDraft() {
 
 <template>
   <AdminLayout active="rechnungen">
-    <FormShell :title="$t(props.draft ? 'creditNoteBuilder.draftTitle' : 'creditNoteBuilder.title')" :kicker="$t('invoiceDetail.title', { number: row.number })" :kicker-href="`/rechnungen/${row.id}`" wide>
+    <FormShell :title="$t(props.draft ? 'creditNoteBuilder.draftTitle' : 'creditNoteBuilder.title', { number: row.number })" :kicker="$t('invoiceDetail.title', { number: row.number })" :kicker-href="`/rechnungen/${row.id}`" wide>
       <template #head>
         <ChoiceGroup
           class="ml-auto"
@@ -55,7 +55,7 @@ function saveDraft() {
           @update:model-value="(value) => (previewing = value === 'preview')"
         />
         <Button type="button" variant="outline" :disabled="form.processing" @click="saveDraft">{{ $t('invoicesCreate.saveDraft') }}</Button>
-        <Button type="submit" form="credit-note" :disabled="!amount || over || !form.reason || form.processing">{{ $t('creditNoteBuilder.submit') }}</Button>
+        <Button type="submit" form="credit-note" :disabled="form.processing">{{ $t('creditNoteBuilder.submit') }}</Button>
       </template>
 
       <InvoicePreviewPane v-if="previewing" class="mx-auto max-w-[900px]" :payload="payload" :url="`/rechnungen/${row.id}/gutschrift/vorschau`" :portal="false" />
@@ -66,7 +66,7 @@ function saveDraft() {
             <div>
               <div class="text-small text-ink-2">{{ $t('invoiceDetail.recipient') }}</div>
               <div class="font-semibold">{{ invoice.recipient }}</div>
-              <div class="text-small text-ink-2">{{ $t('creditNoteBuilder.reference', { number: row.number, date: new Date(`${row.issuedOn}T12:00`).toLocaleDateString('de-DE') }) }}</div>
+              <div class="text-small text-ink-2">{{ $t('creditNoteBuilder.reference', { number: row.number, date: shortDate(`${row.issuedOn}T12:00`) }) }}</div>
             </div>
 
             <Field v-slot="{ id }" :label="$t('creditNoteBuilder.date')" :error="form.errors.issued_on">

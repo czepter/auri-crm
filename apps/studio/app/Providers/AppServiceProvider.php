@@ -35,6 +35,7 @@ use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Events\InstallmentPaid;
+use App\Payments\Listeners\CreatePaymentPlanOnBooking;
 use App\Payments\Support\InvoiceMergeData;
 use App\Policies\ClientCasePolicy;
 use App\Policies\ContactPolicy;
@@ -220,6 +221,7 @@ class AppServiceProvider extends ServiceProvider
         // CRM keeps its listeners beside the events they answer to.
         Event::listen(CaseBooked::class, ApplyTemplatesOnBooking::class);
         Event::listen(CaseBooked::class, RevealCaseOnBooking::class);
+        Event::listen(CaseBooked::class, CreatePaymentPlanOnBooking::class);
 
         // Every other stage of both pipelines. Booking stays above: it is
         // reachable without a lead stage ever changing.

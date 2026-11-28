@@ -287,9 +287,12 @@ watch(transferring, (on) => (on ? window.addEventListener('beforeunload', guardU
 
 // beforeunload only catches the hard exit. Inertia swaps the page without
 // reloading, and the running transfer dies with this component. A visit to the
-// same path (live-update reload, set switch) keeps the component and the upload.
+// same path (live-update reload, set switch) keeps the component and the upload,
+// and so does a mutation (Titelbild, Verschieben) redirecting back here.
 const stopInertiaGuard = router.on('before', (event) =>
-  transferring.value && event.detail.visit.url.pathname !== window.location.pathname
+  transferring.value &&
+  event.detail.visit.method === 'get' &&
+  event.detail.visit.url.pathname !== window.location.pathname
     ? window.confirm(t('media.leaveWhileUploading'))
     : true,
 )
@@ -371,7 +374,7 @@ onUnmounted(() => {
           class="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-md bg-muted p-1 text-center"
         >
           <span class="text-[8.5px] text-muted-foreground">{{ $t(`media.${upload.stage}`) }}</span>
-          <span class="line-clamp-2 text-[8.5px] text-faint">{{ upload.filename }}</span>
+          <span class="line-clamp-2 w-full break-all text-[8.5px] text-faint">{{ upload.filename }}</span>
         </div>
       </div>
 
@@ -418,7 +421,7 @@ onUnmounted(() => {
       <div class="mb-2 text-small leading-none font-semibold text-faint">
         {{ $t('media.needsAttention') }} · {{ $t('media.needsAttentionCount', failedAssets.length) }}
       </div>
-      <div class="overflow-hidden rounded-[var(--r)] bg-paper shadow-card">
+      <div class="overflow-hidden surface-card">
         <div v-for="asset in failedAssets" :key="asset.publicId" class="flex items-center gap-2.5 border-t border-border p-2.5 text-small first:border-t-0">
           <span class="font-medium text-foreground">{{ asset.filename }}</span>
           <span class="text-ink-2">{{ asset.error }}</span>

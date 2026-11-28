@@ -37,7 +37,7 @@ function priceLabel(offer: App.Catalog.Data.PortalServiceData) {
       <Link
         v-for="offer in props.shelf"
         :key="offer.id"
-        class="block rounded-md border border-border p-3 text-inherit no-underline transition-colors duration-200 ease-[var(--ease)] hover:bg-sunk"
+        class="block surface-card p-3 text-inherit no-underline transition-colors duration-200 ease-[var(--ease)] hover:border-line-hover hover:bg-sunk"
         :href="`/leistungen/${offer.id}`"
       >
         <span class="block overflow-hidden rounded-[var(--r-sm)] bg-sunk">

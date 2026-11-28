@@ -5,6 +5,7 @@ use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
@@ -63,6 +64,20 @@ it('files a conversation as done, and reopens it when the client writes again', 
     ]);
 
     expect(collect(inbox()['groups'])->firstWhere('key', 'unbeantwortet')['rows'])->toHaveCount(1);
+});
+
+it('keeps a conversation open when undo arrives after the client wrote again', function () {
+    $thread = threadWhereLastSpoke('client');
+    $this->post("/posteingang/unterhaltung/{$thread->public_id}/erledigt");
+
+    Message::factory()->for($thread)->create([
+        'contact_id' => Contact::factory()->create()->id,
+        'author_id' => null,
+    ]);
+
+    $this->post("/posteingang/unterhaltung/{$thread->public_id}/erledigt", ['reopen' => true])->assertRedirect();
+
+    expect($thread->fresh()->closed_message_id)->toBeNull();
 });
 
 it('opens the first unanswered conversation, or the one asked for', function () {
@@ -150,4 +165,37 @@ it('keeps a draft without anchor from contributors', function () {
     expect($props['drafts'])->toBeEmpty();
     $this->post("/posteingang/entwuerfe/{$run->public_id}/verwerfen")->assertForbidden();
     expect($run->fresh()->status)->toBe(AutomationRunStatus::AwaitingApproval);
+});
+
+it('links a task made from a conversation and shows it as a badge on the thread', function () {
+    $thread = threadWhereLastSpoke('client');
+
+    $this->post("/auftraege/{$thread->case->public_id}/aufgaben", [
+        'title' => 'Zusage einhalten',
+        'audience' => 'internal',
+        'due_on' => '2026-12-01',
+        'thread' => $thread->public_id,
+    ])->assertRedirect();
+
+    $task = Task::sole();
+
+    expect($task->thread_id)->toBe($thread->id);
+
+    $page = inbox(['unterhaltung' => $thread->public_id]);
+
+    expect($page['open']['task'])->toBe(['dueOn' => '2026-12-01']);
+
+    $this->get('/aufgaben')->assertInertia(fn ($page) => $page->where('tasks.0.threadId', $thread->public_id));
+});
+
+it('ignores a thread of another project when linking a task', function () {
+    $thread = threadWhereLastSpoke('client');
+
+    $this->post('/auftraege/'.ClientCase::factory()->create()->public_id.'/aufgaben', [
+        'title' => 'Fremd',
+        'audience' => 'internal',
+        'thread' => $thread->public_id,
+    ])->assertRedirect();
+
+    expect(Task::sole()->thread_id)->toBeNull();
 });

@@ -20,6 +20,7 @@ type Installment = {
   dueOn: string
   status: string
   isLate: boolean
+  cancelledOn: string | null
   statusLabel: string
   label: string
   invoiceId: string | null
@@ -41,6 +42,7 @@ const props = defineProps<{
   showSwitcher: boolean
   project: { id: string; name: string }
   plan: Plan
+  payableIds: string[]
   quote: { number: string | null } | null
   stripeEnabled: boolean
   paymentStatus: 'success' | 'cancelled' | null
@@ -73,11 +75,9 @@ function payNow(installmentId: string) {
 // DIN 5008: groups of four.
 const iban = computed(() => (props.bankDetails.iban ?? '').replace(/\s+/g, '').replace(/(.{4})(?=.)/g, '$1 '))
 
-const hasPayment = computed(() => props.stripeEnabled || !!props.bankDetails.iban)
-
 // Seven months before the due date "Bezahlen" is a question, not a task.
 const soon = (installment: Installment) => installment.isLate || daysUntil(installment.dueOn) <= 14
-const payable = (installment: Installment) => hasPayment.value && (soon(installment) || (!props.stripeEnabled && !!props.bankDetails.iban))
+const payable = (installment: Installment) => props.payableIds.includes(installment.id)
 const copied = ref<string | null>(null)
 
 async function copy(key: string, text: string) {
@@ -145,8 +145,17 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
               <p class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
                 <PortalDot :state="['paid', 'cancelled'].includes(installment.status) ? 'done' : installment.isLate ? 'late' : soon(installment) ? 'due' : 'open'" />
                 {{ ['paid', 'cancelled'].includes(installment.status)
-                  ? installment.statusLabel
+                  ? [installment.statusLabel, installment.cancelledOn && dayDate(installment.cancelledOn)].filter(Boolean).join(' · ')
                   : $t(installment.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: dayDate(installment.dueOn) }) }}
+              </p>
+
+              <p
+                v-for="note in installment.creditNotes"
+                :key="note.id"
+                class="mt-1.5 flex items-baseline justify-between gap-4 text-[13.5px] text-muted-foreground tabular-nums"
+              >
+                <span>{{ $t('portal.creditNote', { number: note.number }) }} · {{ dayDate(note.issuedOn) }}</span>
+                <span>−{{ formatEuros(note.amount) }}</span>
               </p>
 
               <div v-if="!['paid', 'cancelled'].includes(installment.status) && payable(installment)" class="mt-4">
@@ -215,7 +224,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                 v-if="installment.invoiceNumber !== null"
                 class="mt-2 inline-flex min-h-11 items-center text-[13.5px] whitespace-nowrap text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground"
                 :href="`/projekte/${project.id}/zahlungen/${installment.invoiceId}`"
-              >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</Link>
+              >{{ installment.invoiceNumber }}</Link>
             </div>
           </div>
         </section>

@@ -6,6 +6,7 @@ use App\Crm\Data\TaskRowData;
 use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\LiveUpdate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,19 +24,19 @@ class TaskBoardController extends Controller
         $viewer = auth('staff')->user();
 
         return Inertia::render('Tasks/Index', [
-            'tasks' => TaskRowData::collect(
+            'tasks' => LiveUpdate::live(TaskRowData::collect(
                 Task::query()
                     ->visibleTo($viewer)
                     ->orderByRaw('completed_at is not null')
                     ->byDueDate()
-                    ->with(['case', 'contact', 'shoot', 'assignee', 'dependsOn'])
+                    ->with(['case', 'contact', 'shoot', 'assignee', 'dependsOn', 'thread'])
                     ->get()
                     ->map(TaskRowData::fromTask(...))
                     ->values()
-            ),
-            'staffOptions' => User::query()->orderBy('name')->get()
+            )),
+            'staffOptions' => LiveUpdate::live(User::query()->orderBy('name')->get()
                 ->map(fn (User $user) => ['value' => $user->public_id, 'label' => $user->name])
-                ->all(),
+                ->all()),
         ]);
     }
 }

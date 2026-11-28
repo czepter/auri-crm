@@ -74,9 +74,14 @@ function scrubHeaders(headers: Record<string, string>): Record<string, string> {
   return scrubbed
 }
 
-/** Laravel signed URLs (URL::signedRoute) carry the proof in `signature`; mirrors ScrubSensitiveData::scrubSignature exactly. */
+/**
+ * Laravel signed URLs (URL::signedRoute) carry the proof in `signature`; mirrors ScrubSensitiveData::scrubSignature exactly.
+ * Der Link aus der Download-Mail trägt es als Pfadsegment (`/download/{token}`, api: `/download-mail/{token}`).
+ */
 function scrubSignedUrl(value: string): string {
-  return value.replace(/([?&])(signature|expires)=[^&]*/gi, `$1$2=${REDACTED}`)
+  return value
+    .replace(/([?&])(signature|expires)=[^&]*/gi, `$1$2=${REDACTED}`)
+    .replace(/(\/download(?:-mail)?\/)[0-9a-f]{64}(?=[/?#]|$)/gi, `$1${REDACTED}`)
 }
 
 function scrubFields(data: Record<string, unknown>): Record<string, unknown> {

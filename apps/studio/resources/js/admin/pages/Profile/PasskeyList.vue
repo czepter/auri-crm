@@ -10,6 +10,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import { ceremonyCancelled, passkeysSupported } from '@/admin/lib/passkey'
+import { shortDate } from '@/admin/lib/dates'
 
 type Passkey = { id: string; name: string; createdAt: string; lastUsedAt: string | null }
 
@@ -42,7 +43,7 @@ function closeDelete() {
 }
 
 function date(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE')
+  return shortDate(iso)
 }
 
 async function add() {
@@ -106,7 +107,7 @@ function remove() {
     <div
       v-for="passkey in passkeys"
       :key="passkey.id"
-      class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+      class="flex items-center gap-3 py-2.5 border-t border-rule first-of-type:border-t-0"
     >
       <span class="min-w-0 flex-1">
         <span class="block truncate text-ui leading-[1.35] font-semibold tracking-[-0.015em]">{{ passkey.name }}</span>

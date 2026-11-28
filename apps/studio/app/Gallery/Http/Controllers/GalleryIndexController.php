@@ -8,15 +8,14 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\Capability;
 use App\Gallery\Actions\CreateGallery;
+use App\Gallery\Actions\CreateProjectGallery;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Data\GalleryRowData;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
-use App\Gallery\Support\GalleryDesign;
-use App\Gallery\Support\GallerySettings;
 use App\Http\Controllers\Controller;
-use App\Models\StudioSettings;
 use App\Settings\Data\GallerySettingsData;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -55,12 +54,12 @@ class GalleryIndexController extends Controller
             ->get();
 
         return Inertia::render('Galleries/Index', [
-            'galleries' => GalleryRowData::collect($galleries),
-            'settings' => $mayManage ? GallerySettingsData::current() : null,
-            'presets' => $mayManage
+            'galleries' => LiveUpdate::live(GalleryRowData::collect($galleries)),
+            'settings' => LiveUpdate::live($mayManage ? GallerySettingsData::current() : null),
+            'presets' => LiveUpdate::live($mayManage
                 ? GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get())
-                : [],
-            'mailTemplates' => $mayManage ? self::mailTemplates() : [],
+                : []),
+            'mailTemplates' => LiveUpdate::live($mayManage ? self::mailTemplates() : []),
             // Die Adresszeile der Vorschau. Ohne Slug — welche Galerie das
             // spaeter wird, entscheidet sich beim Anlegen.
             'galleryHost' => preg_replace('#^https?://#', '', rtrim((string) config('services.gallery.url'), '/')),
@@ -96,20 +95,10 @@ class GalleryIndexController extends Controller
             'mode' => $request->query('art') === 'extern' ? 'external' : 'internal',
             'project' => $project ? CaseSuggestionData::fromModel($project) : null,
             'shootId' => $project?->shoots()->where('public_id', $request->query('shooting'))->value('public_id'),
-            'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),
-            // Die unterste Stufe der Geburtskette; die beiden darüber reichen
-            // Vorlage und Projektvorschlag nach.
-            'studioDefaults' => [
-                'downloadRule' => StudioSettings::current()->gallery_default_download_rule,
-                'lists' => (bool) StudioSettings::current()->gallery_default_lists_enabled,
-                'comments' => (bool) StudioSettings::current()->gallery_default_comments_enabled,
-                'expiryDays' => GallerySettings::defaults()['expiryDays'],
-                'design' => GallerySettings::design(),
-            ],
         ]);
     }
 
-    public function store(Request $request, CreateGallery $createGallery): RedirectResponse
+    public function store(Request $request, CreateGallery $createGallery, CreateProjectGallery $createProjectGallery): RedirectResponse
     {
         $this->authorize('create', Gallery::class);
 
@@ -124,13 +113,6 @@ class GalleryIndexController extends Controller
             'external_url' => ['nullable', 'url', 'max:2000', 'required_if:is_external,true'],
             'info' => ['nullable', 'string', 'max:2000'],
             'external_password' => ['nullable', 'string', 'max:200'],
-            'expires_at' => ['nullable', 'date'],
-            'download_rule' => ['nullable', Rule::in(['open', 'after_payment', 'off'])],
-            'lists_enabled' => ['nullable', 'boolean'],
-            'comments_enabled' => ['nullable', 'boolean'],
-            'design' => ['nullable', 'array'],
-            ...GalleryDesign::rules('design'),
-            'gallery_preset_id' => ['nullable', 'string', Rule::exists('gallery_presets', 'public_id')],
         ]);
 
         $project = ($validated['case_id'] ?? null) === null
@@ -140,15 +122,17 @@ class GalleryIndexController extends Controller
                 ->where('public_id', $validated['case_id'])
                 ->firstOrFail();
 
-        $gallery = $createGallery(
-            Arr::except($validated, ['case_id', 'shoot_id', 'gallery_preset_id']),
-            $project,
-            $validated['shoot_id'] ?? null,
-            auth('staff')->user(),
-            isset($validated['gallery_preset_id'])
-                ? GalleryPreset::query()->where('public_id', $validated['gallery_preset_id'])->firstOrFail()
-                : null,
-        );
+        $external = $validated['is_external'];
+
+        $gallery = $project && ! $external
+            ? $createProjectGallery($project, $validated['shoot_id'] ?? null, auth('staff')->user(), $validated['title'])
+            : $createGallery(
+                Arr::except($validated, ['case_id', 'shoot_id']),
+                $project,
+                $validated['shoot_id'] ?? null,
+                auth('staff')->user(),
+                $external ? null : GalleryPreset::query()->where('is_default', true)->first(),
+            );
 
         return redirect("/galerien/{$gallery->public_id}");
     }

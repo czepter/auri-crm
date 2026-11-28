@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   types: { value: string; label: string }[]
@@ -24,7 +23,6 @@ const props = defineProps<{
   starters: Record<string, Starter[]>
   projects: { id: string; name: string }[]
 }>()
-useLiveProps([])
 
 type Starter = {
   key: string
@@ -149,7 +147,7 @@ function submit() {
               <span class="block text-ui leading-[1.3] font-semibold tracking-[-0.016em]">{{ starter.name }}</span>
               <span class="mt-0.5 block text-small leading-[1.47] text-ink-2">{{ types.find((t) => t.value === form.type)?.label }}</span>
               <span class="mt-[7px] block text-small leading-[1.45] text-ink-2">{{ starter.description }}</span>
-              <span class="mt-[9px] block pt-2 text-small text-ink-2 shadow-[inset_0_1px_0_var(--rule)]">
+              <span class="mt-[9px] block pt-2 text-small text-ink-2 border-t border-rule">
                 {{ $t('documentTemplates.starterScope', {
                   blocks: scopeOf(starter).blocks,
                   fields: scopeOf(starter).fields,
@@ -157,7 +155,7 @@ function submit() {
               </span>
             </a>
 
-            <a class="block rounded-[12px] px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--rule)]" href="#" @click.prevent="chooseBlank">
+            <a class="block rounded-[12px] border border-rule px-4 py-3.5" href="#" @click.prevent="chooseBlank">
               <span class="block text-ui leading-[1.3] font-semibold tracking-[-0.016em]">{{ $t('documentTemplates.starterBlank') }}</span>
               <span class="mt-[7px] block text-small leading-[1.45] text-ink-2">{{ $t('documentTemplates.starterBlankHint') }}</span>
             </a>

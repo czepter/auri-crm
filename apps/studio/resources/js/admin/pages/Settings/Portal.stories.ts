@@ -59,7 +59,6 @@ export const settings: App.Settings.Data.PortalSettingsData = {
   widerrufAttach: false,
   legalFamilies: { impressum: null, datenschutz: null, agb: null, widerruf: null },
   acceptQuotesEnabled: true,
-  signContractsEnabled: true,
   paymentStatusEnabled: true,
   offersEnabled: true,
   messagingMode: 'booking',

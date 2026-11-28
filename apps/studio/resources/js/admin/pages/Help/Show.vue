@@ -3,7 +3,6 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Link } from '@inertiajs/vue3'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Eintrag = { slug: string; titel: string; beschreibung: string }
 
@@ -12,7 +11,6 @@ defineProps<{
   aufgaben: Eintrag[]
   referenz: Eintrag[]
 }>()
-useLiveProps([])
 </script>
 
 <template>

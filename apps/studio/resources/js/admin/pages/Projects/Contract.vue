@@ -14,7 +14,6 @@ import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { htmlToBlocks } from '@/admin/documents/blocks/importHtml'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
@@ -30,7 +29,6 @@ const props = defineProps<{
   mergeFields: { path: string; sample: string }[]
   clauses: { key: string; group: string; title: string; text: string; on: boolean }[]
 }>()
-useLiveProps(['header', 'templates', 'contract', 'versions', 'contacts', 'clauses'])
 
 const { t } = useI18n()
 
@@ -133,11 +131,11 @@ function day(value: string | null): string {
 
 <template>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
-    <ProjectShell :header="header" active="documents" child="contract">
+    <ProjectShell :header="header" active="contract">
       <div v-if="contract" class="@container">
       <div class="grid items-start gap-6 @[1280px]:grid-cols-[560px_minmax(0,1fr)]">
         <div class="flex min-w-0 flex-col gap-3">
-          <section class="rounded-[var(--r)] bg-paper p-6 shadow-card max-[640px]:p-4">
+          <section class="surface-card p-6 max-[640px]:p-4">
             <div class="flex flex-wrap items-center gap-3">
               <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">{{ $t('project.contract') }}</h2>
               <Chip :tone="statusChip[status]">{{ $t(`project.contractState.${status}`) }}</Chip>
@@ -217,7 +215,7 @@ function day(value: string | null): string {
             <p v-else class="mt-2 mb-0 text-small">{{ day(contract.signDeadlineOn) }}</p>
           </section>
 
-          <section class="rounded-[var(--r)] bg-paper p-6 shadow-card max-[640px]:p-4">
+          <section class="surface-card p-6 max-[640px]:p-4">
             <h3 class="m-0 text-small leading-none font-semibold text-faint">{{ $t('project.contractVersions') }}</h3>
 
             <ul class="mt-3 flex list-none flex-col gap-2.5 p-0">

@@ -5,6 +5,7 @@ namespace App\Engagement\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\ClientCase;
+use App\Crm\Models\Task;
 use Database\Factories\Engagement\ThreadFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -87,6 +88,11 @@ class Thread extends Model
         // By when it was said, not by insertion: RecordMessage writes lines in
         // after the fact, and an old one must not become the newest.
         return $this->hasOne(Message::class)->latestOfMany('created_at');
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 
     public function participants(): HasMany

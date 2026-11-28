@@ -74,7 +74,7 @@ function removeTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
 </script>
 
 <template>
-              <div v-if="shoot.date || shoot.timeline.length" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
+              <div v-if="shoot.date || shoot.timeline.length" class="mt-4 pt-3 border-t border-rule">
                 <div class="text-small leading-none font-semibold text-faint">{{ $t('project.timeline') }}</div>
 
                 <!-- Der Ablauf als Zeitstrahl: eine Linie verbindet die

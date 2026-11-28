@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { completeTask } from "@/admin/lib/undoable";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Card from "@/ui/page/Card.vue";
@@ -37,7 +38,6 @@ import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import { dayWithWeekday as day, daysUntil } from "@/admin/lib/dates";
 import { bandMetrics, isBare } from "@/admin/lib/projectOverview";
 import { dayAndMonth } from "@/admin/lib/shoots";
-import { useLiveProps } from "@/admin/lib/liveReload";
 
 const props = defineProps<{
     queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[];
@@ -77,7 +77,6 @@ const props = defineProps<{
     quotes: App.Quotes.Data.QuoteData[];
     payments: { number: string | null; rows: { label: string; amount: number }[] } | null;
 }>();
-useLiveProps(["header", "conversation", "quotes", "payments", "queue", "lead", "people", "shoots", "quote", "supersededQuotes", "tasks", "thread", "week", "conflicts", "stages", "types"]);
 
 const quoteTab = computed(() => `/anfragen/${props.lead.id}/angebot`);
 const newQuote = computed(() => `/angebote/neu?projekt=${props.lead.projectId}`);
@@ -284,7 +283,7 @@ const createQuote = computed(() => (!props.quote && props.header.canManageQuotes
 const addingTask = ref(false);
 
 function complete(row: App.Crm.Data.TaskRowData) {
-    router.post(`/aufgaben/${row.id}/erledigt`, {}, { preserveScroll: true });
+    completeTask(row, { done: t('common.done'), undo: t('common.undo') });
 }
 
 const primary = computed(() => props.shoots.find((shoot) => shoot.isPrimary));
@@ -488,6 +487,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                     type="text"
                                     :placeholder="$t('lead.taskTitle')"
                                     :aria-label="$t('lead.taskTitle')"
+                                    required
                                 />
                                 <div class="flex items-center gap-4 px-3 pb-2.5">
                                     <DatePicker v-model="task.due_on" class="w-[150px] [&_input]:h-10 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-0" />
@@ -498,7 +498,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                             <SelectItem value="client">{{ $t("lead.audienceClient") }}</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <Button class="ml-auto" variant="default" type="submit" :disabled="!task.title || task.processing">
+                                    <Button class="ml-auto" variant="default" type="submit" :disabled="task.processing">
                                         {{ $t("lead.addTask") }}
                                     </Button>
                                 </div>
@@ -515,7 +515,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                             />
 
                             <CappedList v-slot="{ item: row }" :items="taskRows" :limit="3" :more-href="`${base}/aufgaben`">
-                                <div class="flex min-h-11 items-center gap-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+                                <div class="flex min-h-11 items-center gap-3 border-t border-rule first:border-t-0">
                                     <span
                                         v-if="row.isDone"
                                         class="grid size-6 flex-none place-items-center rounded-full bg-ok-bg text-ok"
@@ -573,7 +573,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                 </div>
                             </template>
                             <CappedList v-else v-slot="{ item: shoot }" :items="shoots" :limit="3" :more-href="`${base}/shootings`">
-                                <div class="grid grid-cols-[140px_minmax(0,1fr)] gap-4 py-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:grid-cols-1 max-[640px]:gap-1">
+                                <div class="grid grid-cols-[140px_minmax(0,1fr)] gap-4 py-3 border-t border-rule first:border-t-0 max-[640px]:grid-cols-1 max-[640px]:gap-1">
                                     <div>
                                         <b class="font-semibold">{{ day(shoot.date) }}</b>
                                         <div class="text-small text-ink-2">{{ shoot.statusLabel }}</div>
@@ -610,7 +610,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                 <div
                                     v-for="(person, index) in kontakte.people"
                                     :key="person.id"
-                                    class="flex items-end gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
+                                    class="flex items-end gap-3 py-2 border-t border-rule first:border-t-0 max-[640px]:flex-wrap"
                                 >
                                     <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('leads.name')">
                                         <Input :id="id" v-model="person.name" type="text" />
@@ -629,7 +629,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                     </Button>
                                 </div>
 
-                                <div v-if="adding" class="mt-3 flex flex-col gap-3 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
+                                <div v-if="adding" class="mt-3 flex flex-col gap-3 pt-3 border-t border-rule">
                                     <ContactTypeahead :model-value="picked" @update:model-value="pick" @create-new="(term) => { pick(null); newContact.name = term }" />
 
                                     <div v-if="newContact.name && !picked" class="flex gap-3 max-[640px]:flex-wrap">
@@ -673,7 +673,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                                 <div
                                     v-for="person in people"
                                     :key="person.id"
-                                    class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                                    class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 border-t border-rule first:border-t-0"
                                 >
                                     <Link class="min-w-[200px] flex-1 font-semibold text-foreground no-underline hover:underline" :href="`/kontakte/${person.id}`">
                                         {{ person.name }}
@@ -734,7 +734,7 @@ const weekHint = (shoot: App.Crm.Data.ShootData) => {
                 :thread="thread"
             />
 
-            <Card v-else :title="$t('project.history')">
+            <Card v-else :title="$t('project.messages')">
                 <MessageThread
                     :project-id="lead.projectId"
                     :thread="conversation"

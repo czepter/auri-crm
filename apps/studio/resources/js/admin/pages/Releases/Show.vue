@@ -11,7 +11,6 @@ import {
     sectionLabel,
     type ReleaseDetail,
 } from "@/admin/lib/releases"
-import { useLiveProps } from "@/admin/lib/liveReload"
 
 /*
  * Ein Release mit allem, was darin steckt. Die Titel sind die Commit-Betreffe,
@@ -23,7 +22,6 @@ const props = defineProps<{
     installed: string
     mediaBase: string | null
 }>()
-useLiveProps([])
 
 const filter = ref<string | null>(null)
 const open = ref<Record<string, boolean>>({})
@@ -63,7 +61,7 @@ function toggle(key: string, index: number) {
 
                     <div class="mt-2.5 flex items-baseline gap-3">
                         <h1
-                            class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]"
+                            class="m-0 text-title leading-7 font-semibold tracking-[-0.02em]"
                         >
                             {{ release.version }}
                         </h1>
@@ -144,7 +142,7 @@ function toggle(key: string, index: number) {
                             :key="change.commit + index"
                         >
                             <button
-                                class="-mx-2.5 flex w-[calc(100%+20px)] cursor-pointer items-baseline gap-2.5 border-0 bg-transparent px-2.5 py-[9px] text-left shadow-[inset_0_1px_0_var(--rule)] hover:bg-sunk"
+                                class="-mx-2.5 flex w-[calc(100%+20px)] cursor-pointer items-baseline gap-2.5 bg-transparent px-2.5 py-[9px] text-left border-t border-rule hover:bg-sunk"
                                 type="button"
                                 @click="toggle(section.key, index)"
                             >

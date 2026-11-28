@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormShell from '@/ui/page/FormShell.vue'
 import CreateSummary from '@/admin/components/CreateSummary.vue'
@@ -11,16 +12,18 @@ import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { TimePicker } from '@/ui/time-picker'
-import { useLiveProps } from '@/admin/lib/liveReload'
+import { focusFirstError } from '@/admin/lib/focusInvalid'
+import { shortDate } from '@/admin/lib/dates'
 
 const props = defineProps<{
   project: App.Crm.Data.CaseSuggestionData | null
   kinds: string[]
   date: string | null
 }>()
-useLiveProps([])
 
+const { t } = useI18n()
 const project = ref(props.project)
+const unpicked = ref(false)
 
 const form = useForm({
   kind: '',
@@ -50,9 +53,13 @@ watch(
 )
 
 function submit() {
-  if (project.value) {
-    form.transform((data) => ({ ...data, wizard: true })).post(`/auftraege/${project.value.id}/shootings`)
+  if (!project.value) {
+    unpicked.value = true
+    nextTick(focusFirstError)
+    return
   }
+
+  form.transform((data) => ({ ...data, wizard: true })).post(`/auftraege/${project.value.id}/shootings`)
 }
 </script>
 
@@ -62,7 +69,7 @@ function submit() {
       :kicker="$t('create.kickerShoots')" :title="$t('project.addShoot')" wide
     >
       <form class="flex flex-col gap-4" @submit.prevent="submit">
-        <Field v-slot="{ id }" :label="$t('create.pick')">
+        <Field v-slot="{ id }" :label="$t('create.pick')" :error="unpicked && !project ? t('common.invalid.valueMissing') : undefined">
           <ProjectTypeahead :id="id" v-model="project" />
         </Field>
 
@@ -102,7 +109,7 @@ function submit() {
           </div>
         </template>
 
-        <Button class="mt-2 ml-0 self-start" type="submit" :disabled="!project || form.processing">
+        <Button class="mt-2 ml-0 self-start" type="submit" :disabled="form.processing">
           {{ $t('project.addShoot') }}
         </Button>
       </form>
@@ -114,7 +121,7 @@ function submit() {
             { label: $t('create.pick'), value: project?.name },
             { label: $t('project.shootKind'), value: form.kind },
             { label: $t('project.shootLabel'), value: form.label },
-            { label: $t('project.shootDate'), value: form.date ? new Date(form.date).toLocaleDateString('de-DE') : null },
+            { label: $t('project.shootDate'), value: form.date ? shortDate(form.date) : null },
             { label: $t('project.callTime'), value: form.call_time },
             { label: $t('project.endTime'), value: form.end_time },
             { label: $t('project.venueName'), value: [form.venue_name, form.venue_city].filter(Boolean).join(', ') },

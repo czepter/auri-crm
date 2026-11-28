@@ -2,19 +2,17 @@
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
 import QuoteList from '@/admin/components/quote/QuoteList.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 defineProps<{
   header: App.Crm.Screens.CaseHeaderData
   quotes: App.Quotes.Data.QuoteData[]
   payments: { number: string | null; rows: { label: string; amount: number }[] } | null
 }>()
-useLiveProps(['header', 'quotes', 'payments'])
 </script>
 
 <template>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
-    <ProjectShell :header="header" active="documents" child="quotes">
+    <ProjectShell :header="header" active="quotes">
       <QuoteList
         :project-id="header.id"
         :can-manage-quotes="header.canManageQuotes"

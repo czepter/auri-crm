@@ -54,7 +54,7 @@ function choose(contact: App.Crm.Data.ContactSuggestionData) {
 
 const ROW = [
   'flex w-full cursor-pointer items-center gap-[9px] border-0 bg-none px-[11px] py-2 text-left text-inherit no-underline',
-  'shadow-[inset_0_1px_0_var(--rule)] first:shadow-none',
+  'border-t border-rule first:border-t-0',
   'not-first:border-t not-first:border-muted',
 ].join(' ')
 </script>

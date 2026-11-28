@@ -455,7 +455,8 @@ it('completes the whole flow for a client that registered itself', function () {
         'code_verifier' => $verifier,
     ])->assertOk()->json();
 
-    expect($token['scope'])->toBe(Capability::ManageContacts->value);
+    expect($token['scope'])->toBe(Capability::ManageContacts->value)
+        ->and($user->tokens()->sole()->oauth_client_id)->toBe($client['client_id']);
 });
 
 it('never lets one client borrow another\'s redirect_uri', function () {

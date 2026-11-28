@@ -25,7 +25,6 @@ describe('Sidebar-Navigation', () => {
         expect(unterlagen(['manage_contracts'] as Cap[])?.children?.map((c) => c.key)).toEqual([
             'vertraege',
             'rechnungen',
-            'gutschriften',
         ])
     })
 

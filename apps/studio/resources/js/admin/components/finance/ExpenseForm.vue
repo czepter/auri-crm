@@ -21,7 +21,7 @@ import ReceiptPane from '@/admin/components/finance/ReceiptPane.vue'
 import DraftDeleteDialog from '@/admin/components/DraftDeleteDialog.vue'
 import { basisPointsToPercent, formatEuros, formatPercent, percentToBasisPoints } from '@/lib/money'
 import { centsToField, costBasis, defaultMethod, modeForYear, parseCents, splitGross } from '@/admin/lib/finance'
-import { dayWithWeekday } from '@/admin/lib/dates'
+import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
 
 type Expense = App.Finance.Data.ExpenseDetailData
 
@@ -106,7 +106,7 @@ const assetOn = computed({
     costsTouched = methodTouched = false
     asset.value = {
       name: form.description || form.vendor,
-      acquired_at: form.invoice_date || form.paid_at || new Date().toLocaleDateString('sv-SE'),
+      acquired_at: form.invoice_date || form.paid_at || isoDate(new Date()),
       cost_net: '',
       cost_gross: '',
       method: 'linear',

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
 use App\Gallery\Support\GallerySettings;
 use App\Models\StudioSettings;
@@ -68,13 +69,14 @@ it('moves the start mark to the preset that was chosen', function () {
         ->and($second->fresh()->is_default)->toBeTrue();
 });
 
-it('ships the studio design to the create screen', function () {
+it('is born with the studio design', function () {
     app(UpdateStudioSetting::class)('gallery_default_design', [
         'cover' => 'split', 'type' => 'serif', 'colour' => 'warm', 'grid' => 'single',
     ]);
 
-    $this->get('/galerien/neu')
-        ->assertInertia(fn ($page) => $page->where('studioDefaults.design.colour', 'warm'));
+    $this->post('/galerien', ['title' => 'Studio', 'is_external' => false])->assertRedirect();
+
+    expect(Gallery::sole()->design['colour'])->toBe('warm');
 });
 
 it('stores a valid redirect and refuses a missing, foreign-scheme or own-host url', function (?string $url, ?string $error) {

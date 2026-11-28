@@ -58,6 +58,6 @@ it('shares the studio name rather than a hardcoded one', function () {
 
     $this->get('/login')
         ->assertOk()
-        ->assertSee('<title inertia>Atelier Weitwinkel</title>', false)
+        ->assertSee('<title data-inertia>Atelier Weitwinkel</title>', false)
         ->assertInertia(fn (Assert $page) => $page->where('brand', 'Atelier Weitwinkel'));
 });

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { completeTask } from "@/admin/lib/undoable";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
@@ -40,7 +41,6 @@ import { groupEntries } from "@/admin/lib/groupEntries";
 import { nextStep, paymentCall, stepRows } from "@/admin/lib/projectNextStep";
 import { sendQuoteHref } from "@/admin/lib/leadPrimary";
 import { stepOnArrow } from "@/admin/lib/queueStep";
-import { useLiveProps } from "@/admin/lib/liveReload";
 import { usePageCommands } from "@/admin/lib/paletteCommands";
 
 type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
@@ -94,7 +94,6 @@ const props = defineProps<{
         since: string | null;
     } | null;
 }>();
-useLiveProps(["header", "shoots", "shootKinds", "tasks", "shootOptions", "staffOptions", "anchors", "thread", "scope", "quote", "supersededQuotes", "fields", "fieldValues", "stages", "presets", "stage", "source", "sourceOther", "sourceLabel", "inquiry", "stalled"]);
 
 const { t } = useI18n();
 const page = usePage();
@@ -228,7 +227,7 @@ const timeline = computed(() => timelineWindow(props.shoots, current.value));
 
 const STATE = {
     done: { text: "text-ok", dot: "bg-action", line: "bg-action" },
-    now: { text: "font-semibold text-ring", dot: "bg-background shadow-[inset_0_0_0_3px_var(--accent)]", line: "bg-rule" },
+    now: { text: "font-semibold text-ring", dot: "border-[3px] border-accent bg-background", line: "bg-rule" },
     next: { text: "text-ink-2", dot: "bg-line-hover", line: "bg-rule" },
     off: { text: "text-faint", dot: "bg-line-hover", line: "bg-rule" },
 };
@@ -265,7 +264,7 @@ function saveKontakte() {
 }
 
 const hasContract = computed(() => props.header.canManageContracts && !!contractTab.value);
-const contractTab = computed(() => props.header.tabs.find((tab) => tab.key === "documents")?.children.find((child) => child.key === "contract"));
+const contractTab = computed(() => props.header.tabs.find((tab) => tab.key === "contract"));
 
 // What the case came from and became. The inquiry has no page of its own once
 // booked, so its row names it and links nowhere.
@@ -342,7 +341,7 @@ const detailsSummary = computed(() =>
 const notes = computed(() => props.thread.filter((entry) => !entry.system).reverse());
 
 function complete(row: App.Crm.Data.TaskRowData) {
-    router.post(`/aufgaben/${row.id}/erledigt`, {}, { preserveScroll: true });
+    completeTask(row, { done: t('common.done'), undo: t('common.undo') });
 }
 </script>
 
@@ -464,7 +463,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             :more-href="`${base}/aufgaben`"
                             :total="showDone ? done.length : open.length"
                         >
-                            <div class="flex min-h-11 items-center gap-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
+                            <div class="flex min-h-11 items-center gap-3 border-t border-rule first:border-t-0">
                                 <span
                                     v-if="row.isDone"
                                     class="grid size-6 flex-none place-items-center rounded-full bg-ok-bg text-ok"
@@ -509,7 +508,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <div
                             v-for="row in installments"
                             :key="row.id"
-                            class="grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            class="grid min-h-16 grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-rule first:border-t-0"
                         >
                             <div class="min-w-0">
                                 <b class="block truncate font-semibold">{{ row.label }}</b>
@@ -546,7 +545,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             <div
                                 v-for="(person, index) in kontakte.people"
                                 :key="person.id"
-                                class="flex items-end gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
+                                class="flex items-end gap-3 py-2 border-t border-rule first:border-t-0 max-[640px]:flex-wrap"
                             >
                                 <span class="min-w-[148px] flex-1 pb-2.5 font-semibold">{{ header.people[index].name }}</span>
                                 <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
@@ -563,7 +562,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         <div
                             v-for="person in header.people"
                             :key="person.id"
-                            class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 border-t border-rule first:border-t-0"
                         >
                             <Link class="min-w-[200px] flex-1 font-semibold text-foreground no-underline hover:underline" :href="`/kontakte/${person.id}`">
                                 {{ person.name }}
@@ -709,7 +708,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                          work happens anyway. -->
                     <Section v-if="scope.items.length && (!quote || scope.delta || scope.items.some((item) => item.state))" :title="$t('project.scope')">
                         <LineItems
-                            class="[&>div]:py-[9px] [&>div]:shadow-none"
+                            class="[&>div]:py-[9px] [&>div]:border-t-0"
                             :items="scope.items"
                         >
                             <template #note="{ item }">

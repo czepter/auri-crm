@@ -2,7 +2,6 @@
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/crm/ProjectShell.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { formatEuros } from '@/lib/money'
 import { Button } from '@/ui/button'
@@ -14,14 +13,13 @@ defineProps<{
   header: App.Crm.Screens.CaseHeaderData
   invoices: App.Payments.Data.InvoiceRowData[]
 }>()
-useLiveProps(['header', 'invoices'])
 
 const CHIP: Record<string, ChipTone> = { open: 'warn', partial: 'warn', overdue: 'danger', paid: 'success', cancelled: 'neutral' }
 </script>
 
 <template>
   <AdminLayout :active="header.isBooked ? 'projekte' : 'anfragen'">
-    <ProjectShell :header="header" active="documents" child="invoices">
+    <ProjectShell :header="header" active="invoices">
       <template #actions>
         <Button v-if="invoices.length" :as="Link" variant="outline" :href="`/rechnungen/neu?projekt=${header.id}`">
           {{ $t('invoicesOverview.create') }}

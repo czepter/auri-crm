@@ -11,8 +11,8 @@
 # ---------------------------------------------------------------- base
 # Pinned: a minor release can bump the bundled Mercure hub, which is how 1.13
 # broke mercure.caddy. Keep it on the Mercure of the local hub in
-# docker-compose.yml (v1.1.1).
-FROM dunglas/frankenphp:1.13.2-php8.5.12 AS base
+# docker-compose.yml (v1.1.6).
+FROM dunglas/frankenphp:1.14.0-php8.5.13 AS base
 
 # install-php-extensions ships inside the FrankenPHP image and resolves each
 # extension's system libraries itself, so the list here is the one CI tests
@@ -38,10 +38,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # ---------------------------------------------------------------- ci
 # ci.yml's studio and e2e jobs run in this stage, so the suite runs on the
-# runtime production serves. The jobs run as the runner's own uid to keep the
-# workspace they share with the host jobs runner-owned, and that user cannot
-# apt-get: everything a job used to install on the host is baked in here,
-# Chromium pinned to the lockfile's Playwright through the build arg.
+# runtime production serves. The jobs run as the runner's own uid, which owns
+# the mounted workspace and cannot apt-get: everything a job needs is baked in
+# here, Chromium pinned to the lockfile's Playwright through the build arg.
 # memory_limit=-1 matches docker/php/Dockerfile; php.ini-production's 128M
 # kills the suite on the AWS SDK's endpoints table.
 FROM base AS ci

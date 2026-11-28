@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
@@ -7,6 +7,8 @@ import ContactTypeahead from '@/admin/components/crm/ContactTypeahead.vue'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
+import { Field as FormField } from '@/ui/field'
+import { focusFirstError } from '@/admin/lib/focusInvalid'
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 
 const FIELDS = ['name', 'email', 'phone', 'street', 'postcode', 'city'] as const
@@ -21,6 +23,7 @@ const duplicate = ref<Sheet | null>(null)
 const choices = reactive<Record<string, 'survivor' | 'duplicate'>>({})
 const processing = ref(false)
 const confirming = ref(false)
+const unpicked = ref(false)
 const { t } = useI18n()
 
 const differing = computed(() => (duplicate.value ? FIELDS.filter((field) => (duplicate.value![field] ?? '') !== (props.sheet[field] ?? '')) : []))
@@ -65,6 +68,16 @@ const options = (field: Field) => [
   { value: 'duplicate', label: duplicate.value?.[field] || '—' },
 ]
 
+function confirm() {
+  if (duplicate.value) {
+    confirming.value = true
+    return
+  }
+
+  unpicked.value = true
+  nextTick(focusFirstError)
+}
+
 function merge() {
   router.post(
     `/kontakte/${props.id}/zusammenfuehren`,
@@ -85,7 +98,9 @@ function merge() {
         <DialogTitle>{{ $t('contacts.merge') }}</DialogTitle>
       </DialogHeader>
       <DialogBody class="flex flex-col gap-4">
-        <ContactTypeahead v-model="other" :creatable="false" />
+        <FormField :error="unpicked && !duplicate ? t('common.invalid.valueMissing') : undefined">
+          <ContactTypeahead v-model="other" :creatable="false" />
+        </FormField>
         <ChoiceGroup
           v-for="field in differing"
           :key="field"
@@ -95,7 +110,7 @@ function merge() {
         />
       </DialogBody>
       <DialogFooter>
-        <Button class="ml-auto" type="button" :disabled="!duplicate || processing" @click="confirming = true">{{ $t('contacts.merge') }}</Button>
+        <Button class="ml-auto" type="button" :disabled="processing" @click="confirm">{{ $t('contacts.merge') }}</Button>
         <Button variant="ghost" type="button" @click="open = false">{{ $t('common.cancel') }}</Button>
       </DialogFooter>
     </DialogContent>

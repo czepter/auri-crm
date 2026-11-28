@@ -12,7 +12,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Switch } from '@/ui/switch'
-import { useLiveProps } from '@/admin/lib/liveReload'
+import { shortDate } from '@/admin/lib/dates'
 
 type Policy = App.Privacy.Data.RetentionPolicyData
 type Part = keyof Policy
@@ -23,7 +23,6 @@ const props = defineProps<{
   candidates: App.Privacy.Data.RetentionCandidateData[]
   funnel: { total: number; booked: number }
 }>()
-useLiveProps(['months', 'policy', 'candidates', 'funnel'])
 
 const PARTS: Part[] = ['name', 'text', 'messages', 'offers', 'galleries', 'order']
 const TEMPLATES: { id: string; policy: Policy }[] = [
@@ -152,7 +151,7 @@ function submit() {
           </div>
 
           <div class="mt-6 grid grid-cols-2 gap-3" :class="enabled ? '' : 'pointer-events-none'" :inert="!enabled">
-            <div v-for="tile in tiles" :key="tile.key" class="rounded-[var(--r)] bg-paper shadow-card px-5 py-4">
+            <div v-for="tile in tiles" :key="tile.key" class="surface-card px-5 py-4">
               <div class="text-small font-semibold text-ink-2">{{ $t(`settings.retention${tile.key}`) }}</div>
               <div class="mt-1 text-heading leading-[1.1] font-semibold tabular-nums" :class="tile.hot && 'text-destructive'">{{ tile.value }}</div>
               <div class="mt-1 text-small text-ink-2">
@@ -182,7 +181,7 @@ function submit() {
               <div
                 v-for="part in PARTS"
                 :key="part"
-                class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
+                class="flex items-center gap-4 py-3 border-b border-rule"
                 :class="chosen.order && part !== 'order' && 'opacity-55'"
                 :inert="chosen.order && part !== 'order'"
               >
@@ -207,7 +206,7 @@ function submit() {
         <FormSection v-if="due.length" :title="$t('settings.retentionDue')" :class="enabled ? '' : 'pointer-events-none'" :inert="!enabled">
           <div class="min-w-0">
             <div>
-              <div class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold text-ink-2 shadow-[inset_0_-1px_0_var(--rule)]">
+              <div class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] gap-3 py-2 text-small font-semibold text-ink-2 border-b border-rule">
                 <span>{{ $t('settings.retentionColContact') }}</span>
                 <span>{{ $t('settings.retentionColRequest') }}</span>
                 <span>{{ $t('settings.retentionColOutcome') }}</span>
@@ -217,7 +216,7 @@ function submit() {
                 <div
                   v-for="candidate in due"
                   :key="candidate.id"
-                  class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] items-center gap-3 py-2 shadow-[inset_0_-1px_0_var(--rule)]"
+                  class="grid grid-cols-[150px_minmax(0,1fr)_100px_76px] items-center gap-3 py-2 border-b border-rule"
                 >
                   <div class="min-w-0">
                     <div class="truncate text-ui font-semibold" :class="effective.name && 'font-normal text-ink-2 italic'">
@@ -257,13 +256,13 @@ function submit() {
             </AlertDialogHeader>
             <AlertDialogBody>
               <div>
-                <div v-for="part in removedParts" :key="part" class="flex justify-between gap-4 py-2 text-ui shadow-[inset_0_-1px_0_var(--rule)]">
+                <div v-for="part in removedParts" :key="part" class="flex justify-between gap-4 py-2 text-ui border-b border-rule">
                   <span class="font-medium">{{ $t(`settings.retentionPart${part[0].toUpperCase()}${part.slice(1)}`) }}</span>
                   <span class="tabular-nums text-ink-2">
                     {{ $t(part === 'name' ? 'settings.retentionDoneAnonymized' : 'settings.retentionDoneDeleted', { count: counts[part] }) }}
                   </span>
                 </div>
-                <div v-if="removedLeads" class="flex justify-between gap-4 py-2 text-ui font-semibold text-destructive shadow-[inset_0_-1px_0_var(--rule)]">
+                <div v-if="removedLeads" class="flex justify-between gap-4 py-2 text-ui font-semibold text-destructive border-b border-rule">
                   <span>{{ $t('settings.retentionRate') }}</span>
                   <span class="tabular-nums">{{ rateBefore }} % → {{ rateAfter }} %</span>
                 </div>
@@ -274,11 +273,11 @@ function submit() {
               </p>
 
               <Field :label="$t('settings.retentionPassword')" id="retention-password" :error="form.errors.current_password">
-                <Input id="retention-password" v-model="form.current_password" type="password" autocomplete="current-password" />
+                <Input id="retention-password" v-model="form.current_password" type="password" autocomplete="current-password" required />
               </Field>
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button type="submit" tone="destructive" class="ml-0" :disabled="form.processing || form.current_password === ''">
+              <Button type="submit" tone="destructive" class="ml-0" :disabled="form.processing">
                 {{ $t('settings.retentionRun') }}
               </Button>
               <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
@@ -288,7 +287,7 @@ function submit() {
       </AlertDialog>
 
       <template #preview>
-        <aside v-if="expiring.length" class="sticky top-6 w-[352px] flex-none rounded-[var(--r)] bg-paper px-5 py-4 shadow-card max-[1100px]:hidden">
+        <aside v-if="expiring.length" class="sticky top-6 w-[352px] flex-none surface-card px-5 py-4 max-[1100px]:hidden">
           <div class="flex justify-between pb-1 text-small font-semibold text-ink-2">
             <span>{{ $t('settings.retentionExpiring') }}</span>
             <span>{{ expiring.length }}</span>
@@ -296,11 +295,11 @@ function submit() {
           <div
             v-for="row in expiring"
             :key="row.candidate.id"
-            class="flex items-center gap-4 py-2 shadow-[inset_0_-1px_0_var(--rule)]"
+            class="flex items-center gap-4 py-2 border-b border-rule"
           >
             <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.candidate.name }}</span>
             <span class="text-small text-ink-2">{{ row.candidate.type }}</span>
-            <span class="w-24 text-right text-small tabular-nums">{{ row.on.toLocaleDateString('de-DE') }}</span>
+            <span class="w-24 text-right text-small tabular-nums">{{ shortDate(row.on) }}</span>
           </div>
         </aside>
       </template>

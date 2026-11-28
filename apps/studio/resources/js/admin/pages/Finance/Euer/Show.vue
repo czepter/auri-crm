@@ -10,14 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import LockDialog from '@/admin/components/finance/LockDialog.vue'
 import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   report: App.Finance.Data.EuerReportData
   years: number[]
   lockable: boolean
 }>()
-useLiveProps(['report', 'lockable'])
 
 const lockOpen = ref(false)
 const standard = computed(() => props.report.vatMode === 'standard')
@@ -71,7 +69,7 @@ const LINK = 'tabular-nums text-foreground underline decoration-line-hover under
           <section>
             <h2 class="text-ui font-semibold">{{ $t('financeEuer.income') }}</h2>
             <div :class="ROW"><span>{{ $t('financeEuer.operatingIncome') }}</span><Link :class="LINK" href="/rechnungen">{{ formatEuros(report.operatingIncome) }}</Link></div>
-            <div v-if="report.creditNotes" :class="[ROW, 'text-ink-2']"><span class="pl-3">{{ $t('financeEuer.creditNotes') }}</span><Link :class="LINK" href="/gutschriften">−{{ formatEuros(report.creditNotes) }}</Link></div>
+            <div v-if="report.creditNotes" :class="[ROW, 'text-ink-2']"><span class="pl-3">{{ $t('financeEuer.creditNotes') }}</span><Link :class="LINK" href="/rechnungen?filter=credits">−{{ formatEuros(report.creditNotes) }}</Link></div>
             <div v-if="standard" :class="ROW"><span>{{ $t('financeEuer.collectedVat') }}</span><Link :class="LINK" href="/rechnungen">{{ formatEuros(report.collectedVat) }}</Link></div>
             <div :class="ROW"><span>{{ $t('financeEuer.assetSales') }}</span><Link :class="LINK" :href="list('/finanzen/anlagen')">{{ formatEuros(report.assetSales) }}</Link></div>
             <div :class="[ROW, 'font-semibold']"><span>{{ $t('financeEuer.sum') }}</span><span class="tabular-nums">{{ formatEuros(report.income) }}</span></div>

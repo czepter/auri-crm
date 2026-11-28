@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { shortDate as formatDate } from "@/admin/lib/dates";
 import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { Clock } from "lucide-vue-next";
@@ -26,7 +27,6 @@ import {
 } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/lib/money";
 import { daysAgo, TYPE_DOT } from "@/admin/lib/boardCard";
-import { useLiveProps } from "@/admin/lib/liveReload";
 import { Button } from "@/ui/button";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/ui/context-menu";
 import { QueueGroup, QueueItem } from "@/ui/queue";
@@ -58,7 +58,6 @@ const props = defineProps<{
     settingsSelection: InstanceType<typeof ProjectSettings>["$props"]["selection"] | null;
     returnTo: string | null;
 }>();
-useLiveProps(["columns", "groups", "queue", "stageSettings"]);
 
 const view = ref(props.view);
 
@@ -84,11 +83,7 @@ const DONE_STAGES = ["booked"];
 
 function shortDate(date: string | null) {
     return date
-        ? new Date(date).toLocaleDateString("de-DE", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-          })
+        ? formatDate(date)
         : null;
 }
 
@@ -352,7 +347,7 @@ const workflowAllowed = computed(() =>
                             <ContextMenu>
                             <ContextMenuTrigger as-child>
                             <Link
-                                class="relative block cursor-grab rounded-[var(--r)] bg-paper p-3.5 text-inherit no-underline shadow-card transition-[background] duration-[120ms] ease-out hover:bg-accent"
+                                class="relative block cursor-grab surface-card p-3.5 text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover hover:bg-accent"
                                 :class="
                                     moving?.id === card.id && 'cursor-grabbing'
                                 "
@@ -649,7 +644,7 @@ const workflowAllowed = computed(() =>
 
                         <AlertDialogFooter>
                             <AlertDialogAction
-                                :disabled="!closeForm.reason || closeForm.processing"
+                                :disabled="closeForm.processing"
                                 @click="closeLead"
                             >{{ $t("board.close") }}</AlertDialogAction>
                             <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>

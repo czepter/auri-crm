@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
@@ -12,7 +13,11 @@ import { Queue, QueueGroup, QueueItem } from '@/ui/queue'
 import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
-import { useLiveProps } from '@/admin/lib/liveReload'
+import { focusFirstError } from '@/admin/lib/focusInvalid'
+import { dayWithWeekday } from '@/admin/lib/dates'
+import Chip from '@/ui/page/Chip.vue'
+import StudioTaskCreateDialog from '@/admin/components/crm/StudioTaskCreateDialog.vue'
+import { postWithUndo } from '@/admin/lib/undoable'
 
 type Row = {
   id: string
@@ -30,6 +35,7 @@ const props = defineProps<{
     id: string
     subject: string
     state: string
+    task: { dueOn: string | null } | null
     projectId: string | null
     projectName: string | null
     shootDate: string | null
@@ -56,16 +62,17 @@ const props = defineProps<{
   unfiled: { id: string; subject: string; snippet: string | null; startedAt: string }[]
   drafts: { id: string; subject: string; body: string; projectName: string | null; to: string }[]
   projects: { id: string; label: string }[]
+  staffOptions: { value: string; label: string }[]
 }>()
-useLiveProps(['groups', 'open', 'catchAll', 'pending', 'threads', 'unfiled', 'drafts', 'projects'])
 
 // One open picker at a time, keyed by the row — the same shape the payments
 // card uses for marking an installment paid.
 const attaching = ref<string | null>(null)
 const chosenThread = ref<string | null>(null)
+const unchosen = ref<string | null>(null)
 
 function attach(id: string) {
-  if (!chosenThread.value) return
+  if (!chosenThread.value) return lack(id)
 
   router.post(`/posteingang/${id}/zuordnen`, { thread: chosenThread.value }, {
     preserveScroll: true,
@@ -82,7 +89,7 @@ const filing = ref<string | null>(null)
 const chosenProject = ref<string | null>(null)
 
 function file(id: string) {
-  if (!chosenProject.value) return
+  if (!chosenProject.value) return lack(id)
 
   router.post(`/posteingang/unterhaltung/${id}/zuordnen`, { project: chosenProject.value }, {
     preserveScroll: true,
@@ -93,10 +100,16 @@ function file(id: string) {
   })
 }
 
+function lack(id: string) {
+  unchosen.value = id
+  nextTick(focusFirstError)
+}
+
 // Long enough to notice. Below that the wait is the normal course of a
 // conversation and colouring it would make every thread look late.
 const NOTICEABLE_DAYS = 3
 
+const { t } = useI18n()
 const reply = useForm({ body: '' })
 
 function send() {
@@ -109,7 +122,10 @@ function send() {
 }
 
 function close(id: string) {
-  router.post(`/posteingang/unterhaltung/${id}/erledigt`, {}, { preserveScroll: true })
+  const url = `/posteingang/unterhaltung/${id}/erledigt`
+
+  if (props.open?.state === 'erledigt') router.post(url, {}, { preserveScroll: true })
+  else postWithUndo(url, url, { done: t('common.done'), undo: t('common.undo') }, {}, { reopen: true })
 }
 
 function show(id: string) {
@@ -166,16 +182,28 @@ function receivedAt(iso: string) {
           <div class="mt-[5px] flex items-start gap-3.5">
             <div>
               <div class="text-small leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
-              <h1 class="m-0 mt-0.5 text-[20px] leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
+              <h1 class="m-0 mt-0.5 text-title leading-7 font-semibold tracking-[-0.02em]">{{ open.subject }}</h1>
             </div>
-            <Button class="ml-auto" variant="secondary" type="button" @click="close(open.id)">
-              {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
-            </Button>
+            <div class="ml-auto flex items-center gap-2">
+              <Chip v-if="open.task">{{ [$t('inbox.task'), open.task.dueOn && dayWithWeekday(open.task.dueOn)].filter(Boolean).join(' · ') }}</Chip>
+              <StudioTaskCreateDialog
+                :key="open.id"
+                :staff-options="staffOptions"
+                :label="$t('inbox.task')"
+                variant="secondary"
+                :title="open.subject"
+                :project="open.projectId"
+                :thread="open.id"
+              />
+              <Button variant="secondary" type="button" @click="close(open.id)">
+                {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
+              </Button>
+            </div>
           </div>
 
-          <div v-for="message in open.messages" :key="message.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)]" :class="
+          <div v-for="message in open.messages" :key="message.id" class="py-3 border-t border-rule" :class="
               message.own &&
-                'pl-3.5 shadow-[inset_0_1px_0_var(--rule),inset_2px_0_0_var(--sunk-2)]'
+                'border-l-2 border-l-sunk-2 pl-3'
             ">
             <div class="flex items-baseline gap-[9px]">
               <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.who }}</span>
@@ -186,10 +214,10 @@ function receivedAt(iso: string) {
 
           <form class="mt-4 pt-1 pb-0.5" @submit.prevent="send">
             <Field v-slot="{ id }" dense :label="$t('inbox.reply')">
-              <Textarea :id="id" v-model="reply.body" rows="3" class="mb-3" />
+              <Textarea :id="id" v-model="reply.body" rows="3" class="mb-3" required />
             </Field>
             <div class="mt-2.5 flex items-center gap-3">
-              <Button variant="default" class="ml-auto" type="submit" :disabled="reply.processing || !reply.body" :state="reply.processing ? 'loading' : 'idle'">
+              <Button variant="default" class="ml-auto" type="submit" :disabled="reply.processing" :state="reply.processing ? 'loading' : 'idle'">
                 {{ $t('inbox.send') }}
               </Button>
             </div>
@@ -230,7 +258,7 @@ function receivedAt(iso: string) {
         <section v-if="drafts.length" class="mt-8">
           <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.draftsTitle') }}</h2>
 
-          <div v-for="draft in drafts" :key="draft.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+          <div v-for="draft in drafts" :key="draft.id" class="py-3 border-t border-rule first-of-type:border-t-0">
             <div class="flex items-baseline gap-[9px]">
               <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ draft.subject }}</span>
               <span class="ml-auto text-small leading-[1.47] text-ink-2">{{ [draft.projectName, draft.to].filter(Boolean).join(' · ') }}</span>
@@ -250,7 +278,7 @@ function receivedAt(iso: string) {
         <section v-if="unfiled.length" class="mt-8">
           <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.unfiledTitle') }}</h2>
 
-          <div v-for="row in unfiled" :key="row.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+          <div v-for="row in unfiled" :key="row.id" class="py-3 border-t border-rule first-of-type:border-t-0">
             <div class="flex items-baseline gap-[9px]">
               <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.subject }}</span>
               <span class="ml-auto text-small leading-[1.47] tabular-nums text-ink-2">{{ receivedAt(row.startedAt) }}</span>
@@ -259,15 +287,17 @@ function receivedAt(iso: string) {
 
             <div class="mt-2.5 flex items-center gap-2">
               <template v-if="filing === row.id">
-                <Select v-model="chosenProject">
-                  <SelectTrigger size="sm" class="w-64"><SelectValue :placeholder="$t('inbox.chooseProject')" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="project in projects" :key="project.id" :value="project.id">
-                      {{ project.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="default" type="button" :disabled="!chosenProject" @click="file(row.id)">
+                <Field v-slot="{ id }" dense :error="unchosen === row.id && !chosenProject ? $t('common.invalid.valueMissing') : undefined">
+                  <Select v-model="chosenProject">
+                    <SelectTrigger :id="id" size="sm" class="w-64"><SelectValue :placeholder="$t('inbox.chooseProject')" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="project in projects" :key="project.id" :value="project.id">
+                        {{ project.label }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Button variant="default" type="button" @click="file(row.id)">
                   {{ $t('inbox.file') }}
                 </Button>
                 <Button variant="ghost" type="button" @click="filing = null">{{ $t('common.cancel') }}</Button>
@@ -282,7 +312,7 @@ function receivedAt(iso: string) {
         <section v-if="pending.length" class="mt-8">
           <h2 class="m-0 mb-[9px] text-small leading-none font-semibold text-ink-2">{{ $t('inbox.triageTitle') }}</h2>
 
-          <div v-for="row in pending" :key="row.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+          <div v-for="row in pending" :key="row.id" class="py-3 border-t border-rule first-of-type:border-t-0">
             <div class="flex items-baseline gap-[9px]">
               <span class="text-small leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.from }}</span>
               <span class="text-small leading-[1.47] text-ink-2">
@@ -299,15 +329,17 @@ function receivedAt(iso: string) {
                  by hand instead of automatically. -->
             <div v-if="row.state !== 'quarantined'" class="mt-2.5 flex items-center gap-2">
               <template v-if="attaching === row.id">
-                <Select v-model="chosenThread">
-                  <SelectTrigger size="sm" class="w-64"><SelectValue :placeholder="$t('inbox.chooseThread')" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="thread in threads" :key="thread.id" :value="thread.id">
-                      {{ thread.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="default" type="button" :disabled="!chosenThread" @click="attach(row.id)">
+                <Field v-slot="{ id }" dense :error="unchosen === row.id && !chosenThread ? $t('common.invalid.valueMissing') : undefined">
+                  <Select v-model="chosenThread">
+                    <SelectTrigger :id="id" size="sm" class="w-64"><SelectValue :placeholder="$t('inbox.chooseThread')" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="thread in threads" :key="thread.id" :value="thread.id">
+                        {{ thread.label }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Button variant="default" type="button" @click="attach(row.id)">
                   {{ $t('inbox.attach') }}
                 </Button>
                 <Button variant="ghost" type="button" @click="attaching = null">{{ $t('common.cancel') }}</Button>

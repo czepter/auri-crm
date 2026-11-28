@@ -2,6 +2,7 @@
 
 namespace App\Payments\Console\Commands;
 
+use App\Automation\Actions\DraftPaymentReminders;
 use App\Payments\Actions\DetectOverdueInstallments;
 use Illuminate\Console\Command;
 
@@ -13,11 +14,12 @@ class DetectOverdueInstallmentsCommand extends Command
 {
     protected $signature = 'payments:detect-overdue-installments';
 
-    protected $description = 'Flags every scheduled payment installment whose due date has passed, and dispatches InstallmentOverdue once per installment.';
+    protected $description = 'Flags every scheduled payment installment whose due date has passed, dispatches InstallmentOverdue once per installment and drafts the client reminders.';
 
-    public function handle(DetectOverdueInstallments $detect): int
+    public function handle(DetectOverdueInstallments $detect, DraftPaymentReminders $remind): int
     {
         $count = $detect();
+        $remind();
 
         $this->info("Flagged {$count} overdue installment(s).");
 

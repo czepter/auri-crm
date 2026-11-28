@@ -48,9 +48,6 @@
   --color-input: var(--input, var(--line));
   --color-ring: var(--ring, var(--accent));
 
-  /* crm.css's card shadow as `shadow-card`; the admin's only surface depth. */
-  --shadow-card: var(--card-shadow);
-
   /* No shadcn name means these two, but the controls need them: --faint is
      placeholder and micro-label text, --line-hover the border a field takes
      on hover. Exposed here so the components can spell them as utilities
@@ -168,6 +165,9 @@
 [data-slot="context-menu-panel"][data-state="open"] { animation: nl-menu-in .2s cubic-bezier(.23, 1, .32, 1); }
 [data-slot="context-menu-panel"][data-state="closed"] { animation: nl-menu-out .14s cubic-bezier(.4, 0, 1, 1) forwards; }
 
+/* vue-sonner draws its own shadow; the focus ring stays. */
+[data-sonner-toast][data-styled="true"]:not(:focus-visible) { box-shadow: none; }
+
 @media (prefers-reduced-motion: reduce) {
   [data-slot="context-menu-panel"] { animation: none !important; }
   [data-slot="dialog-overlay"][data-state="open"],
@@ -175,4 +175,12 @@
   [data-slot="dialog-panel"][data-state="open"],
   [data-slot="alert-dialog-panel"][data-state="open"],
   [data-slot="popover-panel"][data-state="open"] { animation: none; }
+}
+
+@layer components {
+  .surface-card {
+    border: 1px solid var(--rule);
+    border-radius: var(--r);
+    background: var(--paper);
+  }
 }

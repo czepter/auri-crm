@@ -15,7 +15,7 @@ export { default as Button } from "./Button.vue"
  * unstroked on every screen that has moved to Tailwind.
  */
 const PORTAL
-  = "gap-2.5 rounded-[var(--r-pill)] border-0 px-[26px] py-[15px] text-[14.5px] font-semibold leading-none duration-200 ease-[var(--ease)] [&_svg]:size-[15px] [&_svg]:stroke-[1.6]"
+  = "gap-2.5 rounded-[var(--r-pill)] px-[26px] py-[15px] text-[14.5px] font-semibold leading-none duration-200 ease-[var(--ease)] [&_svg]:size-[15px] [&_svg]:stroke-[1.6]"
 
 export const buttonVariants = cva(
   "inline-flex shrink-0 cursor-pointer items-center gap-[7px] font-sans no-underline outline-none disabled:cursor-default disabled:opacity-50 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.75] [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]",
@@ -38,11 +38,11 @@ export const buttonVariants = cva(
          * under the pointer, which is the one moment it is about to act.
          */
         portal: `${PORTAL} bg-foreground tracking-[-0.005em] text-background transition-[transform,background-color] hover:-translate-y-px hover:bg-action active:translate-y-0`,
-        "portal-ghost": `${PORTAL} bg-transparent text-foreground shadow-[inset_0_0_0_1px_var(--line-hover)] transition-colors hover:bg-foreground hover:text-background hover:shadow-none`,
+        "portal-ghost": `${PORTAL} border border-line-hover bg-transparent text-foreground transition-colors hover:border-foreground hover:bg-foreground hover:text-background`,
         /* mockups/redesign/tokens.css .chip — the quiet portal action, and
            the only one that ever stands next to another of its kind. */
         "portal-chip":
-          "gap-2 rounded-[var(--r-pill)] border border-line-hover bg-transparent px-[15px] py-2.5 text-[13px] leading-none font-medium text-foreground transition-colors duration-200 ease-[var(--ease)] hover:border-foreground hover:bg-foreground hover:text-background [&_svg]:size-3.5 [&_svg]:stroke-[1.5]",
+          "gap-2 rounded-[var(--r-pill)] border border-line-hover bg-transparent px-[15px] py-2.5 text-small leading-none font-medium text-foreground transition-colors duration-200 ease-[var(--ease)] hover:border-foreground hover:bg-foreground hover:text-background [&_svg]:size-3.5 [&_svg]:stroke-[1.5]",
         /*
          * A destination in a portal nav rather than an action: it inherits
          * the colour of the rail it stands in and answers on opacity, so the
@@ -59,7 +59,7 @@ export const buttonVariants = cva(
          * the call sites carried it before this variant existed.
          */
         "portal-filter":
-          "rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-[13px] leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground data-[active=true]:border-foreground! data-[active=true]:bg-foreground data-[active=true]:font-semibold data-[active=true]:text-background!",
+          "rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-small leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground data-[active=true]:border-foreground! data-[active=true]:bg-foreground data-[active=true]:font-semibold data-[active=true]:text-background!",
       },
       size: {
         default: "",

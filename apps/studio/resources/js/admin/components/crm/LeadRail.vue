@@ -25,7 +25,7 @@ defineProps<{
                 v-for="entry in week"
                 :key="`${entry.date}${entry.what}`"
                 :href="`/auftraege/${entry.projectId}`"
-                class="group -mx-2 flex gap-2.5 rounded-lg px-2 py-1.5 text-small leading-[1.47] shadow-[inset_0_1px_0_var(--rule)] transition-colors first:shadow-none hover:bg-paper"
+                class="group -mx-2 flex gap-2.5 rounded-lg px-2 py-1.5 text-small leading-[1.47] border-t border-rule transition-colors first:border-t-0 hover:bg-paper"
             >
                 <span class="w-[62px] flex-none font-semibold tabular-nums">{{ day(entry.date) }}</span>
                 <span class="text-ink-2 transition-colors group-hover:text-foreground">{{ entry.what }}</span>

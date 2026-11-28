@@ -31,7 +31,7 @@ function chip(path: string): HTMLElement {
   const node = document.createElement('span')
   node.dataset.mf = path
   node.contentEditable = 'false'
-  node.className = 'mx-px inline-block rounded-[var(--r-sm)] bg-sunk px-1.5 align-baseline text-small font-medium whitespace-nowrap shadow-[inset_0_0_0_1px_var(--line)]'
+  node.className = 'mx-px inline-block rounded-[var(--r-sm)] bg-sunk px-1.5 align-baseline text-small font-medium whitespace-nowrap border border-border'
   node.textContent = chipText(path)
 
   return node

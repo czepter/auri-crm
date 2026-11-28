@@ -288,7 +288,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
           v-for="(row, index) in summaryRows(quote)"
           :key="`${row.label}-${index}`"
           class="flex gap-3 py-1.5"
-          :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-small'"
+          :class="row.last ? 'mt-1.5 pt-2.5 font-semibold border-t border-border' : 'text-small'"
         >
           <span class="flex-1" :class="{ 'text-ui': row.last }">
             {{ row.rate === undefined ? $t(row.label) : $t('quotes.vat', { rate: formatPercent(row.rate) }) }}
@@ -312,7 +312,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       v-if="quote.status !== 'draft'"
       :min="1180"
       :label="$t('common.preview')"
-      wrapper-class="sticky top-6 h-fit min-w-[420px] flex-1 self-start rounded-[var(--r)] bg-paper shadow-card px-6 py-5"
+      wrapper-class="sticky top-6 h-fit min-w-[420px] flex-1 self-start surface-card px-6 py-5"
     >
       <QuotePreviewPane :quote-id="quote.id" />
     </PreviewOverlay>
@@ -348,6 +348,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       <InstallmentPaidDialog
         v-if="canManagePaymentPlan && !installment.invoiceId && installment.status !== 'cancelled' && installment.remaining > 0"
         :installment-id="installment.id"
+        :subject="installment.label"
         :remaining="installment.remaining"
       />
     </div>

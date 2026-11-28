@@ -57,6 +57,7 @@ it('publishes to the hub when an entry is audited', function () {
 
     Http::assertSent(fn (Request $request) => $request->url() === 'http://hub/.well-known/mercure'
         && $request['topic'] === LiveUpdate::topic()
+        && $request['type'] === LiveUpdate::EVENT
         && liveUpdateClaims(substr($request->header('Authorization')[0], 7), 'publisher-key') === liveUpdateGrant('publish'));
 });
 
@@ -104,6 +105,18 @@ it('hands signed-in staff a subscriber cookie for the topic', function () {
         ->toBe(liveUpdateGrant('subscribe'));
 });
 
+it('marks the nav counts live on the topic and shares the hub url', function () {
+    config(['services.mercure.public_url' => '/hub']);
+
+    $page = $this->actingAs(User::factory()->create(), 'staff')->get('/')->assertOk()->viewData('page');
+
+    expect($page['props']['live'])->toBe('/hub')
+        ->and($page['liveProps']['nav']['listeners'])->toBe([[
+            'channel' => ['name' => LiveUpdate::topic(), 'type' => 'public'],
+            'events' => [LiveUpdate::EVENT],
+        ]]);
+});
+
 it('drops the cookie prefix on plain http', function () {
     config(['session.secure' => false]);
 
@@ -123,5 +136,6 @@ it('publishes a staff reply to the contacts on the thread, on the portal hub', f
 
     Http::assertSent(fn (Request $request) => $request->url() === 'http://portal-hub/.well-known/mercure'
         && $request['topic'] === LiveUpdate::contactTopic($contact->public_id)
+        && $request['type'] === LiveUpdate::EVENT
         && liveUpdateClaims(substr($request->header('Authorization')[0], 7), 'publisher-key')[0]['topics'] === [['match' => $request['topic']]]);
 });

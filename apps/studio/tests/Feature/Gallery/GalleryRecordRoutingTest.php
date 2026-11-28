@@ -68,9 +68,9 @@ it('sends a bookmark on a deleted set back to the pictures', function () {
         ->assertRedirect("/galerien/{$this->gallery->public_id}/bilder");
 });
 
-it('sends an unknown settings section to allgemein', function () {
+it('sends an unknown settings section to zugang', function () {
     $this->get("/galerien/{$this->gallery->public_id}/einstellungen/farbe")
-        ->assertRedirect("/galerien/{$this->gallery->public_id}/einstellungen/allgemein");
+        ->assertRedirect("/galerien/{$this->gallery->public_id}/einstellungen/zugang");
 });
 
 it('still answers 404 for a gallery that does not exist', function () {
@@ -83,7 +83,7 @@ it('carries area, set and section as props', function () {
     $props = fn (string $url) => $this->get($url)->viewData('page')['props'];
 
     expect($props("/galerien/{$this->gallery->public_id}"))
-        ->toMatchArray(['area' => 'bilder', 'activeSetId' => null, 'settingsSection' => 'allgemein']);
+        ->toMatchArray(['area' => 'bilder', 'activeSetId' => null, 'settingsSection' => 'zugang']);
 
     expect($props("/galerien/{$this->gallery->public_id}/bilder/{$this->set->public_id}"))
         ->toMatchArray(['area' => 'bilder', 'activeSetId' => $this->set->public_id]);

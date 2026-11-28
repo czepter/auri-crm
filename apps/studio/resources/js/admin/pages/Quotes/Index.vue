@@ -16,16 +16,14 @@ import { formatEuros } from '@/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { quoteTone } from '@/admin/lib/quoteDisplay'
 import Chip from '@/ui/page/Chip.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
-import DraftDeleteDialog from '@/admin/components/DraftDeleteDialog.vue'
+import { deleteWithUndo, isHidden } from '@/admin/lib/deferredDelete'
 
 type Row = App.Quotes.Data.QuoteRowData
 
 const props = defineProps<{ quotes: Row[] }>()
-useLiveProps(['quotes'])
-const deleteUrl = ref<string | null>(null)
 
 const { t } = useI18n()
+const remove = (url: string) => deleteWithUndo(url, { deleted: t('common.deleted'), undo: t('common.undo'), failed: t('common.deleteFailed') })
 
 const query = ref('')
 const filter = ref('all')
@@ -44,7 +42,7 @@ const shown = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('de')
 
   return props.quotes
-    .filter((quote) => (filter.value === 'all' || GROUPS[filter.value].includes(quote.status))
+    .filter((quote) => !isHidden(`/angebote/${quote.id}?back=list`) && (filter.value === 'all' || GROUPS[filter.value].includes(quote.status))
       && (!needle || `${quote.projectName} ${quote.contact ?? ''} ${quote.number ?? ''}`.toLocaleLowerCase('de').includes(needle)))
     .sort((a, b) => Number(b.status === 'draft') - Number(a.status === 'draft') || dateOf(b).localeCompare(dateOf(a)))
 })
@@ -131,7 +129,7 @@ const post = (url: string, data: Record<string, string> = {}) => router.post(url
                         <DropdownMenuItem as-child>
                           <a :href="`/angebote/${quote.id}/pdf`" target="_blank">{{ $t('invoiceDetail.download') }}</a>
                         </DropdownMenuItem>
-                        <DropdownMenuItem v-if="quote.status === 'draft'" class="text-destructive" @select="deleteUrl = `/angebote/${quote.id}?back=list`">{{ $t('common.delete') }}</DropdownMenuItem>
+                        <DropdownMenuItem v-if="quote.status === 'draft'" class="text-destructive" @select="remove(`/angebote/${quote.id}?back=list`)">{{ $t('common.delete') }}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -146,6 +144,5 @@ const post = (url: string, data: Record<string, string> = {}) => router.post(url
         </Empty>
       </div>
     </Page>
-    <DraftDeleteDialog v-model:url="deleteUrl" />
   </AdminLayout>
 </template>

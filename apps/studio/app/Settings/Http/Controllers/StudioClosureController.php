@@ -8,6 +8,7 @@ use App\Models\StudioClosure;
 use App\Settings\Actions\UpdateStudioSetting;
 use App\Settings\Data\StudioClosureData;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -28,7 +29,7 @@ class StudioClosureController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Closures/Index', [
-            'closures' => StudioClosure::query()->orderBy('starts_on')->get()->map(StudioClosureData::fromModel(...))->all(),
+            'closures' => LiveUpdate::live(StudioClosure::query()->orderBy('starts_on')->get()->map(StudioClosureData::fromModel(...))->all()),
         ]);
     }
 

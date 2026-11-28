@@ -10,7 +10,7 @@ defineProps<{ title: string; count?: number | string | null; bare?: boolean }>()
 <template>
     <section
         class="overflow-hidden rounded-[var(--r)] px-6 py-5"
-        :class="bare ? 'bg-transparent' : 'bg-paper shadow-card'"
+        :class="bare ? 'bg-transparent' : 'surface-card'"
     >
         <header class="mb-2 flex items-baseline gap-[9px]">
             <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">

@@ -37,7 +37,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       :class="
         cn(
           'z-50 w-auto max-w-(--reka-popover-content-available-width) rounded-[6px] border border-line-hover bg-background p-3 font-sans text-foreground',
-          'shadow-[0_24px_64px_rgb(20_16_14_/_0.16)] outline-none',
+          'outline-none',
           props.class,
         )
       "

@@ -74,7 +74,7 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
             v-for="item in NAV"
             :key="item.key"
             :aria-current="pane === item.key"
-            class="-mb-px min-h-11 shrink-0 cursor-pointer border-b-2 border-transparent bg-transparent px-0 text-[14px] leading-none font-medium whitespace-nowrap text-muted-foreground hover:text-foreground aria-[current=true]:border-foreground aria-[current=true]:font-semibold aria-[current=true]:text-foreground min-[900px]:text-left"
+            class="-mb-px min-h-11 shrink-0 cursor-pointer border-b-2 border-transparent bg-transparent px-0 text-ui leading-none font-medium whitespace-nowrap text-muted-foreground hover:text-foreground aria-[current=true]:border-foreground aria-[current=true]:font-semibold aria-[current=true]:text-foreground min-[900px]:text-left"
             type="button"
             @click="pane = item.key"
           >{{ $t(item.label) }}</button>

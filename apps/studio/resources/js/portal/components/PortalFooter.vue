@@ -29,7 +29,7 @@ const who = computed(() =>
 
 <template>
   <footer
-    :class="cn('mx-auto flex w-full max-w-[var(--page)] flex-wrap justify-between gap-6 border-t border-border px-6 pt-8 pb-18 text-[13px] leading-[1.5] text-muted-foreground', props.class)"
+    :class="cn('mx-auto flex w-full max-w-[var(--page)] flex-wrap justify-between gap-6 border-t border-border px-6 pt-8 pb-18 text-small leading-[1.5] text-muted-foreground', props.class)"
   >
     <span>{{ who }}</span>
     <span class="flex flex-wrap gap-x-6 [&_a]:inline-flex [&_a]:min-h-11 [&_a]:items-center [&_a]:no-underline [&_a:hover]:text-foreground">

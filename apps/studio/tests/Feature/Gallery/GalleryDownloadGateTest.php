@@ -85,18 +85,72 @@ it('needs every invoice of the project paid when none is chosen, and at least on
     expect(GalleryDownloadGate::allows($gallery->fresh()))->toBeTrue();
 });
 
-it('answers 403 on the guest download route while payment is outstanding', function () {
+function unbilledRate(ClientCase $case): PaymentInstallment
+{
+    $plan = PaymentPlan::query()->firstOrCreate(['case_id' => $case->id], ['total' => 0]);
+
+    return PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => 2500,
+        'invoice_id' => null,
+        'status' => PaymentInstallmentStatus::Scheduled,
+    ]);
+}
+
+it('keeps an after_payment gallery shut while a plan rate has no invoice, even with every issued invoice paid', function () {
+    $gallery = Gallery::factory()->create(['download_rule' => 'after_payment']);
+    invoiceOn($gallery->case, paid: true);
+    $rest = unbilledRate($gallery->case);
+
+    expect(GalleryDownloadGate::allows($gallery->fresh()))->toBeFalse()
+        ->and(GalleryDownloadGate::invoiceToPay($gallery->fresh()))->toBeNull()
+        ->and(GalleryDownloadGate::unbilled($gallery->fresh())->is($rest))->toBeTrue();
+
+    $rest->update(['status' => PaymentInstallmentStatus::Paid]);
+    expect(GalleryDownloadGate::allows($gallery->fresh()))->toBeTrue()
+        ->and(GalleryDownloadGate::unbilled($gallery->fresh()))->toBeNull();
+});
+
+it('opens with every rate paid even when no invoice was issued', function () {
+    $gallery = Gallery::factory()->create(['download_rule' => 'after_payment']);
+    unbilledRate($gallery->case)->update(['status' => PaymentInstallmentStatus::Paid]);
+
+    expect(GalleryDownloadGate::allows($gallery->fresh()))->toBeTrue();
+});
+
+it('leaves a chosen invoice alone when the plan still has an open rate', function () {
+    $gallery = Gallery::factory()->create(['download_rule' => 'after_payment']);
+    $paid = invoiceOn($gallery->case, paid: true);
+    unbilledRate($gallery->case);
+
+    $gallery->update(['download_invoice_id' => $paid->id]);
+
+    expect(GalleryDownloadGate::allows($gallery->fresh()))->toBeTrue()
+        ->and(GalleryDownloadGate::unbilled($gallery->fresh()))->toBeNull();
+});
+
+it('judges by issued invoices when the project has no plan', function () {
+    $gallery = Gallery::factory()->create(['download_rule' => 'after_payment']);
+    $invoice = Invoice::query()->forceCreate(['number' => 'R-solo', 'case_id' => $gallery->case_id, 'issued_at' => now()]);
+    PaymentInstallment::factory()->create(['payment_plan_id' => null, 'invoice_id' => $invoice->id, 'status' => PaymentInstallmentStatus::Paid]);
+
+    expect(GalleryDownloadGate::followsPlan($gallery->fresh()))->toBeFalse()
+        ->and(GalleryDownloadGate::allows($gallery->fresh()))->toBeTrue();
+});
+
+it('answers 403 on the guest download request while payment is outstanding', function () {
     useSurface(Surface::API);
     $gallery = Gallery::factory()->create(['download_rule' => 'after_payment']);
     GalleryVersion::factory()->for($gallery)->create();
     invoiceOn($gallery->case, paid: false);
 
-    $this->getJson("/api/galleries/{$gallery->public_id}/download")->assertForbidden();
+    $payload = ['email' => 'anna@example.test', 'size' => 'web'];
+
+    $this->postJson("/api/galleries/{$gallery->public_id}/download/link", $payload)->assertForbidden();
 
     Invoice::query()->where('case_id', $gallery->case_id)->get()
         ->each(fn (Invoice $invoice) => $invoice->installments()->update(['status' => PaymentInstallmentStatus::Paid]));
 
-    $this->getJson("/api/galleries/{$gallery->public_id}/download")->assertOk();
+    $this->postJson("/api/galleries/{$gallery->public_id}/download/link", $payload)->assertStatus(202);
 });
 
 it('offers only the sizes the gallery allows', function () {

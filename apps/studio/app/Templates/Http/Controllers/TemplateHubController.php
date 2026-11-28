@@ -14,9 +14,12 @@ use App\Crm\Support\CrmVocabulary;
 use App\Documents\Data\DocumentTemplateData;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\Capability;
+use App\Enums\ContractMode;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
+use App\Models\StudioSettings;
+use App\Support\LiveUpdate;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -72,32 +75,32 @@ class TemplateHubController extends Controller
         return Inertia::render('Templates/Index', [
             'kind' => $kind,
             'kinds' => $allowed,
-            'counts' => [
+            'counts' => LiveUpdate::live([
                 'aufgaben' => $tasks->count(),
                 'fragebogen' => $forms->count(),
                 'dokumente' => $documents->count(),
                 'galerien' => $presets->count(),
-            ],
-            'taskTemplates' => TaskTemplateData::collect($tasks),
-            'formTemplates' => FormTemplateData::collect($forms),
-            'documentTemplates' => DocumentTemplateData::collect($documents),
+            ]),
+            'taskTemplates' => LiveUpdate::live(TaskTemplateData::collect($tasks)),
+            'formTemplates' => LiveUpdate::live(FormTemplateData::collect($forms)),
+            'documentTemplates' => LiveUpdate::live(DocumentTemplateData::collect($documents)),
             'documentUse' => $this->documentUse($documents),
-            'galleryPresets' => GalleryPresetData::collect($presets),
+            'galleryPresets' => LiveUpdate::live(GalleryPresetData::collect($presets)),
             'audiences' => $this->options(TaskAudience::cases()),
-            'shootKinds' => Shoot::kindSuggestions(),
-            'projectTypes' => app(CrmVocabulary::class)->types()
+            'shootKinds' => LiveUpdate::live(Shoot::kindSuggestions()),
+            'projectTypes' => LiveUpdate::live(app(CrmVocabulary::class)->types()
                 ->filter(fn (ProjectType $type) => $type->is_active)
                 ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
-                ->values()->all(),
+                ->values()->all()),
             'selected' => $validated['vorlage'] ?? null,
             'previewDate' => $validated['preview_date'] ?? null,
             'previewShootKind' => $validated['preview_shoot_kind'] ?? null,
-            'preview' => isset($validated['preview_date']) && in_array('aufgaben', $allowed, true)
+            'preview' => LiveUpdate::live(isset($validated['preview_date']) && in_array('aufgaben', $allowed, true)
                 ? $apply->preview(
                     CarbonImmutable::parse($validated['preview_date']),
                     $validated['preview_shoot_kind'] ?? null,
                 )
-                : null,
+                : null),
         ]);
     }
 
@@ -115,7 +118,8 @@ class TemplateHubController extends Controller
         $checks = [
             'aufgaben' => $gate->allows('viewAny', TaskTemplate::class),
             'fragebogen' => $gate->allows('viewAny', FormTemplate::class),
-            'dokumente' => $gate->allows('viewAny', DocumentTemplate::class),
+            'dokumente' => StudioSettings::current()->contractMode() !== ContractMode::Off
+                && $gate->allows('viewAny', DocumentTemplate::class),
             'galerien' => $staff?->can(Capability::ManageSettings->value) ?? false,
         ];
 

@@ -8,7 +8,7 @@ const ICON = { shoot: Camera, quote: FileText, task: ListChecks, form: Clipboard
 </script>
 
 <template>
-    <section class="rounded-[var(--r)] bg-paper p-6 shadow-card">
+    <section class="surface-card p-6 ">
         <div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${tiles.length}, minmax(0, 1fr))` }">
             <Link
                 v-for="tile in tiles"

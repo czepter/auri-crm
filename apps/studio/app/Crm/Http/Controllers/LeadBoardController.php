@@ -12,6 +12,7 @@ use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\StageSettingsPayload;
 use App\Http\Controllers\Controller;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -62,11 +63,11 @@ class LeadBoardController extends Controller
             })->values()->all();
 
         return Inertia::render('Leads/Board', [
-            'columns' => $columns,
-            'groups' => $leads->groups(),
-            'queue' => $leads->queue(),
+            'columns' => LiveUpdate::live($columns),
+            'groups' => LiveUpdate::live($leads->groups()),
+            'queue' => LiveUpdate::live($leads->queue()),
             'view' => $this->view($request),
-            'stageSettings' => $settings(),
+            'stageSettings' => LiveUpdate::live($settings()),
             'settingsSelection' => $settings->selection($request),
             'returnTo' => $settings->returnTo($request),
             // Only fetched when the panel opens (a partial reload asking for

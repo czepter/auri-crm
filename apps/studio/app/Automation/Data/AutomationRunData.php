@@ -34,7 +34,7 @@ class AutomationRunData extends Data
             anchorLabel: self::anchor($run),
             status: $run->status->value,
             statusLabel: match ($run->status) {
-                AutomationRunStatus::Sent => $run->rule->action === AutomationAction::Task ? 'Angelegt' : 'Gesendet',
+                AutomationRunStatus::Sent => $run->rule?->action === AutomationAction::Task ? 'Angelegt' : 'Gesendet',
                 AutomationRunStatus::AwaitingApproval => 'Entwurf',
                 AutomationRunStatus::Skipped => 'Übersprungen',
                 AutomationRunStatus::Failed => 'Fehlgeschlagen',

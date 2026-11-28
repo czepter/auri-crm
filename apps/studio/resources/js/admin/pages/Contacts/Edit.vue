@@ -13,17 +13,19 @@ import { changedKeys, debounced, saveState } from '@/admin/lib/autosave'
 import Panel from '@/admin/components/crm/Panel.vue'
 import Metric from '@/admin/components/crm/Metric.vue'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { completeTask } from '@/admin/lib/undoable'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
-import { formatEurosRounded } from '@/lib/money'
+import { formatEuros, formatEurosRounded } from '@/lib/money'
 import { useI18n } from 'vue-i18n'
 import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import { filledProfiles, withOpenRow } from '@/admin/lib/socialProfile'
 import { Mail, Phone } from 'lucide-vue-next'
+import { shortDate } from '@/admin/lib/dates'
 
 const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
 
@@ -68,6 +70,9 @@ const props = defineProps<{
   socialProfiles: { platform: string; value: string }[]
   socialPlatforms: { value: string; label: string }[]
   correspondence: App.Engagement.Data.MessageData[]
+  openInvoices: App.Payments.Data.InvoiceRowData[]
+  openTasks: App.Crm.Data.TaskRowData[]
+  nextShoot: { date: string; title: string; projectId: string; projectName: string } | null
   projects: { id: string; name: string; role: string; date: string | null; value: number | null; booked: boolean; open: boolean; quote: { status: string; total: number } | null }[]
   galleries: {
     id: string
@@ -98,7 +103,6 @@ const props = defineProps<{
   offerablePackages: { id: string; name: string; price: number | null; priceMode: string; requiresDate: boolean }[]
   portalLogins: { count: number; firstAt: string | null; lastAt: string | null }
 }>()
-useLiveProps(['contacts', 'contact', 'billingAddress', 'socialProfiles', 'correspondence', 'projects', 'galleries', 'connected', 'suggestions', 'offerablePackages', 'portalLogins', 'portalAccessRevokedAt', 'canRevokePortalAccess', 'canSendPortalAccess', 'dsgvoErasedAt', 'canManageDsgvo', 'portalDefaults', 'portalOverrides', 'canPreviewPortal', 'dsgvoRequests'])
 
 const { t } = useI18n()
 
@@ -164,7 +168,7 @@ function savePortal() {
 }
 
 function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+  return iso ? shortDate(iso) : '—'
 }
 
 function time(iso: string) {
@@ -342,7 +346,7 @@ function eraseDsgvoData() {
         />
 
         <!-- Dieselbe Reiterspur wie im Auftrag (ProjectShell). -->
-        <div class="mx-6 mt-4 flex max-w-full overflow-x-auto text-small font-medium shadow-[inset_0_-1px_0_var(--rule)] [scrollbar-width:none]">
+        <div class="mx-6 mt-4 flex max-w-full overflow-x-auto text-small font-medium border-b border-rule [scrollbar-width:none]">
           <button
             v-for="key in TABS"
             :key="key"
@@ -377,6 +381,47 @@ function eraseDsgvoData() {
                   {{ $t('contacts.email') }}
                 </a>
               </div>
+
+              <section v-if="openInvoices.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
+                  {{ $t('contacts.openInvoices') }}
+                </h2>
+                <div
+                  v-for="invoice in openInvoices"
+                  :key="invoice.id"
+                  class="flex items-center gap-4 py-2.5 border-t border-rule first-of-type:border-t-0"
+                >
+                  <Link class="text-body font-semibold no-underline hover:underline" :href="`/rechnungen/${invoice.id}`">{{ invoice.number }}</Link>
+                  <span class="text-small tabular-nums" :class="invoice.status === 'overdue' ? 'text-destructive' : 'text-ink-2'">{{ day(invoice.dueOn) }}</span>
+                  <span class="ml-auto text-body tabular-nums">{{ formatEuros(invoice.openInstallments.reduce((sum, row) => sum + row.remaining, 0)) }}</span>
+                </div>
+              </section>
+
+              <section v-if="openTasks.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
+                  {{ $t('contacts.openTasks') }}
+                </h2>
+                <div
+                  v-for="task in openTasks"
+                  :key="task.id"
+                  class="flex items-center gap-3.5 py-2 border-t border-rule first-of-type:border-t-0"
+                >
+                  <Checkbox :model-value="false" :aria-label="$t('project.taskComplete')" @update:model-value="completeTask(task, { done: $t('common.done'), undo: $t('common.undo') })" />
+                  <span class="min-w-0 flex-1 truncate text-body">{{ task.title }}</span>
+                  <span class="text-small tabular-nums" :class="task.isOverdue ? 'text-destructive' : 'text-ink-2'">{{ task.dueOn ? day(task.dueOn) : task.dueAnchorLabel }}</span>
+                </div>
+              </section>
+
+              <section v-if="nextShoot" class="mb-7">
+                <h2 class="mt-0 mb-3 text-small leading-none font-semibold text-ink-2">
+                  {{ $t('contacts.nextShoot') }}
+                </h2>
+                <div class="flex items-center gap-4">
+                  <span class="text-body tabular-nums">{{ day(nextShoot.date) }}</span>
+                  <span class="text-body">{{ nextShoot.title }}</span>
+                  <Link class="ml-auto text-small no-underline hover:underline" :href="`/auftraege/${nextShoot.projectId}`">{{ nextShoot.projectName }}</Link>
+                </div>
+              </section>
 
               <form class="mb-7 flex flex-col gap-4" @focusin="focusIn" @focusout="focusOut" @submit.prevent="save(true)">
                 <Field id="c-name" :label="$t('contacts.name')" :error="form.errors.name">
@@ -413,7 +458,7 @@ function eraseDsgvoData() {
                 <div
                   v-for="project in openInquiries"
                   :key="project.id"
-                  class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                  class="flex items-center gap-4 py-2.5 border-t border-rule first-of-type:border-t-0"
                 >
                   <div>
                     <div class="text-body leading-none font-semibold tracking-[-0.012em] tabular-nums">
@@ -434,7 +479,7 @@ function eraseDsgvoData() {
               <div
                 v-for="person in connected"
                 :key="person.id"
-                class="py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                class="py-2 border-t border-rule first:border-t-0"
               >
                 <Link class="text-small font-semibold tracking-[-0.012em]" :href="`/kontakte/${person.id}`">
                   {{ person.name }}
@@ -454,7 +499,7 @@ function eraseDsgvoData() {
               <div
                 v-for="request in dsgvoRequests"
                 :key="request.id"
-                class="py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                class="py-2 border-t border-rule first:border-t-0"
               >
                 <div class="mt-px text-small text-due">
                   {{ $t(`contacts.dsgvoRequested.${request.kind}`, { date: day(request.requestedAt) }) }}
@@ -511,7 +556,7 @@ function eraseDsgvoData() {
                 <div
                   v-for="project in projects"
                   :key="project.id"
-                  class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                  class="flex items-center gap-4 py-2.5 border-t border-rule first-of-type:border-t-0"
                 >
                   <div>
                     <div class="text-body leading-none font-semibold tracking-[-0.012em] tabular-nums">
@@ -535,7 +580,7 @@ function eraseDsgvoData() {
                 <div
                   v-for="gallery in galleries"
                   :key="gallery.id"
-                  class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                  class="flex items-center gap-4 py-2.5 border-t border-rule first-of-type:border-t-0"
                 >
                   <div>
                     <div class="text-body leading-none font-semibold tracking-[-0.012em] tabular-nums">
@@ -566,7 +611,7 @@ function eraseDsgvoData() {
                 <div
                   v-for="message in correspondence"
                   :key="message.id"
-                  class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                  class="py-3 border-t border-rule first-of-type:border-t-0"
                 >
                   <div class="flex items-baseline gap-2.25">
                     <span class="text-small font-semibold tracking-[-0.012em]">{{ message.author }}</span>
@@ -611,7 +656,7 @@ function eraseDsgvoData() {
                   <ContactPortalFields group="offers" :portal="portal" :defaults="portalDefaults" @change="savePortal" />
 
                   <template v-for="row in offerRows" :key="row.id">
-                    <div class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)]">
+                    <div class="flex items-center gap-4 py-2.5 border-t border-rule">
                       <div class="min-w-0">
                         <div class="text-body leading-none font-semibold tracking-[-0.012em]">{{ row.name }}</div>
                         <div class="mt-px text-small text-ink-2">{{ row.terms }}</div>
@@ -640,6 +685,7 @@ function eraseDsgvoData() {
                   <form v-if="offerablePackages.length" class="mt-4 flex flex-col gap-3" @submit.prevent="saveSuggestion">
                     <Field id="s-package" :label="$t('contacts.suggestionPackage')" :error="suggestion.errors.package">
                       <Select
+                        required
                         :model-value="suggestion.package || undefined"
                         @update:model-value="(v) => (suggestion.package = String(v))"
                       >
@@ -653,7 +699,7 @@ function eraseDsgvoData() {
                       <Textarea id="s-note" v-model="suggestion.note" rows="3" />
                     </Field>
                     <div>
-                      <Button type="submit" variant="default" :disabled="!suggestion.package || suggestion.processing">
+                      <Button type="submit" variant="default" :disabled="suggestion.processing">
                         {{ $t('contacts.suggest') }}
                       </Button>
                     </div>

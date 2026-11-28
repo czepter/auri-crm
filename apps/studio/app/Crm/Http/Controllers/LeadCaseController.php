@@ -29,6 +29,7 @@ use App\Quotes\Actions\ReadCaseQuote;
 use App\Quotes\Screens\ReadQuoteList;
 use App\Settings\Rules\ValidFormat;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -90,11 +91,11 @@ class LeadCaseController extends Controller
 
         return Inertia::render('Leads/Show', [
             'tab' => $tab,
-            'header' => CaseHeaderData::fromCase($case, app(DeriveCasePosition::class)($case), queue: false),
-            'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
-            ...($tab === 'quotes' ? app(ReadQuoteList::class)($case) : ['quotes' => [], 'payments' => null]),
-            'queue' => $this->leads->queue($lead),
-            'lead' => [
+            'header' => LiveUpdate::live(CaseHeaderData::fromCase($case, app(DeriveCasePosition::class)($case), queue: false)),
+            'conversation' => LiveUpdate::live($conversation === null ? null : ThreadData::fromModel($conversation)),
+            ...array_map(LiveUpdate::live(...), $tab === 'quotes' ? app(ReadQuoteList::class)($case) : ['quotes' => [], 'payments' => null]),
+            'queue' => LiveUpdate::live($this->leads->queue($lead)),
+            'lead' => LiveUpdate::live([
                 'id' => $case->public_id,
                 'projectId' => $case->public_id,
                 'name' => $case->name,
@@ -113,36 +114,36 @@ class LeadCaseController extends Controller
                 'capturedAt' => $lead->captured_at->toIso8601String(),
                 'lostReason' => $case->close_reason,
                 'outcomeLabel' => $case->closeLabel(),
-            ],
+            ]),
             // The contact column stands beside the quote, not small underneath
             // it: the phone number is the reason the screen is open.
-            'people' => CasePersonData::collect(
+            'people' => LiveUpdate::live(CasePersonData::collect(
                 $case->contacts->map(CasePersonData::fromContact(...))
-            ),
-            'shoots' => ShootData::collect(
+            )),
+            'shoots' => LiveUpdate::live(ShootData::collect(
                 $case->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
-            ),
-            ...app(ReadCaseQuote::class)($case),
-            'tasks' => TaskRowData::collect(
+            )),
+            ...array_map(LiveUpdate::live(...), app(ReadCaseQuote::class)($case)),
+            'tasks' => LiveUpdate::live(TaskRowData::collect(
                 $case->tasks->sortBy('due_on')->values()->map(TaskRowData::fromTask(...))
-            ),
-            'thread' => ($this->thread)($case),
+            )),
+            'thread' => LiveUpdate::live(($this->thread)($case)),
             // C-10 (#245): the fixed value lists the edit state offers. Same
             // button rows the capture screen uses.
-            'types' => app(CrmVocabulary::class)->types()
+            'types' => LiveUpdate::live(app(CrmVocabulary::class)->types()
                 ->filter(fn (ProjectType $type) => $type->is_active)
-                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])->values()->all(),
+                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])->values()->all()),
             'sources' => collect(LeadSource::cases())
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
             'presets' => [
                 'type' => OtherSuggestions::for('type'),
                 'source' => OtherSuggestions::for('source'),
             ],
-            'week' => $this->week($case, $primary?->date?->format('Y-m-d')),
-            'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $case),
-            'stages' => app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
+            'week' => LiveUpdate::live($this->week($case, $primary?->date?->format('Y-m-d'))),
+            'conflicts' => LiveUpdate::live($this->availability->forDate($primary?->date?->format('Y-m-d'), $case)),
+            'stages' => LiveUpdate::live(app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
                 ->filter(fn (Stage $stage) => $stage->is_active)
-                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name, 'anchor' => $stage->anchor?->value])->values()->all(),
+                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name, 'anchor' => $stage->anchor?->value])->values()->all()),
         ]);
     }
 

@@ -4,6 +4,7 @@ use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\CaseContactRole;
 use App\Crm\Models\ClientCase;
 use App\Crm\Models\Contact;
+use App\Enums\ContractMode;
 use App\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -140,4 +141,25 @@ it('404s a sign attempt when the project has no contract yet', function () {
     $this->actingAs($contact, 'portal')
         ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => true])
         ->assertNotFound();
+});
+
+it('refuses to sign and hides the form while contracts are off', function () {
+    Storage::fake('local');
+
+    $project = ClientCase::factory()->create(['portal_visible' => true]);
+    renderedContract($project);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, CaseContactRole::Primary);
+    StudioSettings::query()->update(['contract_mode' => ContractMode::Off->value]);
+    Cache::store('redis')->flush();
+
+    $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/vertrag")
+        ->assertInertia(fn ($page) => $page->where('canSign', false));
+
+    $this->actingAs($contact, 'portal')
+        ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => true])
+        ->assertForbidden();
+
+    expect(ContractSignature::count())->toBe(0);
 });

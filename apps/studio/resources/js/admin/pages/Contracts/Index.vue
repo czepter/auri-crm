@@ -14,12 +14,10 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import Chip, { type ChipTone } from '@/ui/page/Chip.vue'
 import { dayWithWeekday } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 type Row = App.Contracts.Data.ContractRowData
 
 const props = defineProps<{ contracts: Row[] }>()
-useLiveProps(['contracts'])
 
 const { t } = useI18n()
 

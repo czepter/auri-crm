@@ -53,12 +53,24 @@ it('renders the project overview with a derived header', function () {
 });
 
 it('shows only the tabs whose feature exists', function () {
-    // Mockup 04 shows seven. A tab appears when the feature behind it lands,
-    // never as an empty shell. Vertrag ist optional, Kommunikation is E-06,
-    // Fragebögen is E-02.
-    $tabs = props("/auftraege/{$this->case->public_id}")['header']['tabs'];
+    $tabs = fn () => props("/auftraege/{$this->case->public_id}")['header']['tabs'];
 
-    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'tasks', 'messages', 'galleries', 'documents', 'info']);
+    expect(array_column($tabs(), 'key'))->toBe(['overview', 'shoots', 'tasks', 'messages', 'quotes', 'invoices', 'info'])
+        ->and(collect($tabs())->every(fn ($tab) => ! array_key_exists('children', $tab)))->toBeTrue();
+
+    FormInstance::factory()->for($this->case, 'case')->create();
+    expect(array_column($tabs(), 'key'))->toContain('forms');
+});
+
+it('shows Galerien from the first gallery or delivered shoot', function () {
+    markBooked($this->case);
+    $keys = fn () => array_column(props("/auftraege/{$this->case->public_id}")['header']['tabs'], 'key');
+
+    Shoot::factory()->for($this->case, 'case')->primary()->atStatus(ShootStatus::Prep)->create();
+    expect($keys())->not->toContain('galleries');
+
+    Shoot::factory()->for($this->case, 'case')->atStatus(ShootStatus::Delivered)->create();
+    expect($keys())->toContain('galleries');
 });
 
 it('serves the rail as the Info tab of a project', function () {
@@ -119,10 +131,7 @@ it('counts the questionnaires the client has not answered', function () {
 
     $tabs = props("/auftraege/{$this->case->public_id}")['header']['tabs'];
 
-    $documents = collect($tabs)->firstWhere('key', 'documents');
-
-    expect(collect($documents['children'])->firstWhere('key', 'forms')['count'])->toBe(1)
-        ->and($documents['count'])->toBe(3);
+    expect(collect($tabs)->firstWhere('key', 'forms')['count'])->toBe(1);
 });
 
 it('lists the invoices with their credit notes and counts only the open ones', function () {
@@ -142,12 +151,9 @@ it('lists the invoices with their credit notes and counts only the open ones', f
     CreditNote::query()->forceCreate(['invoice_id' => $paid->id, 'number' => 'G-1', 'issued_at' => now(), 'amount' => 5000, 'reason' => 'Nachlass']);
 
     $page = props("/auftraege/{$this->case->public_id}/rechnungen");
-    $documents = collect($page['header']['tabs'])->firstWhere('key', 'documents');
-
     expect(collect($page['invoices'])->pluck('number')->sort()->values()->all())->toBe(['R-1', 'R-2', 'R-3'])
         ->and(collect($page['invoices'])->firstWhere('number', 'R-3')['creditNotes'][0]['number'])->toBe('G-1')
-        ->and(collect($documents['children'])->firstWhere('key', 'invoices')['count'])->toBe(1)
-        ->and($documents['count'])->toBe(3);
+        ->and(collect($page['header']['tabs'])->firstWhere('key', 'invoices')['count'])->toBe(1);
 });
 
 it('counts the quotes the client has not answered', function () {
@@ -159,7 +165,7 @@ it('counts the quotes the client has not answered', function () {
 
     $tabs = props("/auftraege/{$this->case->public_id}")['header']['tabs'];
 
-    expect(collect(collect($tabs)->firstWhere('key', 'documents')['children'])->firstWhere('key', 'quotes')['count'])->toBe(1);
+    expect(collect($tabs)->firstWhere('key', 'quotes')['count'])->toBe(1);
 });
 
 it('counts the contracts still waiting for a signature', function () {
@@ -172,7 +178,7 @@ it('counts the contracts still waiting for a signature', function () {
 
     $tabs = props("/auftraege/{$this->case->public_id}")['header']['tabs'];
 
-    expect(collect(collect($tabs)->firstWhere('key', 'documents')['children'])->firstWhere('key', 'contract')['count'])->toBe(1);
+    expect(collect($tabs)->firstWhere('key', 'contract')['count'])->toBe(1);
 });
 
 it('agrees with the board about an unbooked project', function () {

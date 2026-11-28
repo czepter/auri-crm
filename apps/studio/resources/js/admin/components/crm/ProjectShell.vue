@@ -28,15 +28,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, Ale
  * stand still while the tabs change. Which tool is open is the tab that is
  * lit, so the heading never has to say it twice.
  */
-const props = defineProps<{ header: App.Crm.Screens.CaseHeaderData; active: string; child?: string }>()
+const props = defineProps<{ header: App.Crm.Screens.CaseHeaderData; active: string }>()
 
 const tabNav = useTemplateRef<HTMLElement>('tabNav')
 // Fonts change the tab widths; centering before they load clips the last tab.
 onMounted(() => document.fonts.ready.then(() => tabNav.value?.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'instant' })))
 
-const { rect: tabRect, animate: tabAnimate } = useSlidingIndicator(tabNav, () => props.active, { selector: '[aria-current]', key: 'project-tabs' })
+// An inquiry has no tab of its own for shoots, tasks or notes; they sit under Übersicht.
+const lit = computed(() => (props.header.tabs.some((tab) => tab.key === props.active) ? props.active : 'overview'))
 
-const subTabs = computed(() => props.header.tabs.find((tab) => tab.key === props.active)?.children ?? [])
+const { rect: tabRect, animate: tabAnimate } = useSlidingIndicator(tabNav, () => lit.value, { selector: '[aria-current]', key: 'project-tabs' })
 
 const booking = ref(false)
 
@@ -113,7 +114,7 @@ usePageCommands(() => {
       <div class="sticky top-0 z-[5] -mx-[26px] mt-0.5 bg-background px-[26px] pb-4 max-[640px]:contents">
         <div class="flex flex-wrap items-center gap-3">
           <slot name="title">
-            <h1 class="m-0 text-[20px] leading-7 font-semibold tracking-[-0.02em]">
+            <h1 class="m-0 text-title leading-7 font-semibold tracking-[-0.02em]">
               {{ header.name }}
             </h1>
           </slot>
@@ -152,7 +153,7 @@ usePageCommands(() => {
               <Switch id="portal-visible" :model-value="header.portalVisible" @update:model-value="togglePortal" />
             </div>
 
-            <DropdownMenu v-if="$slots.menu || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
+            <DropdownMenu v-if="$slots.menu || header.canGenerateContract || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete || header.canManagePortalVisibility">
               <DropdownMenuTrigger as-child>
                 <Button variant="secondary" size="icon" type="button" class="max-[640px]:min-h-11 max-[640px]:min-w-11" :aria-label="$t('project.more')">
                   <Ellipsis class="size-4" />
@@ -160,6 +161,9 @@ usePageCommands(() => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-[208px]">
                 <slot name="menu" />
+                <DropdownMenuItem v-if="header.canGenerateContract" as-child>
+                  <Link :href="`/auftraege/${header.id}/vertrag`">{{ $t('project.contractGenerate') }}</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem v-if="header.canManagePortalVisibility" class="min-[641px]:hidden" @select="togglePortal">
                   {{ $t(header.portalVisible ? 'project.portalHide' : 'project.portalShow') }}
                 </DropdownMenuItem>
@@ -185,7 +189,7 @@ usePageCommands(() => {
         <!-- The track scrolls once the tabs outgrow the column; a local
              background paints its whole scroll width, not only what shows. -->
         <div class="mt-4 max-[640px]:sticky max-[640px]:top-0 max-[640px]:z-[5] max-[640px]:-mx-4 max-[640px]:mt-2 max-[640px]:bg-background max-[640px]:px-4 max-[640px]:py-2">
-        <nav ref="tabNav" class="relative flex max-w-full overflow-x-auto text-small font-medium shadow-[inset_0_-1px_0_var(--rule)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
+        <nav ref="tabNav" class="relative flex max-w-full overflow-x-auto text-small font-medium border-b border-rule [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[640px]:[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)] max-[640px]:after:w-6 max-[640px]:after:flex-none max-[640px]:after:content-['']">
           <SlidingIndicator
             :rect="tabRect"
             :animate="tabAnimate"
@@ -196,33 +200,17 @@ usePageCommands(() => {
             :key="tab.key"
             :href="tab.href"
             class="relative inline-flex min-h-10 flex-none items-center px-3 whitespace-nowrap no-underline"
-            :class="
-              tab.key === active
+            :class="[
+              tab.key === lit
                 ? ['font-semibold text-foreground', !tabRect && '[background:linear-gradient(var(--ink),var(--ink))_bottom/100%_2px_no-repeat]']
-                : 'text-ink-2 hover:text-foreground'
-            "
-            :aria-current="tab.key === active ? 'page' : undefined"
+                : 'text-ink-2 hover:text-foreground',
+            ]"
+            :aria-current="tab.key === lit ? 'page' : undefined"
           >
             {{ $t(tab.label) }}<span v-if="tab.count" class="ml-1 text-small">{{ tab.count }}</span>
           </Link>
         </nav>
         </div>
-
-        <nav
-          v-if="subTabs.length"
-          class="mt-1 flex text-small font-medium shadow-[inset_0_-1px_0_var(--rule)]"
-        >
-          <Link
-            v-for="entry in subTabs"
-            :key="entry.key"
-            :href="entry.href"
-            class="inline-flex min-h-10 items-center px-3 whitespace-nowrap no-underline"
-            :class="entry.key === child ? 'font-semibold text-foreground [background:linear-gradient(var(--ink),var(--ink))_bottom/100%_2px_no-repeat]' : 'text-ink-2 hover:text-foreground'"
-            :aria-current="entry.key === child ? 'page' : undefined"
-          >
-            {{ $t(entry.label) }}<span v-if="entry.count" class="ml-1 font-medium text-faint">{{ entry.count }}</span>
-          </Link>
-        </nav>
       </div>
 
       <div
@@ -272,7 +260,7 @@ usePageCommands(() => {
             </Field>
           </AlertDialogBody>
           <AlertDialogFooter>
-            <AlertDialogAction :disabled="!closeForm.reason || closeForm.processing" @click.prevent="close">
+            <AlertDialogAction :disabled="closeForm.processing" @click.prevent="close">
               {{ $t('board.close') }}
             </AlertDialogAction>
             <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>

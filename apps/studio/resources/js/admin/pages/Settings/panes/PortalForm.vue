@@ -22,7 +22,6 @@ const form = useForm({
   portal_maintenance_enabled: props.settings.maintenanceEnabled,
   portal_maintenance_message: props.settings.maintenanceMessage ?? '',
   portal_accept_quotes_enabled: props.settings.acceptQuotesEnabled,
-  portal_sign_contracts_enabled: props.settings.signContractsEnabled,
   portal_payment_status_enabled: props.settings.paymentStatusEnabled,
   portal_offers_enabled: props.settings.offersEnabled,
   portal_messaging_mode: props.settings.messagingMode,
@@ -33,7 +32,6 @@ const form = useForm({
 
 const CAPABILITIES = [
   { field: 'portal_accept_quotes_enabled', label: 'portalSettings.acceptQuotesEnabledLabel' },
-  { field: 'portal_sign_contracts_enabled', label: 'portalSettings.signContractsEnabledLabel' },
   { field: 'portal_payment_status_enabled', label: 'portalSettings.paymentStatusEnabledLabel' },
   // Eigener Schalter und nicht an „Angebote annehmen" gehängt: ein Kunde
   // mitten in einer Reklamation soll nichts angeboten bekommen, darf aber
@@ -65,7 +63,7 @@ defineExpose({ form, submit })
 <template>
   <form id="portal-settings-form" @submit.prevent="submit">
     <FormSection :title="$t('portalSettings.welcomeSection')">
-      <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
+      <div class="mb-2 overflow-hidden surface-card">
         <div v-for="state in STATES" :key="state" class="px-4 py-3 not-first:border-t not-first:border-border">
           <div class="mb-2 flex flex-wrap items-center gap-2.5">
             <Chip>{{ $t(`portalSettings.welcomeState.${state}`) }}</Chip>
@@ -99,7 +97,7 @@ defineExpose({ form, submit })
          portal into each capability, whether or not the feature behind
          it already ships elsewhere. -->
     <FormSection :title="$t('portalSettings.capabilitiesSection')">
-      <div class="mb-2 overflow-hidden rounded-[var(--r)] border border-border">
+      <div class="mb-2 overflow-hidden surface-card">
         <div
           v-for="capability in CAPABILITIES"
           :key="capability.field"

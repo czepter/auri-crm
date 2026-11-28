@@ -16,7 +16,6 @@ import PasskeyList from './PasskeyList.vue'
 import SessionList from './SessionList.vue'
 import CalendarSettings from '@/admin/components/crm/CalendarSettings.vue'
 import ProfileNav from '@/admin/components/settings/ProfileNav.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 
 const props = defineProps<{
   pane: 'konto' | 'sicherheit' | 'benachrichtigungen' | 'kalender' | 'adressbuch'
@@ -33,7 +32,6 @@ const props = defineProps<{
   events: Record<string, Mode>
   briefable: Record<string, boolean>
 }>()
-useLiveProps(['user', 'pendingEmail', 'mfaConfirmed', 'sessions', 'passkeys', 'recoveryCodesLeft', 'digestFrequency', 'calendarFeedUrl', 'carddav', 'events'])
 
 const DAY_KEYS = ['settings.dayMon', 'settings.dayTue', 'settings.dayWed', 'settings.dayThu', 'settings.dayFri', 'settings.daySat', 'settings.daySun']
 

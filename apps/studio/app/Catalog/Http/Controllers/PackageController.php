@@ -14,6 +14,7 @@ use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
 use App\Models\StudioSettings;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class PackageController extends Controller
             ->get();
 
         return Inertia::render('Packages/Index', [
-            'packages' => PackageData::collect($packages),
+            'packages' => LiveUpdate::live(PackageData::collect($packages)),
         ]);
     }
 
@@ -71,21 +72,21 @@ class PackageController extends Controller
         $package->loadCount(self::requestCounts())->load('galleryPreset');
 
         return Inertia::render('Packages/Edit', [
-            'package' => PackageData::fromModel($package),
-            'galleryPresets' => GalleryPreset::query()->orderBy('name')->get(['public_id', 'name'])
-                ->map(fn (GalleryPreset $preset) => ['id' => $preset->public_id, 'name' => $preset->name])->all(),
-            'catalogItems' => self::catalogItems(),
+            'package' => LiveUpdate::live(PackageData::fromModel($package)),
+            'galleryPresets' => LiveUpdate::live(GalleryPreset::query()->orderBy('name')->get(['public_id', 'name'])
+                ->map(fn (GalleryPreset $preset) => ['id' => $preset->public_id, 'name' => $preset->name])->all()),
+            'catalogItems' => LiveUpdate::live(self::catalogItems()),
             // Wie ServiceController::show(): ein Kleinunternehmer hat keinen
             // Satz, und dann steht unter dem Preis nichts.
-            'vatRate' => StudioSettings::current()->effectiveVatRate() ?: null,
+            'vatRate' => LiveUpdate::live(StudioSettings::current()->effectiveVatRate() ?: null),
             // Ohne Projekttyp hat eine Anfrage aus dem Portal keine Form —
             // siehe App\Portal\Actions\RequestService.
-            'projectTypes' => ProjectType::query()->active()
+            'projectTypes' => LiveUpdate::live(ProjectType::query()->active()
                 ->orderBy('sort_order')->orderBy('name')
-                ->get(['key', 'name'])->all(),
+                ->get(['key', 'name'])->all()),
             // Die letzten Anfragen, die von diesem Paket ausgingen. Steht hier
             // und nicht in der Übersicht: die Frage gilt diesem Paket.
-            'requests' => $package->leads()
+            'requests' => LiveUpdate::live($package->leads()
                 ->with(['case.contacts', 'case.primaryShoot'])
                 ->orderByDesc('captured_at')
                 ->limit(10)
@@ -97,7 +98,7 @@ class PackageController extends Controller
                     'requestedOn' => $lead->captured_at?->format('Y-m-d'),
                     'date' => $lead->case->primaryShoot?->date?->format('Y-m-d'),
                     'booked' => $lead->case->isBooked(),
-                ])->all(),
+                ])->all()),
         ]);
     }
 

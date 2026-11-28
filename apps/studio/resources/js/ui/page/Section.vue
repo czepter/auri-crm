@@ -9,7 +9,7 @@ defineProps<{ title: string }>()
 </script>
 
 <template>
-    <section class="mt-3 rounded-[var(--r)] bg-paper px-6 pb-5 shadow-card">
+    <section class="mt-3 surface-card px-6 pb-5 ">
         <h2 class="m-0 flex h-[52px] items-center text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">
             {{ title }}
         </h2>

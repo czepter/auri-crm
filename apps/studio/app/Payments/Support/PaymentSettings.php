@@ -3,6 +3,9 @@
 namespace App\Payments\Support;
 
 use App\Models\StudioSettings;
+use App\Payments\Data\PaymentInstallmentData;
+use App\Payments\Enums\PaymentInstallmentStatus;
+use Carbon\Carbon;
 
 /** T-07: Stripe as an optional capability, with a key pair per mode. */
 final class PaymentSettings
@@ -33,6 +36,24 @@ final class PaymentSettings
     public static function activeStripePublishableKey(): ?string
     {
         return self::key(StudioSettings::current()->payments_stripe_mode, 'publishable');
+    }
+
+    /**
+     * What the portal offers "Bezahlen" for: a payment method exists and the
+     * rate is late, due within 14 days, or can only be transferred anyway.
+     */
+    public static function payableNow(PaymentInstallmentData $row): bool
+    {
+        if (! in_array($row->status, array_column(PaymentInstallmentStatus::open(), 'value'), true)) {
+            return false;
+        }
+
+        $settings = StudioSettings::current();
+        $stripe = (bool) $settings->payments_stripe_enabled;
+        $iban = filled($settings->bank_iban);
+
+        return ($stripe || $iban)
+            && ($row->isLate || Carbon::parse($row->dueOn)->lte(today()->addDays(14)) || ! $stripe);
     }
 
     /** Anything but 'live' reads the test pair. */

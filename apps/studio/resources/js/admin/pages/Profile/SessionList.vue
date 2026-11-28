@@ -36,7 +36,7 @@ function endOthers() {
     <div
       v-for="session in sessions"
       :key="session.id"
-      class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+      class="flex items-center gap-3 py-2.5 border-t border-rule first-of-type:border-t-0"
     >
       <span class="min-w-0 flex-1">
         <span class="block truncate text-ui leading-[1.35] font-semibold tracking-[-0.015em]">{{ session.count > 1 ? `${session.device} (${session.count}×)` : session.device }}</span>

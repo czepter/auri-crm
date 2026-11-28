@@ -6,6 +6,10 @@ use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\ClientCase;
 use App\Crm\Support\CrmVocabulary;
+use App\Enums\ContractMode;
+use App\Models\StudioSettings;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 /**
  * The one thing a project asks for next, for the head every tab carries.
@@ -37,8 +41,12 @@ class ReadNextAction
 
         $base = "/auftraege/{$id}";
 
-        if (! $project->contracts()->where('state', '!=', 'superseded')->exists()) {
+        if (StudioSettings::current()->contractMode() === ContractMode::Always && ! $project->contracts()->where('state', '!=', 'superseded')->exists()) {
             return ['label' => 'project.contractSendStep', 'href' => "{$base}/vertrag", 'post' => null];
+        }
+
+        if ($step = $this->dueInstallment($project)) {
+            return $step;
         }
 
         if (! $project->formInstances()->exists()) {
@@ -65,8 +73,65 @@ class ReadNextAction
         }
 
         $plan = $project->paymentPlan;
-        $paid = $plan === null || $plan->total - $plan->installments()->sum('paid_amount') <= 0;
 
-        return $paid ? ['label' => 'project.completeMenu', 'href' => null, 'post' => "{$base}/abschluss"] : null;
+        if ($plan === null || $plan->total - $plan->installments()->sum('paid_amount') <= 0) {
+            return ['label' => 'project.completeMenu', 'href' => null, 'post' => "{$base}/abschluss"];
+        }
+
+        return $this->openPayment($project);
+    }
+
+    /** @return Next|null */
+    private function dueInstallment(ClientCase $project): ?array
+    {
+        $live = $this->liveInstallments($project);
+        $installment = $live->first(fn ($row) => $row->invoice_id === null && $row->status->value !== 'paid');
+
+        if ($installment === null) {
+            return null;
+        }
+
+        $index = $live->search($installment);
+
+        if ($index > 0 && $installment->due_on->gt(today()->addDays(14))) {
+            return null;
+        }
+
+        return ['label' => $this->issueLabel($live, $index), 'href' => null, 'post' => "/raten/{$installment->public_id}/rechnung"];
+    }
+
+    /** @return Next|null */
+    private function openPayment(ClientCase $project): ?array
+    {
+        $live = $this->liveInstallments($project);
+        $installment = $live->first(fn ($row) => $row->status->value !== 'paid');
+
+        return match (true) {
+            $installment === null => null,
+            $installment->invoice_id === null => ['label' => $this->issueLabel($live, $live->search($installment)), 'href' => null, 'post' => "/raten/{$installment->public_id}/rechnung"],
+            default => ['label' => 'project.paymentRecordStep', 'href' => "/rechnungen/{$installment->invoice->public_id}", 'post' => null],
+        };
+    }
+
+    /** @param Collection<int, Model> $live */
+    private function issueLabel(Collection $live, int $index): string
+    {
+        return match (true) {
+            $index === 0 => 'project.depositIssueStep',
+            $index === $live->count() - 1 => 'project.restIssueStep',
+            default => 'project.rateIssueStep',
+        };
+    }
+
+    /** @return Collection<int, Model> */
+    private function liveInstallments(ClientCase $project): Collection
+    {
+        $plan = $project->paymentPlan;
+
+        if ($plan === null || $plan->settled_at !== null || ! auth('staff')->user()?->can('managePaymentPlan', $project)) {
+            return collect();
+        }
+
+        return $plan->installments()->with('invoice')->whereNull('cancelled_at')->orderBy('sort_order')->get();
     }
 }

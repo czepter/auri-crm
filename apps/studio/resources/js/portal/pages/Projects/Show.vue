@@ -24,31 +24,28 @@ type Shoot = {
   date: string | null
   callTime: string | null
   venue: string | null
-  status: string
-  state: 'open' | 'done' | 'neutral'
+  phase: 'upcoming' | 'editing' | 'delivered'
 }
 
 type Document = {
-  kind: 'payments' | 'contract' | 'quote' | 'messages'
+  kind: 'contract' | 'quote' | 'messages'
   href: string
-  label?: string
   dueOn: string | null
-  overdue?: boolean
   signedOn?: string | null
   acceptedOn?: string | null
   amount: number | null
-  openTotal?: number
   unread?: number
   settled: boolean
 }
 
-type Invoice = {
-  id: string
-  number: string
-  issuedOn: string | null
-  amount: number
-  status: string
-  settled: boolean
+type Step = {
+  kind: 'contract' | 'quote' | 'installment' | 'questionnaire'
+  label: string | null
+  detail: string | null
+  amount: number | null
+  dueOn: string | null
+  overdue: boolean
+  href: string
 }
 
 type Offers = {
@@ -71,80 +68,39 @@ const props = defineProps<{
     shoots: Shoot[]
     gallery: { id: string; title: string | null; count: number; expiresAt: string | null; strip: string[] } | null
     documents: Document[]
-    invoices: Invoice[]
+    payments: { openTotal: number; rows: App.Payments.Data.PaymentInstallmentData[] } | null
+    steps: Step[]
+    appointment: { title: string; date: string; callTime: string | null; venue: string | null } | null
     questionnaires: { id: string; name: string; count: number; openCount: number }[]
     details: { date: string | null; callTime: string | null; venue: string | null; email: string | null; phone: string | null }
   }
   offers: Offers
 }>()
 
-// One sentence instead of four tiles that all said the same thing. Counted
-// in whole days from today, so "heute" and "morgen" are their own words
-// rather than "in 0 Tagen".
-const statement = computed(() => {
-  if (props.project.date === null) {
-    return null
-  }
+const STEP_BUTTON: Record<Step['kind'], string> = {
+  contract: 'portal.signButton',
+  quote: 'portal.quoteAccept',
+  installment: 'portal.payButton',
+  questionnaire: 'portal.answerButton',
+}
 
-  const midnight = new Date()
-  midnight.setHours(0, 0, 0, 0)
-  const days = Math.round((new Date(props.project.date).getTime() - midnight.getTime()) / 86_400_000)
-
-  if (days < 0) {
-    return null
-  }
-
-  return days === 0 ? 'today' : days === 1 ? 'tomorrow' : 'countdown'
-})
-
-const daysLeft = computed(() => {
-  const midnight = new Date()
-  midnight.setHours(0, 0, 0, 0)
-
-  return Math.round((new Date(props.project.date!).getTime() - midnight.getTime()) / 86_400_000)
-})
-
-// Everything waiting on the client, most pressing first: the contract, an
-// overdue rate, the quote, a rate not yet due, then the questionnaires.
-const steps = computed(() => {
-  const rank = (document: Document) => document.kind === 'contract' ? 0 : document.kind === 'payments' ? (document.overdue ? 1 : 3) : 2
-
-  const documents = props.project.documents
-    .filter(document => !document.settled && document.kind !== 'messages')
-    .map(document => ({
-      rank: rank(document),
-      title: document.kind === 'payments' ? (document.label ?? t('portal.payment')) : t(`portal.document.${document.kind}`),
-      note: document.kind === 'payments' && document.dueOn
-        ? { key: document.overdue ? 'portal.overdueSince' : 'portal.dueOn', date: document.dueOn }
-        : document.kind === 'contract'
-          ? { key: 'portal.notSignedYet', date: null }
-          : document.kind === 'quote' && document.dueOn ? { key: 'portal.validUntil', date: document.dueOn } : null,
-      amount: document.amount ? formatEuros(document.amount) : null,
-      detail: null as string | null,
-      state: (document.overdue ? 'late' : document.dueOn ? 'due' : 'open') as 'late' | 'due' | 'open',
-      label: ({ payments: 'portal.payButton', contract: 'portal.signButton', quote: 'portal.quoteAccept' } as Record<string, string>)[document.kind],
-      href: document.href,
-    }))
-
-  const sheets = props.project.questionnaires
-    .filter(one => one.openCount > 0)
-    .map(sheet => ({
-      rank: 4,
-      title: t('portal.questionnairesTitle'),
-      note: null,
-      amount: null,
-      state: 'open' as 'late' | 'due' | 'open',
-      label: 'portal.answerButton',
-      href: `/projekte/${props.project.id}/fragebogen/${sheet.id}`,
-      detail: `${sheet.name} · ${sheet.openCount}/${sheet.count}`,
-    }))
-
-  return [...documents, ...sheets].sort((a, b) => a.rank - b.rank)
-})
+const steps = computed(() => props.project.steps.map(step => ({
+  ...step,
+  title: step.kind === 'installment'
+    ? (step.label ?? t('portal.payment'))
+    : step.kind === 'questionnaire' ? t('portal.questionnairesTitle') : t(`portal.document.${step.kind}`),
+  note: step.dueOn
+    ? { key: step.overdue ? 'portal.overdueSince' : step.kind === 'quote' ? 'portal.validUntil' : 'portal.dueOn', date: step.dueOn }
+    : step.kind === 'contract' ? { key: 'portal.notSignedYet', date: null } : null,
+  state: (step.overdue ? 'late' : step.dueOn ? 'due' : 'open') as 'late' | 'due' | 'open',
+  label: STEP_BUTTON[step.kind],
+})))
 
 const shoots = computed(() => [...props.project.shoots].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999')))
 
-const delivered = (shoot: Shoot) => shoot.state === 'done' && props.project.gallery !== null
+const SHOOT_DOT = { upcoming: 'neutral', editing: 'open', delivered: 'done' } as const
+
+const delivered = (shoot: Shoot) => shoot.phase === 'delivered' && props.project.gallery !== null
 
 const galleryExpiring = computed(() => {
   const expiresAt = props.project.gallery?.expiresAt
@@ -157,8 +113,8 @@ const galleryExpiring = computed(() => {
 
 const step = computed(() => steps.value[0] ?? null)
 
-// Open items already stand in the card and the list above.
-const documents = computed(() => props.project.documents.filter(document => document.kind === 'messages' || document.settled))
+// What stands in the card and the list above is not listed twice.
+const documents = computed(() => props.project.documents.filter(document => !steps.value.some(one => one.kind === document.kind)))
 
 const sheets = computed(() => props.project.questionnaires.filter(sheet => sheet.openCount === 0))
 
@@ -166,11 +122,22 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
 const BAND = 'mt-10 border-t border-border pt-8'
 
-function documentNote(document: Document) {
-  if (document.kind === 'payments') {
-    return document.settled ? 'settled' : 'due'
-  }
+function paymentState(row: App.Payments.Data.PaymentInstallmentData) {
+  if (row.status === 'cancelled') return 'neutral'
+  if (row.status === 'paid') return 'done'
 
+  return row.isLate ? 'late' : daysUntil(row.dueOn) <= 14 ? 'due' : 'open'
+}
+
+function paymentNote(row: App.Payments.Data.PaymentInstallmentData) {
+  const state = row.status === 'paid'
+    ? row.statusLabel
+    : row.status === 'cancelled' ? null : t(row.isLate ? 'portal.overdueSince' : 'portal.dueOn', { date: dayDate(row.dueOn) })
+
+  return [state, row.invoiceNumber].filter(Boolean).join(' · ') || null
+}
+
+function documentNote(document: Document) {
   if (document.kind === 'contract') {
     return document.signedOn ? 'signed' : 'unsigned'
   }
@@ -193,7 +160,7 @@ function documentNote(document: Document) {
         <h1 class="animate-rise motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
           {{ project.name }}
         </h1>
-        <p class="mt-1.5 text-[14px] leading-[1.5] tabular-nums text-muted-foreground">
+        <p class="mt-1.5 text-ui leading-[1.5] tabular-nums text-muted-foreground">
           {{ [project.date ? dayDate(project.date) : $t('portal.dateOpen'), project.venue].filter(Boolean).join(' · ') }}
         </p>
       </section>
@@ -202,7 +169,7 @@ function documentNote(document: Document) {
         <PortalLabel>{{ $t('portal.nextStep') }}</PortalLabel>
         <div class="mt-3 flex items-baseline justify-between gap-4">
           <h2 class="font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em]">{{ step.title }}</h2>
-          <span v-if="step.amount" class="text-[17px] leading-none font-semibold tabular-nums">{{ step.amount }}</span>
+          <span v-if="step.amount" class="text-[17px] leading-none font-semibold tabular-nums">{{ formatEuros(step.amount) }}</span>
         </div>
         <p v-if="step.note || step.detail" class="mt-1.5 flex items-center gap-2 text-[13.5px] text-muted-foreground">
           <PortalDot :state="step.state" />
@@ -213,9 +180,15 @@ function documentNote(document: Document) {
         </Button>
       </section>
 
-      <p v-else-if="statement" class="mt-6 font-serif text-[22px] leading-[1.25]">
-        {{ statement === 'countdown' ? $t('portal.daysUntil', { days: daysLeft }) : $t(`portal.${statement}`) }}
-      </p>
+      <section v-else-if="project.appointment" class="-mx-2 mt-6 rounded-md border border-line-hover p-6">
+        <PortalLabel>{{ $t('portal.appointment') }}</PortalLabel>
+        <h2 class="mt-3 font-serif text-[22px] leading-[1.25] font-normal tracking-[-0.01em] tabular-nums">
+          {{ [dayDate(project.appointment.date), project.appointment.callTime].filter(Boolean).join(' · ') }}
+        </h2>
+        <p class="mt-1.5 text-[13.5px] text-muted-foreground">
+          {{ [project.appointment.title, project.appointment.venue].filter(Boolean).join(' · ') }}
+        </p>
+      </section>
 
       <section v-if="steps.length > 1" class="mt-8">
         <PortalLabel class="mb-2">{{ $t('portal.openTitle') }}</PortalLabel>
@@ -226,7 +199,7 @@ function documentNote(document: Document) {
           :title="other.title"
           :state="other.state"
           :note="other.detail ?? (other.note ? $t(other.note.key, { date: other.note.date ? dayDate(other.note.date) : '' }) : null)"
-          :aside="other.amount"
+          :aside="other.amount ? formatEuros(other.amount) : null"
           aside-open
         />
       </section>
@@ -281,17 +254,15 @@ function documentNote(document: Document) {
           :key="document.kind"
           :href="document.href"
           :title="$t(`portal.document.${document.kind}`)"
-          :state="document.kind === 'messages' ? (document.unread ? 'open' : 'neutral') : 'done'"
+          :state="document.kind === 'messages' ? (document.unread ? 'open' : 'neutral') : document.settled ? 'done' : 'open'"
           :note="{
-            settled: $t('portal.allSettled'),
-            due: $t('portal.quoteOpen'),
             signed: document.signedOn ? $t('portal.signedOn', { date: dayDate(document.signedOn) }) : null,
             unsigned: $t('portal.notSignedYet'),
             accepted: document.acceptedOn ? $t('portal.quoteAccepted', { date: dayDate(document.acceptedOn) }) : null,
             open: $t('portal.quoteOpen'),
             messages: document.unread ? $t('portal.unreadCount', { count: document.unread }) : null,
           }[documentNote(document)]"
-          :aside="document.kind === 'payments' ? (document.openTotal ? formatEuros(document.openTotal) : null) : document.amount ? formatEuros(document.amount) : null"
+          :aside="document.amount ? formatEuros(document.amount) : null"
           :aside-open="!document.settled"
         />
       </section>
@@ -313,7 +284,7 @@ function documentNote(document: Document) {
             <div v-if="shoot.venue" class="mt-[3px] text-[13.5px] text-muted-foreground">{{ shoot.venue }}</div>
           </div>
           <div class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground">
-            <PortalDot :state="shoot.state" />{{ shoot.status }}
+            <PortalDot :state="SHOOT_DOT[shoot.phase]" />{{ $t(`portal.shootPhase.${shoot.phase}`) }}
           </div>
           <span v-if="delivered(shoot)" class="col-span-full inline-flex min-h-11 items-center gap-1 text-[13.5px] text-foreground max-[820px]:justify-between">
             {{ $t('portal.viewImages') }}
@@ -322,20 +293,29 @@ function documentNote(document: Document) {
         </component>
       </section>
 
-      <!-- #415: die eigene Kopie der Rechnungsfolge, eine Zeile je
-           ausgestellte Rate. -->
-      <section v-if="project.invoices.length" :class="BAND">
-        <PortalLabel class="mb-2">{{ $t('portal.invoicesTitle') }}</PortalLabel>
-        <PortalRow
-          v-for="invoice in project.invoices"
-          :key="invoice.id"
-          :href="`/projekte/${project.id}/zahlungen/${invoice.id}`"
-          :title="invoice.number"
-          :state="invoice.settled ? 'done' : 'open'"
-          :note="invoice.issuedOn ? `${invoice.status} · ${dayDate(invoice.issuedOn)}` : invoice.status"
-          :aside="formatEuros(invoice.amount)"
-          :aside-open="!invoice.settled"
-        />
+      <section v-if="project.payments" :class="BAND">
+        <PortalLabel class="mb-2">{{ $t('portal.paymentsTitle') }}</PortalLabel>
+        <template v-for="row in project.payments.rows" :key="row.id">
+          <PortalRow
+            :href="row.invoiceId ? `/projekte/${project.id}/zahlungen/${row.invoiceId}` : `/projekte/${project.id}/zahlungen`"
+            :title="row.label"
+            :state="paymentState(row)"
+            :note="paymentNote(row)"
+            :aside="formatEuros(row.status === 'paid' || row.status === 'cancelled' ? row.amount : row.remaining)"
+            :aside-open="row.status !== 'paid' && row.status !== 'cancelled'"
+          />
+          <p v-if="row.cancelledOn" class="flex items-baseline justify-between gap-4 border-b border-border py-3 pl-4 text-[13.5px] text-muted-foreground tabular-nums">
+            {{ $t('portal.cancelledOn', { date: dayDate(row.cancelledOn) }) }}
+          </p>
+          <p
+            v-for="note in row.creditNotes"
+            :key="note.id"
+            class="flex items-baseline justify-between gap-4 border-b border-border py-3 pl-4 text-[13.5px] text-muted-foreground tabular-nums"
+          >
+            <span>{{ $t('portal.creditNote', { number: note.number }) }} · {{ dayDate(note.issuedOn) }}</span>
+            <span>−{{ formatEuros(note.amount) }}</span>
+          </p>
+        </template>
       </section>
 
       <!-- P-03 (#222): absent until the studio shares a questionnaire. -->

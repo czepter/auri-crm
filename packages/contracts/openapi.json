@@ -4343,9 +4343,9 @@
                 }
             }
         },
-        "/galleries/{gallery}/download": {
-            "get": {
-                "operationId": "galleries.download.show",
+        "/galleries/{gallery}/download/link": {
+            "post": {
+                "operationId": "galleries.download.link",
                 "tags": [
                     "GalleryDownloadOffer"
                 ],
@@ -4360,178 +4360,79 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "size": {
+                                        "$ref": "#/components/schemas/ZipBuildSize"
+                                    },
+                                    "pin": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "email",
+                                    "size"
+                                ]
+                            }
+                        }
+                    }
+                },
                 "responses": {
-                    "200": {
+                    "202": {
                         "description": "",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "step": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "email",
-                                                        "ready",
-                                                        "pin"
-                                                    ]
-                                                },
-                                                "gallery": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string"
-                                                        },
-                                                        "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        },
-                                                        "count": {
-                                                            "type": "integer",
-                                                            "minimum": 0
-                                                        },
-                                                        "expiresAt": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "id",
-                                                        "title",
-                                                        "count",
-                                                        "expiresAt"
-                                                    ]
-                                                },
-                                                "sizes": {
-                                                    "type": "array",
-                                                    "items": {}
-                                                },
-                                                "builds": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "size": {
-                                                                "type": "string"
-                                                            },
-                                                            "status": {
-                                                                "type": "string"
-                                                            },
-                                                            "parts": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "type": "object",
-                                                                    "properties": {
-                                                                        "number": {
-                                                                            "type": "integer"
-                                                                        },
-                                                                        "bytes": {
-                                                                            "type": "integer"
-                                                                        },
-                                                                        "path": {
-                                                                            "type": "string"
-                                                                        }
-                                                                    },
-                                                                    "required": [
-                                                                        "number",
-                                                                        "bytes",
-                                                                        "path"
-                                                                    ]
-                                                                }
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "size",
-                                                            "status",
-                                                            "parts"
-                                                        ]
-                                                    }
-                                                }
-                                            },
-                                            "required": [
-                                                "step",
-                                                "gallery",
-                                                "sizes",
-                                                "builds"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "step": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "email",
-                                                        "ready",
-                                                        "pin"
-                                                    ]
-                                                },
-                                                "gallery": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string"
-                                                        },
-                                                        "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        },
-                                                        "count": {
-                                                            "type": "integer",
-                                                            "minimum": 0
-                                                        },
-                                                        "expiresAt": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "id",
-                                                        "title",
-                                                        "count",
-                                                        "expiresAt"
-                                                    ]
-                                                },
-                                                "sizes": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string"
-                                                    },
-                                                    "minItems": 0,
-                                                    "maxItems": 0,
-                                                    "additionalItems": false
-                                                },
-                                                "builds": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string"
-                                                    },
-                                                    "minItems": 0,
-                                                    "maxItems": 0,
-                                                    "additionalItems": false
-                                                }
-                                            },
-                                            "required": [
-                                                "step",
-                                                "gallery",
-                                                "sizes",
-                                                "builds"
-                                            ]
+                                    "type": "object",
+                                    "properties": {
+                                        "sent": {
+                                            "type": "boolean"
                                         }
+                                    },
+                                    "required": [
+                                        "sent"
                                     ]
                                 }
                             }
                         }
+                    },
+                    "429": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sent": {
+                                            "type": "boolean"
+                                        },
+                                        "retryAfter": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "sent",
+                                        "retryAfter"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -4539,9 +4440,9 @@
                 }
             }
         },
-        "/galleries/{gallery}/download/pin": {
-            "post": {
-                "operationId": "galleries.download.pin",
+        "/galleries/{gallery}/download-mail/{token}": {
+            "get": {
+                "operationId": "galleries.download.mail",
                 "tags": [
                     "GalleryDownloadOffer"
                 ],
@@ -4550,29 +4451,20 @@
                         "name": "gallery",
                         "in": "path",
                         "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
                         "schema": {
                             "type": "string"
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "pin": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "pin"
-                                ]
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "",
@@ -4581,226 +4473,125 @@
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "pass": {
+                                        "gallery": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "title": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "count": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "cover": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "key": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "type": "null"
+                                                                },
+                                                                {
+                                                                    "type": "string"
+                                                                },
+                                                                {
+                                                                    "type": "array",
+                                                                    "items": {}
+                                                                }
+                                                            ]
+                                                        },
+                                                        "focal": {
+                                                            "type": [
+                                                                "object",
+                                                                "null"
+                                                            ],
+                                                            "properties": {
+                                                                "x": {
+                                                                    "type": [
+                                                                        "integer",
+                                                                        "null"
+                                                                    ]
+                                                                },
+                                                                "y": {
+                                                                    "type": [
+                                                                        "integer",
+                                                                        "null"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "x",
+                                                                "y"
+                                                            ]
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        },
+                                                        "pass": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "key",
+                                                        "focal",
+                                                        "version",
+                                                        "pass"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "title",
+                                                "count",
+                                                "cover"
+                                            ]
+                                        },
+                                        "size": {
                                             "type": "string"
+                                        },
+                                        "bytes": {
+                                            "type": "integer"
+                                        },
+                                        "parts": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "number": {
+                                                        "type": "integer"
+                                                    },
+                                                    "bytes": {
+                                                        "type": "integer"
+                                                    },
+                                                    "path": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "number",
+                                                    "bytes",
+                                                    "path"
+                                                ]
+                                            }
                                         }
                                     },
                                     "required": [
-                                        "pass"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/galleries/{gallery}/download/vorbereiten": {
-            "post": {
-                "operationId": "galleries.download.prepare",
-                "tags": [
-                    "GalleryDownloadOffer"
-                ],
-                "parameters": [
-                    {
-                        "name": "gallery",
-                        "in": "path",
-                        "required": true,
-                        "description": "The gallery public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "size": {
-                                        "$ref": "#/components/schemas/ZipBuildSize"
-                                    }
-                                },
-                                "required": [
-                                    "size"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "step": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "email",
-                                                        "ready",
-                                                        "pin"
-                                                    ]
-                                                },
-                                                "gallery": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string"
-                                                        },
-                                                        "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        },
-                                                        "count": {
-                                                            "type": "integer",
-                                                            "minimum": 0
-                                                        },
-                                                        "expiresAt": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "id",
-                                                        "title",
-                                                        "count",
-                                                        "expiresAt"
-                                                    ]
-                                                },
-                                                "sizes": {
-                                                    "type": "array",
-                                                    "items": {}
-                                                },
-                                                "builds": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "size": {
-                                                                "type": "string"
-                                                            },
-                                                            "status": {
-                                                                "type": "string"
-                                                            },
-                                                            "parts": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "type": "object",
-                                                                    "properties": {
-                                                                        "number": {
-                                                                            "type": "integer"
-                                                                        },
-                                                                        "bytes": {
-                                                                            "type": "integer"
-                                                                        },
-                                                                        "path": {
-                                                                            "type": "string"
-                                                                        }
-                                                                    },
-                                                                    "required": [
-                                                                        "number",
-                                                                        "bytes",
-                                                                        "path"
-                                                                    ]
-                                                                }
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "size",
-                                                            "status",
-                                                            "parts"
-                                                        ]
-                                                    }
-                                                }
-                                            },
-                                            "required": [
-                                                "step",
-                                                "gallery",
-                                                "sizes",
-                                                "builds"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "step": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "email",
-                                                        "ready",
-                                                        "pin"
-                                                    ]
-                                                },
-                                                "gallery": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string"
-                                                        },
-                                                        "title": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        },
-                                                        "count": {
-                                                            "type": "integer",
-                                                            "minimum": 0
-                                                        },
-                                                        "expiresAt": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "id",
-                                                        "title",
-                                                        "count",
-                                                        "expiresAt"
-                                                    ]
-                                                },
-                                                "sizes": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string"
-                                                    },
-                                                    "minItems": 0,
-                                                    "maxItems": 0,
-                                                    "additionalItems": false
-                                                },
-                                                "builds": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string"
-                                                    },
-                                                    "minItems": 0,
-                                                    "maxItems": 0,
-                                                    "additionalItems": false
-                                                }
-                                            },
-                                            "required": [
-                                                "step",
-                                                "gallery",
-                                                "sizes",
-                                                "builds"
-                                            ]
-                                        }
+                                        "gallery",
+                                        "size",
+                                        "bytes",
+                                        "parts"
                                     ]
                                 }
                             }
@@ -4808,9 +4599,6 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -5860,6 +5648,13 @@
                                                         "downloads": {
                                                             "type": "boolean"
                                                         },
+                                                        "downloadSizes": {
+                                                            "type": "array",
+                                                            "items": {}
+                                                        },
+                                                        "downloadPin": {
+                                                            "type": "boolean"
+                                                        },
                                                         "downloadAfterPayment": {
                                                             "type": "string"
                                                         },
@@ -5949,6 +5744,8 @@
                                                         "intro",
                                                         "locked",
                                                         "downloads",
+                                                        "downloadSizes",
+                                                        "downloadPin",
                                                         "downloadAfterPayment",
                                                         "sets",
                                                         "version"
@@ -6067,6 +5864,13 @@
                                                         "downloads": {
                                                             "type": "boolean"
                                                         },
+                                                        "downloadSizes": {
+                                                            "type": "array",
+                                                            "items": {}
+                                                        },
+                                                        "downloadPin": {
+                                                            "type": "boolean"
+                                                        },
                                                         "downloadAfterPayment": {
                                                             "type": "string"
                                                         },
@@ -6154,6 +5958,8 @@
                                                         "intro",
                                                         "locked",
                                                         "downloads",
+                                                        "downloadSizes",
+                                                        "downloadPin",
                                                         "downloadAfterPayment",
                                                         "sets",
                                                         "version"

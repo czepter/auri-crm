@@ -71,8 +71,8 @@ function optionsHint(type: string): string {
 
 <template>
   <div>
-    <div class="flex flex-col gap-1.5">
-      <div v-for="(field, index) in fields" :key="index" class="group/qbrow flex items-start gap-2.5 rounded-xl border border-border bg-background p-2.5 hover:border-line-hover">
+    <div class="flex flex-col">
+      <div v-for="(field, index) in fields" :key="index" class="group/qbrow flex items-start gap-2.5 border-t border-rule py-2.5 first:border-t-0">
         <span class="mt-0.5 h-[22px] w-3.5 flex-none cursor-grab bg-icon-grip bg-center bg-no-repeat bg-[length:12px_18px] opacity-45 group-hover/qbrow:opacity-80"></span>
 
         <div v-if="editingIndex === index" class="flex-1">

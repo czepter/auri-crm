@@ -15,8 +15,7 @@ import { Input } from '@/ui/input'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
 import { Textarea } from '@/ui/textarea'
-import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
-import { useLiveProps } from '@/admin/lib/liveReload'
+import { dayWithWeekday, isoDate, shortDate } from '@/admin/lib/dates'
 
 type Option = { value: string; label: string }
 
@@ -30,7 +29,6 @@ const props = defineProps<{
   fieldsByType: Record<string, FieldDefinition[]>
   presets: { type: string[]; source: string[]; channel: string[] }
 }>()
-useLiveProps([])
 
 // ProjectType::isCatchAll() und die beiden Other-Fälle der Enums hängen alle
 // an diesem einen Schlüssel; der Anzeigename daneben ist umbenennbar.
@@ -344,7 +342,7 @@ function submit() {
           </Field>
         </Card>
 
-        <div class="mt-2 flex flex-wrap items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
+        <div class="mt-2 flex flex-wrap items-center gap-3 pt-4 border-t border-rule [&>button:last-child]:ml-auto">
           <a
             class="text-small tracking-[-0.01em] whitespace-nowrap text-ring no-underline hover:underline"
             href="/anfragen"
@@ -365,7 +363,7 @@ function submit() {
             { label: $t('leads.contact'), value: contact?.name ?? form.contact_name },
             { label: $t('projects.title'), value: form.project_name },
             { label: $t('leads.type'), value: types.find((t) => t.value === form.type)?.label },
-            { label: $t('project.shootDate'), value: form.date ? new Date(form.date).toLocaleDateString('de-DE') : null },
+            { label: $t('project.shootDate'), value: form.date ? shortDate(form.date) : null },
             { label: $t('project.venueName'), value: [form.venue_name, form.venue_city].filter(Boolean).join(', ') },
           ]"
         />

@@ -1,45 +1,41 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buyDownloadPass, downloadCookieName, formatBytes, readOffer } from './download'
+import { formatBytes, readDownloadLink, requestDownloadLink } from './download'
 
-describe('downloadCookieName', () => {
-  it("keeps one gallery's pin pass out of another's", () => {
-    expect(downloadCookieName('abc')).not.toBe(downloadCookieName('def'))
+const payload = { email: 'anna@example.test', size: 'original', pin: null }
+
+function answer(status: number, body: unknown = {}) {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status })))
+}
+
+describe('requestDownloadLink', () => {
+  it('posts the address and size with the view pass as bearer', async () => {
+    answer(202, { sent: true })
+
+    expect(await requestDownloadLink('https://api.example', 'abc', 'req-1', payload, 'v')).toBe('sent')
+
+    const [url, init] = vi.mocked(fetch).mock.calls[0]
+    expect(url).toBe('https://api.example/api/galleries/abc/download/link')
+    expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer v')
+    expect(JSON.parse(String(init?.body))).toEqual(payload)
+  })
+
+  it('tells a wrong pin, a throttle and any other refusal apart', async () => {
+    answer(422, { errors: { pin: ['Dieser Code stimmt nicht.'] } })
+    expect(await requestDownloadLink('https://api.example', 'abc', 'req-1', payload, null)).toBe('pin')
+
+    answer(429, { sent: false })
+    expect(await requestDownloadLink('https://api.example', 'abc', 'req-1', payload, null)).toBe('throttled')
+
+    answer(422, { errors: { size: ['x'] } })
+    expect(await requestDownloadLink('https://api.example', 'abc', 'req-1', payload, null)).toBe('failed')
   })
 })
 
-describe('readOffer', () => {
-  it('carries the guest and pin passes as headers, never in the URL, and the view pass as bearer', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ step: 'ready' }), { status: 200 }))
-    vi.stubGlobal('fetch', fetchMock)
+describe('readDownloadLink', () => {
+  it('is null once the token is gone', async () => {
+    answer(404)
 
-    const { offer } = await readOffer('https://api.example', 'abc', 'req-1', { view: 'v', guest: 'g', download: 'd' })
-
-    expect(offer?.step).toBe('ready')
-
-    const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe('https://api.example/api/galleries/abc/download')
-
-    const headers = new Headers(init.headers)
-    expect(headers.get('Authorization')).toBe('Bearer v')
-    expect(headers.get('X-Guest-Pass')).toBe('g')
-    expect(headers.get('X-Download-Pass')).toBe('d')
-  })
-
-  it('keeps the status when the api refuses', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 404 })))
-
-    expect(await readOffer('https://api.example', 'abc', 'req-1', { view: null, guest: null, download: null })).toEqual({
-      status: 404,
-      offer: null,
-    })
-  })
-})
-
-describe('buyDownloadPass', () => {
-  it('is null for a wrong pin', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 422 })))
-
-    expect(await buyDownloadPass('https://api.example', 'abc', 'req-1', '0000', null)).toBeNull()
+    expect(await readDownloadLink('https://api.example', 'abc', 'req-1', 't')).toBeNull()
   })
 })
 

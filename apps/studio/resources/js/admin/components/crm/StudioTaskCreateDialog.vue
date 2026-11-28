@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import ContactTypeahead from '@/admin/components/crm/ContactTypeahead.vue'
 import { Button } from '@/ui/button'
@@ -16,24 +16,40 @@ import {
 } from '@/ui/dialog'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import { parseQuickAdd } from '@/admin/lib/quickAdd'
+import { dayWithWeekday } from '@/admin/lib/dates'
+import Chip from '@/ui/page/Chip.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
-defineProps<{ staffOptions: { value: string; label: string }[]; label?: string }>()
+const props = defineProps<{
+  staffOptions: { value: string; label: string }[]
+  label?: string
+  variant?: 'default' | 'secondary'
+  title?: string
+  project?: string | null
+  thread?: string
+}>()
 
 const open = ref(false)
 const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
 
-const form = useForm({ title: '', due_on: '', assignee: 'none' })
+const form = useForm({ title: props.title ?? '', due_on: '', assignee: 'none' })
+
+const quick = computed(() => parseQuickAdd(form.title))
+const parsedDue = computed(() => (form.due_on === '' ? quick.value.dueOn : null))
 
 function submit() {
   form
     .transform((data) => ({
       ...data,
-      due_on: data.due_on === '' ? null : data.due_on,
+      title: parsedDue.value ? quick.value.title : data.title,
+      due_on: parsedDue.value ?? (data.due_on === '' ? null : data.due_on),
       assignee: data.assignee === 'none' ? null : data.assignee,
       contact: contact.value?.id ?? null,
+      thread: props.thread,
+      ...(props.project ? { audience: 'internal' } : {}),
     }))
-    .post('/aufgaben', {
+    .post(props.project ? `/auftraege/${props.project}/aufgaben` : '/aufgaben', {
       preserveScroll: true,
       onSuccess: () => {
         form.reset()
@@ -47,7 +63,7 @@ function submit() {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button class="ml-auto" variant="default" type="button">
+      <Button class="ml-auto" :variant="variant ?? 'default'" type="button">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ label ?? $t('project.taskAdd') }}
       </Button>
@@ -65,7 +81,8 @@ function submit() {
           @submit.prevent="submit"
         >
           <Field v-slot="{ id }" wide :label="$t('project.taskTitle')" :error="form.errors.title">
-            <Input :id="id" v-model="form.title" type="text" />
+            <Input :id="id" v-model="form.title" type="text" required />
+            <Chip v-if="parsedDue" class="mt-1.5">{{ dayWithWeekday(parsedDue) }}</Chip>
           </Field>
 
           <Field wide :label="$t('project.taskDue')" :error="form.errors.due_on">
@@ -91,7 +108,7 @@ function submit() {
       </DialogBody>
 
       <DialogFooter>
-        <Button class="ml-auto" type="submit" form="studio-task-create-form" :disabled="!form.title || form.processing">
+        <Button class="ml-auto" type="submit" form="studio-task-create-form" :disabled="form.processing">
           {{ $t('common.save') }}
         </Button>
         <DialogClose as-child>

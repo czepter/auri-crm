@@ -31,8 +31,8 @@ import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 import Activity, { type ActivityData } from '@/admin/pages/Galleries/panes/Activity.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
 import Chip from '@/ui/page/Chip.vue'
+import { shortDate } from '@/admin/lib/dates'
 
 const { t } = useI18n()
 
@@ -63,6 +63,7 @@ const props = withDefaults(defineProps<{
     downloadSizes: ('original' | 'web')[]
     expiryReminder: boolean
     invoices: { id: string; number: string; status: string }[]
+    followsPlan: boolean
     deviates: boolean
     withdrawn: boolean
     prerelease: boolean
@@ -107,7 +108,7 @@ const props = withDefaults(defineProps<{
   nav: App.Gallery.Data.GalleryNavData
   area: 'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'
   activeSetId: string | null
-  settingsSection: 'allgemein' | 'zugang' | 'freigabe' | 'download' | 'listen'
+  settingsSection: 'zugang' | 'download' | 'darstellung'
 }>(), {
   siblings: () => [],
   assets: () => [],
@@ -119,8 +120,6 @@ const props = withDefaults(defineProps<{
   failedAssets: () => [],
   pendingUploads: () => [],
 })
-
-useLiveProps(['gallery', 'siblings', 'figures', 'sets', 'assets', 'versions', 'builds', 'lists', 'activity', 'favoriteKeys', 'failedAssets', 'pendingUploads'])
 
 const tab = computed(() => props.area)
 
@@ -142,22 +141,15 @@ const stateWord = computed(() => {
   if (key !== 'online') return t(key === 'draft' ? 'galleryRecord.stateDraft' : 'galleryRecord.stateWithdrawn')
   return props.figures.expiresAt === null
     ? t('galleryRecord.stateOnline')
-    : t('galleryRecord.stateOnlineUntil', { date: new Date(props.figures.expiresAt).toLocaleDateString('de-DE') })
+    : t('galleryRecord.stateOnlineUntil', { date: shortDate(props.figures.expiresAt) })
 })
 const stateTone = computed(() => ({ online: 'text-ok', withdrawn: 'text-ink-2', draft: 'text-ink-2' })[stateKey(publishState.value)])
 const publishLabel = computed(() => publishLabelKey(publishState.value))
 const showPublish = computed(() => props.gallery.canPublish && showPublishRule(publishState.value))
 const showWithdraw = computed(() => props.gallery.canPublish && showWithdrawRule(publishState.value))
 
-const publishing = ref(false)
-
 function publish() {
-  if (props.gallery.canMail) {
-    openSend('mail')
-    return
-  }
-
-  publishSilently()
+  openSend(props.gallery.canMail ? 'mail' : 'link')
 }
 
 const sharing = ref(false)
@@ -169,18 +161,8 @@ function openSend(target: 'mail' | 'link') {
   sharing.value = true
 }
 
-const isFirstPublish = computed(() => showPublish.value && props.figures.published === null)
 const showResend = computed(() => props.gallery.canPublish && props.gallery.canMail && showWithdraw.value && !props.gallery.deviates)
 const previewForm = ref<HTMLFormElement | null>(null)
-
-function publishSilently() {
-  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, {
-    preserveScroll: true,
-    onStart: () => (publishing.value = true),
-    onFinish: () => (publishing.value = false),
-    onSuccess: () => openSend('link'),
-  })
-}
 
 function duplicate() {
   router.post(`/galerien/${props.gallery.id}/duplizieren`)
@@ -424,7 +406,6 @@ function saveFocal(focal: { x: number; y: number }) {
               <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="presets.length" @select="applyingPreset = true">{{ $t('galleryRecord.applyPreset') }}</DropdownMenuItem>
               <DropdownMenuItem class="min-[641px]:hidden" @select="previewForm?.submit()">{{ $t('galleryRecord.preview') }}</DropdownMenuItem>
-              <DropdownMenuItem v-if="showPublish && gallery.canMail" @select="publishSilently">{{ $t('galleryRecord.publishSilently') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showWithdraw" @select="withdrawing = true">{{ $t('galleryRecord.withdraw') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStartPrerelease" @select="choosingPrerelease = true">{{ $t('galleryRecord.prerelease') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="showStopPrerelease" @select="stopPrerelease">{{ $t('galleryRecord.prereleaseStop') }}</DropdownMenuItem>
@@ -442,17 +423,7 @@ function saveFocal(focal: { x: number; y: number }) {
             <input type="hidden" name="_token" :value="csrf">
             <Button type="submit" variant="secondary">{{ $t('galleryRecord.preview') }}</Button>
           </form>
-          <DropdownMenu v-if="isFirstPublish" :modal="false">
-            <DropdownMenuTrigger as-child>
-              <Button class="ml-auto" type="button" :state="publishing ? 'loading' : 'idle'">{{ $t(publishLabel) }}</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" force-mount class="data-[state=closed]:hidden">
-              <DropdownMenuItem v-if="gallery.canMail" @select="openSend('mail')">{{ $t('galleryRecord.publishAndSend') }}</DropdownMenuItem>
-              <DropdownMenuItem @select="publishSilently">{{ $t('galleryRecord.publishOnly') }}</DropdownMenuItem>
-              <DropdownMenuItem @select="openSend('link')">{{ $t('galleryRecord.copyLinkAndPassword') }}</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button class="ml-auto" v-else-if="showPublish" type="button" :state="publishing ? 'loading' : 'idle'" @click="publish">{{ $t(publishLabel) }}</Button>
+          <Button class="ml-auto" v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
           <Button class="ml-auto" v-else-if="showWithdraw" type="button" @click="openSend('link')">{{ $t('galleryRecord.share') }}</Button>
         </span>
       </PageHead>
@@ -532,13 +503,13 @@ function saveFocal(focal: { x: number; y: number }) {
           <DialogBody>
             <form id="gallery-preset-form" class="flex flex-col gap-1.5" @submit.prevent="saveAsPreset">
               <Label for="preset-name">{{ $t('galleryPresets.nameField') }}</Label>
-              <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" />
+              <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" required />
               <p v-if="presetForm.errors.name" class="text-small leading-[1.45] text-destructive">{{ presetForm.errors.name }}</p>
             </form>
           </DialogBody>
 
           <DialogFooter>
-            <Button class="ml-auto" type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
+            <Button class="ml-auto" type="submit" form="gallery-preset-form" :disabled="presetForm.processing">
               {{ $t('common.save') }}
             </Button>
             <DialogClose as-child>
@@ -557,7 +528,7 @@ function saveFocal(focal: { x: number; y: number }) {
           <DialogBody>
             <form id="gallery-preset-apply-form" class="flex flex-col gap-1.5" @submit.prevent="applyPreset">
               <Label for="preset-apply">{{ $t('galleryRecord.applyPresetField') }}</Label>
-              <Select v-model="applyForm.gallery_preset_id">
+              <Select v-model="applyForm.gallery_preset_id" required>
                 <SelectTrigger id="preset-apply"><SelectValue :placeholder="$t('galleryRecord.applyPresetPlaceholder')" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem v-for="preset in presets" :key="preset.id" :value="preset.id">{{ preset.name }}</SelectItem>
@@ -570,7 +541,7 @@ function saveFocal(focal: { x: number; y: number }) {
           </DialogBody>
 
           <DialogFooter>
-            <Button class="ml-auto" type="submit" form="gallery-preset-apply-form" :disabled="applyForm.processing || applyForm.gallery_preset_id === ''">
+            <Button class="ml-auto" type="submit" form="gallery-preset-apply-form" :disabled="applyForm.processing">
               {{ $t('galleryRecord.applyPreset') }}
             </Button>
             <DialogClose as-child>
@@ -660,11 +631,11 @@ function saveFocal(focal: { x: number; y: number }) {
         <!-- Einstellungen: Pixieset's General Settings shape — a
              sub-navigation in the rail, one labelled section at a time here. -->
         <div v-else-if="tab === 'einstellungen'" class="flex min-w-0 flex-1 px-6 pt-7 pb-8">
-          <Settings :gallery="gallery" :siblings="siblings" :versions="versions" :lists="lists" :settings-section="settingsSection" />
+          <Settings :gallery="gallery" :siblings="siblings" :settings-section="settingsSection" />
         </div>
 
         <div v-else class="flex min-w-0 flex-1 px-6 pt-7 pb-8">
-          <Activity :gallery-id="gallery.id" :activity="activity" :builds="builds" />
+          <Activity :gallery-id="gallery.id" :activity="activity" :builds="builds" :lists="lists" :versions="versions" />
         </div>
       </div>
     </div>

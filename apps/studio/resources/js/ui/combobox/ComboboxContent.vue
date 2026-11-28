@@ -24,7 +24,6 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       :class="cn(
         'relative z-50 max-h-72 min-w-(--reka-combobox-trigger-width) overflow-y-auto overflow-x-hidden',
         'rounded-[6px] border border-line-hover bg-background p-1 font-sans text-foreground',
-        'shadow-[0_8px_24px_rgb(20_16_14_/_0.10)]',
         props.class,
       )"
     >

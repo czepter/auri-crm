@@ -10,6 +10,7 @@ use App\Media\Models\Asset;
 use App\Privacy\Models\StudioExport;
 use App\Settings\Enums\StudioExportKind;
 use App\Settings\Support\StudioRecords;
+use App\Support\LiveUpdate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -27,9 +28,9 @@ class DataExportController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Export', [
-            'contacts' => $records->contactQuery()->count(),
-            'projects' => $records->projectQuery()->count(),
-            'archives' => auth('staff')->user()->role === StaffRole::Admin ? $this->archives() : null,
+            'contacts' => LiveUpdate::live($records->contactQuery()->count()),
+            'projects' => LiveUpdate::live($records->projectQuery()->count()),
+            'archives' => LiveUpdate::live(auth('staff')->user()->role === StaffRole::Admin ? $this->archives() : null),
         ]);
     }
 

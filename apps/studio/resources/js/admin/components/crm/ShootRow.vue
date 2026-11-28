@@ -18,7 +18,7 @@ function advance(status: string) {
 
 <template>
     <div
-        class="relative flex items-center gap-3.5 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:grid max-[640px]:grid-cols-[auto_1fr_auto] max-[640px]:gap-x-3 max-[640px]:gap-y-0 max-[640px]:pr-11"
+        class="relative flex items-center gap-3.5 py-[11px] border-t border-rule first:border-t-0 max-[640px]:grid max-[640px]:grid-cols-[auto_1fr_auto] max-[640px]:gap-x-3 max-[640px]:gap-y-0 max-[640px]:pr-11"
     >
         <span
             class="w-[150px] flex-none text-small leading-[1.47] font-semibold tracking-[-0.012em] tabular-nums max-[640px]:contents"

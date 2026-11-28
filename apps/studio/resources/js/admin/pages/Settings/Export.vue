@@ -8,7 +8,7 @@ import FormShell from '@/ui/page/FormShell.vue'
 import SettingsNav from '@/admin/components/settings/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import Empty from '@/ui/page/Empty.vue'
-import { useLiveProps } from '@/admin/lib/liveReload'
+import { shortDate } from '@/admin/lib/dates'
 
 type Archive = { id: string; status: 'building' | 'ready' | 'failed'; size: number | null; createdAt: string; expiresAt: string | null; url: string | null }
 
@@ -17,7 +17,6 @@ const props = defineProps<{
   projects: number
   archives: { daten: Archive | null; galleries: { id: string; title: string; size: number; archive: Archive | null }[] } | null
 }>()
-useLiveProps(['contacts', 'projects', 'archives'])
 
 const { t } = useI18n()
 
@@ -35,7 +34,7 @@ function size(bytes: number) {
 }
 
 function day(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return shortDate(iso)
 }
 
 function create(gallery: string | null) {
@@ -52,12 +51,12 @@ function create(gallery: string | null) {
 
       <div class="min-w-0">
         <FormSection title="CSV">
-        <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
+        <div class="flex items-center gap-4 py-3 border-b border-rule">
           <span class="flex-1 text-ui font-semibold">{{ $t('contacts.title') }}</span>
           <span class="text-small tabular-nums text-ink-2">{{ contacts }}</span>
           <Button as="a" variant="outline" href="/einstellungen/export/kontakte">CSV</Button>
         </div>
-        <div class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]">
+        <div class="flex items-center gap-4 py-3 border-b border-rule">
           <span class="flex-1 text-ui font-semibold">{{ $t('projects.title') }}</span>
           <span class="text-small tabular-nums text-ink-2">{{ projects }}</span>
           <Button as="a" variant="outline" href="/einstellungen/export/projekte">CSV</Button>
@@ -70,7 +69,7 @@ function create(gallery: string | null) {
           <div
             v-for="row in rows"
             :key="row.gallery ?? 'daten'"
-            class="flex items-center gap-4 py-3 shadow-[inset_0_-1px_0_var(--rule)]"
+            class="flex items-center gap-4 py-3 border-b border-rule"
           >
             <span class="min-w-0 flex-1 truncate text-ui font-semibold">{{ row.title }}</span>
             <span v-if="row.size !== null" class="text-small tabular-nums text-ink-2">{{ size(row.size) }}</span>
@@ -89,12 +88,12 @@ function create(gallery: string | null) {
       </div>
 
       <template v-if="archives" #aside>
-        <div class="rounded-[var(--r)] bg-paper px-5 py-4 shadow-card">
+        <div class="surface-card px-5 py-4 ">
         <h2 class="mb-2 text-ui font-semibold">{{ $t('settings.exportRecent') }}</h2>
         <div
           v-for="row in recent"
           :key="row.gallery ?? 'daten'"
-          class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+          class="flex items-center gap-3 py-2.5 border-t border-rule first:border-t-0"
         >
           <span class="min-w-0 flex-1">
             <span class="block truncate text-ui">{{ row.title }}</span>

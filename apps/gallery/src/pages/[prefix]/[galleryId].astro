@@ -5,6 +5,7 @@ import { callApi } from '../../lib/apiClient'
 import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPass'
 import { isPrerelease, signUpForPrerelease, type PrereleaseSignupResult } from '../../lib/prerelease'
 import { confirm as confirmGuest, guestCookieName, GUEST_MAX_AGE_SECONDS, nameFromEmail, requestCode } from '../../lib/guest'
+import { requestDownloadLink, type DownloadLinkResult } from '../../lib/download'
 import { tileStyle } from '../../lib/tile'
 import { gateTitle } from '../../lib/home'
 import { INTRO_TEXT, introRows } from '../../lib/intro'
@@ -29,7 +30,7 @@ const { prefix, galleryId: slug } = Astro.params
 const ref = galleryRef(prefix!, slug!)
 const basePath = `/${prefix}/${slug}`
 const requestId = Astro.locals.requestId
-const downloadUrl = `${basePath}/download`
+const downloadUrl = `${basePath}?herunterladen#herunterladen`
 const cookieName = passCookieName(ref)
 const guestCookie = guestCookieName(ref)
 // Zwei Cookies: der Pass bleibt undurchsichtig und signiert, der Name steht
@@ -63,6 +64,8 @@ interface PublishedGallery {
   intro: boolean
   locked: boolean
   downloads: boolean
+  downloadSizes: ('original' | 'web')[]
+  downloadPin: boolean
   downloadAfterPayment: boolean
   sets: GuestSet[]
   version: {
@@ -96,6 +99,11 @@ let pendingEmail: string | null = null
 let codeSent = false
 let codeWrong = false
 let tooManyCodes = false
+// Das Download-Blatt steht offen, wenn der Link es verlangt oder ein Absenden es beantwortet.
+let downloadOpen = Astro.url.searchParams.has('herunterladen')
+let downloadResult: DownloadLinkResult | null = null
+let downloadEmail = ''
+let downloadSize = ''
 
 function rememberGuest(identity: { name: string; pass: string }) {
   const options = {
@@ -157,6 +165,18 @@ if (Astro.request.method === 'POST') {
     } else {
       rememberGuest(identity)
     }
+  } else if (intent === 'herunterladen') {
+    downloadEmail = String(form.get('download_email') ?? '')
+    downloadSize = String(form.get('size') ?? '')
+    downloadOpen = true
+
+    downloadResult = await requestDownloadLink(
+      apiBase,
+      ref,
+      requestId,
+      { email: downloadEmail, size: downloadSize, pin: String(form.get('pin') ?? '') || null },
+      pass,
+    )
   } else if (intent === 'abmelden') {
     // Beides, nicht nur das Cookie: bliebe die anonyme Kennung liegen, erbte
     // der Nächste am geteilten Rechner die Markierungen von vorher.
@@ -306,8 +326,6 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(gallery?.imag
             <h1 class="display">{gateHeading}</h1>
 
             <div>
-              <div class="hair" />
-
               <form method="POST">
                 <div class="field">
                   <label for="pw">Galerie-Passwort</label>
@@ -337,8 +355,6 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(gallery?.imag
             <p class="meta">Die Galerie wird vorbereitet.</p>
 
             <div>
-              <div class="hair" />
-
               {signupStatus === 'accepted' ? (
                 <p class="hint">Eingetragen.</p>
               ) : (
@@ -403,7 +419,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(gallery?.imag
                 {guestPass === null && (can.favorites || can.comments) && <button class="txtbtn" type="button" data-signin-open aria-controls="anmelden">Anmelden</button>}
                 {can.share && <button class="txtbtn" type="button" data-share><span data-share-label>Teilen</span></button>}
                 {gallery.downloads && (
-                  <a class="barbtn solid" href={downloadUrl}>
+                  <a class="barbtn solid" href={downloadUrl} data-download-open aria-controls="herunterladen">
                     <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
                     Herunterladen
                   </a>
@@ -552,7 +568,13 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(gallery?.imag
             // Markierung ohne Absender wäre auf dem nächsten Gerät verloren,
             // und unter jedem Kommentar stünde wieder „Gast".
             !gallery.draft && guestPass === null && (can.favorites || can.comments) && (
-              <section class="signin" id="anmelden" hidden={!codeSent && !tooManyCodes}>
+              <section class="signin" id="anmelden" aria-labelledby="anmelden-titel" hidden={!codeSent && !tooManyCodes}>
+                <div class="sheethead">
+                  <h2 id="anmelden-titel">Markieren und kommentieren</h2>
+                  <a class="close" href={basePath} aria-label="Schließen" data-sheet-close>
+                    <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                  </a>
+                </div>
                 {
                   codeSent ? (
                     <form method="POST">
@@ -560,31 +582,93 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(gallery?.imag
                       <input type="hidden" name="gast_email" value={pendingEmail ?? ''} />
                       <input type="hidden" name="anonym" data-anonymous-id value="" />
                       <p>Wir haben dir sechs Ziffern an {pendingEmail} geschickt.</p>
-                      <div class="row">
+                      <div class="field">
+                        <label for="anmelden-code">Code</label>
                         <input
+                          id="anmelden-code"
                           type="text"
                           name="code"
                           inputmode="numeric"
                           autocomplete="one-time-code"
                           maxlength="6"
-                          placeholder="000000"
                           required
+                          aria-invalid={codeWrong ? 'true' : undefined}
+                          aria-describedby={codeWrong ? 'anmelden-code-fehler' : undefined}
                           data-code-input
                         />
-                        <button class="barbtn" type="submit">Bestätigen</button>
+                        {codeWrong && <p class="err" id="anmelden-code-fehler">Der Code stimmt nicht oder ist abgelaufen.</p>}
                       </div>
-                      {codeWrong && <p class="err">Der Code stimmt nicht oder ist abgelaufen.</p>}
+                      <button class="barbtn solid" type="submit">Bestätigen</button>
                     </form>
                   ) : (
                     <form method="POST">
                       <input type="hidden" name="absicht" value="anmelden" />
-                      <div class="eyebrow">Markieren und kommentieren</div>
-                      <div class="row">
-                        <label>E-Mail <input type="email" name="gast_email" autocomplete="email" required data-email-source /></label>
-                        <label>Name <input type="text" name="gast_name" autocomplete="name" required data-name-target /></label>
-                        <button class="barbtn" type="submit">Weiter</button>
+                      <div class="field">
+                        <label for="anmelden-email">E-Mail</label>
+                        <input id="anmelden-email" type="email" name="gast_email" autocomplete="email" required data-email-source />
+                      </div>
+                      <div class="field">
+                        <label for="anmelden-name">Name</label>
+                        <input id="anmelden-name" type="text" name="gast_name" autocomplete="name" required data-name-target />
                       </div>
                       {tooManyCodes && <p class="err">Zu viele Anfragen. Versuch es später noch einmal.</p>}
+                      <button class="barbtn solid" type="submit">Anmelden</button>
+                    </form>
+                  )
+                }
+              </section>
+            )
+          }
+
+          {
+            !gallery.draft && gallery.downloads && (
+              <section class="signin" id="herunterladen" aria-labelledby="herunterladen-titel" hidden={!downloadOpen}>
+                <div class="sheethead">
+                  <h2 id="herunterladen-titel">Herunterladen</h2>
+                  <a class="close" href={basePath} aria-label="Schließen" data-sheet-close>
+                    <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                  </a>
+                </div>
+                {
+                  downloadResult === 'sent' ? (
+                    <p>Der Link kommt per E-Mail an {downloadEmail}.</p>
+                  ) : (
+                    <form method="POST">
+                      <input type="hidden" name="absicht" value="herunterladen" />
+                      {gallery.downloadSizes.length > 1 && (
+                        <fieldset class="sizes">
+                          <legend>Größe</legend>
+                          {gallery.downloadSizes.map((size) => (
+                            <label>
+                              <input type="radio" name="size" value={size} checked={size === (downloadSize || 'original')} />
+                              {size === 'original' ? 'Original' : 'Web'}
+                            </label>
+                          ))}
+                        </fieldset>
+                      )}
+                      {gallery.downloadSizes.length === 1 && <input type="hidden" name="size" value={gallery.downloadSizes[0]} />}
+                      <div class="field">
+                        <label for="herunterladen-email">E-Mail</label>
+                        <input id="herunterladen-email" type="email" name="download_email" autocomplete="email" value={downloadEmail} required />
+                      </div>
+                      {gallery.downloadPin && (
+                        <div class="field">
+                          <label for="herunterladen-pin">Download-Code</label>
+                          <input
+                            id="herunterladen-pin"
+                            type="text"
+                            name="pin"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            required
+                            aria-invalid={downloadResult === 'pin' ? 'true' : undefined}
+                            aria-describedby={downloadResult === 'pin' ? 'herunterladen-pin-fehler' : undefined}
+                          />
+                          {downloadResult === 'pin' && <p class="err" id="herunterladen-pin-fehler">Dieser Code stimmt nicht.</p>}
+                        </div>
+                      )}
+                      {downloadResult === 'throttled' && <p class="err">Zu viele Anfragen. Versuch es später noch einmal.</p>}
+                      <button class="barbtn solid" type="submit">Download-Link erstellen</button>
                     </form>
                   )
                 }
@@ -672,14 +756,35 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(gallery?.imag
             }
 
             const signin = document.getElementById('anmelden')
+            const download = document.getElementById('herunterladen')
 
-            document.querySelector('[data-signin-open]')?.addEventListener('click', () => {
-              signin.hidden = !signin.hidden
-              if (!signin.hidden) signin.querySelector('input:not([type=hidden])')?.focus()
+            // Ein Blatt zur Zeit: beide sitzen am unteren Rand.
+            function toggleSheet(sheet, other) {
+              if (!sheet) return
+              if (other) other.hidden = true
+              sheet.hidden = !sheet.hidden
+              if (!sheet.hidden) sheet.querySelector('input:not([type=hidden])')?.focus()
+            }
+
+            document.querySelector('[data-signin-open]')?.addEventListener('click', () => toggleSheet(signin, download))
+
+            document.querySelector('[data-download-open]')?.addEventListener('click', (event) => {
+              if (!download) return
+              event.preventDefault()
+              toggleSheet(download, signin)
             })
 
+            document.querySelectorAll('[data-sheet-close]').forEach((link) =>
+              link.addEventListener('click', (event) => {
+                event.preventDefault()
+                link.closest('.signin').hidden = true
+              }),
+            )
+
             document.addEventListener('keydown', (event) => {
-              if (event.key === 'Escape' && signin) signin.hidden = true
+              if (event.key !== 'Escape') return
+              if (signin) signin.hidden = true
+              if (download) download.hidden = true
             })
 
             document.addEventListener('submit', (event) => {

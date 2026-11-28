@@ -71,7 +71,7 @@ function aufLink(event: MouseEvent) {
 
 <template>
   <div v-if="sichtbar" class="fixed inset-0 z-40 bg-foreground/20" @click.self="helpPanel.schliessen()">
-    <aside class="absolute inset-y-0 right-0 w-[420px] max-w-full overflow-y-auto bg-background px-5 py-4 shadow-xl">
+    <aside class="absolute inset-y-0 right-0 w-[420px] max-w-full overflow-y-auto border-l border-line-hover bg-background px-5 py-4">
       <div class="mb-3 flex items-center gap-2">
         <button
           v-for="eintrag in eintraege"

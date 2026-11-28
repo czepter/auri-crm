@@ -23,6 +23,7 @@ beforeEach(function () {
 function fullPreset(array $overrides = []): GalleryPreset
 {
     return GalleryPreset::factory()->create([
+        'is_default' => true,
         'sets' => [
             ['name' => 'Highlights', 'access' => 'internal'],
             ['name' => 'Getting Ready', 'access' => 'internal'],
@@ -44,11 +45,7 @@ function fullPreset(array $overrides = []): GalleryPreset
 it('applies sets, release defaults, design and expiry from the preset', function () {
     $preset = fullPreset();
 
-    $this->post('/galerien', [
-        'title' => 'Hochzeit',
-        'is_external' => false,
-        'gallery_preset_id' => $preset->public_id,
-    ])->assertRedirect();
+    $this->post('/galerien', ['title' => 'Hochzeit', 'is_external' => false])->assertRedirect();
 
     $gallery = Gallery::sole();
 
@@ -71,11 +68,9 @@ it('applies sets, release defaults, design and expiry from the preset', function
 });
 
 it('keeps the single default set for a preset without sets', function () {
-    $this->post('/galerien', [
-        'title' => 'Ohne',
-        'is_external' => false,
-        'gallery_preset_id' => GalleryPreset::factory()->create()->public_id,
-    ])->assertRedirect();
+    GalleryPreset::factory()->create(['is_default' => true]);
+
+    $this->post('/galerien', ['title' => 'Ohne', 'is_external' => false])->assertRedirect();
 
     expect(Gallery::sole()->sets()->pluck('name')->all())->toBe(['Highlights']);
 });
@@ -236,22 +231,16 @@ it('is born with the studio download rule, and a preset rule wins over it', func
     StudioSettings::current()->forceFill(['gallery_default_download_rule' => 'after_payment'])->save();
 
     $this->post('/galerien', ['title' => 'Studio', 'is_external' => false])->assertRedirect();
-    $this->post('/galerien', [
-        'title' => 'Vorlage', 'is_external' => false,
-        'gallery_preset_id' => GalleryPreset::factory()->create(['download_rule' => 'off'])->public_id,
-    ])->assertRedirect();
-    $this->post('/galerien', ['title' => 'Formular', 'is_external' => false, 'download_rule' => 'open'])->assertRedirect();
+    GalleryPreset::factory()->create(['is_default' => true, 'download_rule' => 'off']);
+    $this->post('/galerien', ['title' => 'Vorlage', 'is_external' => false])->assertRedirect();
 
     expect(Gallery::query()->where('title', 'Studio')->value('download_rule'))->toBe('after_payment')
-        ->and(Gallery::query()->where('title', 'Vorlage')->first())->download_rule->toBe('off')->downloads_enabled->toBeFalse()
-        ->and(Gallery::query()->where('title', 'Formular')->value('download_rule'))->toBe('open');
+        ->and(Gallery::query()->where('title', 'Vorlage')->first())->download_rule->toBe('off')->downloads_enabled->toBeFalse();
 });
 
 it('reads a preset from before the rule as open or off', function () {
-    $this->post('/galerien', [
-        'title' => 'Alt', 'is_external' => false,
-        'gallery_preset_id' => GalleryPreset::factory()->create(['downloads_enabled' => false, 'download_rule' => null])->public_id,
-    ])->assertRedirect();
+    GalleryPreset::factory()->create(['is_default' => true, 'downloads_enabled' => false, 'download_rule' => null]);
+    $this->post('/galerien', ['title' => 'Alt', 'is_external' => false])->assertRedirect();
 
     expect(Gallery::sole()->download_rule)->toBe('off');
 });

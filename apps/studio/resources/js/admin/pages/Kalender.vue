@@ -10,7 +10,7 @@ import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
 import { QueueGroup, QueueItem } from '@/ui/queue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
-import { useLiveProps } from '@/admin/lib/liveReload'
+import { dayWithWeekday } from '@/admin/lib/dates'
 
 const props = defineProps<{
   view: 'monat' | 'liste' | 'saison'
@@ -25,7 +25,6 @@ const props = defineProps<{
   season: InstanceType<typeof CalendarSeason>['$props']['season'] | null
   workingDays: number[] | null
 }>()
-useLiveProps(['days', 'shoots', 'projects', 'mine', 'season', 'workingDays'])
 
 const seasonLabel = ref('')
 
@@ -86,9 +85,6 @@ const groups = computed(() => {
   return Object.entries(buckets).filter(([, rows]) => rows.length)
 })
 
-function shortDate(date: string | null) {
-  return date ? new Date(date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
-}
 </script>
 
 <template>
@@ -155,7 +151,7 @@ function shortDate(date: string | null) {
           <div
             v-for="day in days"
             :key="day.date"
-            class="min-h-[104px] overflow-hidden px-2 pt-2 pb-2.5 max-[640px]:px-1 shadow-[inset_0_1px_0_var(--rule),inset_1px_0_0_var(--rule)] [&:nth-child(7n+1)]:shadow-[inset_0_1px_0_var(--rule)]"
+            class="min-h-[104px] overflow-hidden px-2 pt-2 pb-2.5 max-[640px]:px-1 border-t border-l border-rule [&:nth-child(7n+1)]:border-l-0"
           >
             <span
               class="text-small tabular-nums"
@@ -222,7 +218,7 @@ function shortDate(date: string | null) {
               :href="`/auftraege/${projects[shoot.id].id}`"
               :name="projects[shoot.id].name"
               :meta="shoot.statusLabel"
-              :title="[shortDate(shoot.date) + (shoot.callTime ? ` ${shoot.callTime}` : ''), shoot.venue].filter(Boolean).join(' · ')"
+              :title="[dayWithWeekday(shoot.date) + (shoot.callTime ? ` ${shoot.callTime}` : ''), shoot.venue].filter(Boolean).join(' · ')"
             />
           </template>
         </div>
@@ -254,7 +250,7 @@ function shortDate(date: string | null) {
                   {{ $t(`calendar.group.${key}`) }}
               </TableGroupRow>
               <TableRow v-for="shoot in rows" :key="shoot.id">
-                <TableCell>{{ shortDate(shoot.date) }}<template v-if="shoot.callTime"> {{ shoot.callTime }}</template></TableCell>
+                <TableCell>{{ dayWithWeekday(shoot.date) }}<template v-if="shoot.callTime"> {{ shoot.callTime }}</template></TableCell>
                 <TableCell tone="name">
                   <Link :href="`/auftraege/${projects[shoot.id].id}`">{{ projects[shoot.id].name }}</Link>
                 </TableCell>

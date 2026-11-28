@@ -58,6 +58,7 @@ const meta = {
       id: 'th-brandt',
       subject: 'Trauung am 12.06.2027',
       state: 'offen',
+      task: null,
       projectId: 'p-brandt',
       projectName: 'Brandt, Familie',
       shootDate: '2027-06-12T11:00:00+02:00',
@@ -109,6 +110,7 @@ const meta = {
         startedAt: '2026-09-10T19:22:00+02:00',
       },
     ],
+    staffOptions: [{ value: 'u1', label: 'Christian Zepter' }],
     projects: [
       { id: 'p-rahn', label: 'Rahn, Marie & Jonas' },
       { id: 'p-ahrens', label: 'Ahrens, Sophie & Tim' },

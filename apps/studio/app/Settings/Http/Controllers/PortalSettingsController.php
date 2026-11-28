@@ -18,6 +18,7 @@ use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Rules\LegalTemplateFamily;
 use App\Settings\Rules\ValidFormat;
+use App\Support\LiveUpdate;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,11 +49,11 @@ class PortalSettingsController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Portal', [
-            'settings' => PortalSettingsData::current(),
+            'settings' => LiveUpdate::live(PortalSettingsData::current()),
             // The pane's preview draws the portal head, which is the
             // studio's logo, pair and accent — none of which belongs in
             // PortalSettingsData, all of which this DTO already carries.
-            'branding' => StudioSettingsData::current(),
+            'branding' => LiveUpdate::live(StudioSettingsData::current()),
         ]);
     }
 
@@ -95,14 +96,14 @@ class PortalSettingsController extends Controller
             // echter Kontakt müsste erst gesucht werden, und seine Buchungen
             // sagen über die Einstellung nichts.
             'client' => 'Maxi Musterfrau',
-            'welcomeText' => $welcome,
+            'welcomeText' => LiveUpdate::live($welcome),
             'closed' => $request->boolean('geschlossen'),
-            'shelf' => $request->boolean('leistungen', (bool) StudioSettings::current()->portal_offers_enabled) ? $this->sampleShelf() : [],
-            'maintenanceMessage' => $request->query('hinweis', StudioSettings::current()->portal_maintenance_message),
-            'fontPair' => (FontPair::tryFrom((string) $request->query('schrift')) ?? FontPair::current())->value,
+            'shelf' => LiveUpdate::live($request->boolean('leistungen', (bool) StudioSettings::current()->portal_offers_enabled) ? $this->sampleShelf() : []),
+            'maintenanceMessage' => LiveUpdate::live($request->query('hinweis', StudioSettings::current()->portal_maintenance_message)),
+            'fontPair' => LiveUpdate::live((FontPair::tryFrom((string) $request->query('schrift')) ?? FontPair::current())->value),
             // Getippt schlägt gespeichert, wie beim Text: die Seite Allgemein
             // schickt Name, Farbe, Logo und Anschrift, wie sie im Formular stehen.
-            'portalBranding' => [
+            'portalBranding' => LiveUpdate::live([
                 'displayName' => Str::limit(trim((string) $request->query('name')), 120, '') ?: (StudioSettings::current()->display_name ?? config('app.name')),
                 // Nur ein Blob des eigenen Browsers: ein fremder Wert in einem <img> wäre ein Tracking-Pixel.
                 'logoUrl' => str_starts_with((string) $request->query('logo'), 'blob:')
@@ -110,10 +111,10 @@ class PortalSettingsController extends Controller
                     : (StudioSettings::current()->logo_path !== null ? '/einstellungen/logo' : null),
                 'accentColor' => preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $request->query('akzent')) ? $request->query('akzent') : StudioSettings::current()->profile()['accent_color'],
                 'address' => $request->has('adresse') ? Str::limit(trim((string) $request->query('adresse')), 200, '') : StudioSettings::current()->postalLine(),
-            ],
-            'portalLegal' => collect(LegalTexts::ALL)
+            ]),
+            'portalLegal' => LiveUpdate::live(collect(LegalTexts::ALL)
                 ->mapWithKeys(fn (string $text) => [$text.'Url' => LegalTexts::url($text)])
-                ->all(),
+                ->all()),
             'portalNav' => null,
             'clientRegister' => in_array($request->query('anrede'), ['formal', 'informal'], true) ? $request->query('anrede') : StudioSettings::current()->client_register,
         ]);
@@ -210,9 +211,9 @@ class PortalSettingsController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Settings/PortalContact', [
-            'settings' => PortalSettingsData::current(),
+            'settings' => LiveUpdate::live(PortalSettingsData::current()),
             // Die Vorschau zeigt, was ohne eigenen Namen dort stünde: die Marke.
-            'branding' => StudioSettingsData::current(),
+            'branding' => LiveUpdate::live(StudioSettingsData::current()),
         ]);
     }
 
@@ -252,8 +253,8 @@ class PortalSettingsController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Settings/ImprintTerms', [
-            'settings' => PortalSettingsData::current(),
-            'legalTemplates' => DocumentTemplate::query()
+            'settings' => LiveUpdate::live(PortalSettingsData::current()),
+            'legalTemplates' => LiveUpdate::live(DocumentTemplate::query()
                 ->current()
                 ->ofType(DocumentTemplateType::Legal)
                 ->orderBy('name')
@@ -263,7 +264,7 @@ class PortalSettingsController extends Controller
                     'name' => $template->name,
                     'updatedAt' => $template->updated_at?->toDateString(),
                 ])
-                ->all(),
+                ->all()),
         ]);
     }
 
@@ -324,7 +325,6 @@ class PortalSettingsController extends Controller
             'portal_maintenance_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_maintenance_message' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'portal_accept_quotes_enabled' => ['sometimes', 'required', 'boolean'],
-            'portal_sign_contracts_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_payment_status_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_offers_enabled' => ['sometimes', 'required', 'boolean'],
             // P-09 (#228): everything Sprint 25's seven portal screens do
