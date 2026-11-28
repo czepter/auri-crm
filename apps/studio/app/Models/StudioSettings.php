@@ -133,10 +133,10 @@ class StudioSettings extends Model
         return ContractMode::tryFrom((string) $this->contract_mode) ?? ContractMode::OnDemand;
     }
 
-    /** config('mail.from.*') stands in until the E-Mail pane sets the tenant's own. */
+    /** config('mail.from.*') stands in until the E-Mail pane sets the tenant's own; the name prefers the studio's. */
     public function mailFromName(): string
     {
-        return $this->mail_from_name ?: config('mail.from.name');
+        return $this->mail_from_name ?: $this->display_name ?: config('mail.from.name');
     }
 
     public function mailFromAddress(): string

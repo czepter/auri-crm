@@ -22,6 +22,14 @@ it('falls back to config(mail.from.*) until a studio sets its own', function () 
         ->and(StudioSettings::current()->mail_signature)->toBeNull();
 });
 
+it('sends under the studio name while no sender name is set', function () {
+    config(['mail.from.name' => 'Studio']);
+
+    app(UpdateStudioSetting::class)('display_name', '50mm freunde', staffMember(StaffRole::Admin));
+
+    expect(StudioSettings::current()->mailFromName())->toBe('50mm freunde');
+});
+
 it('resolves the tenant value the moment it is set, with no deploy', function () {
     $owner = staffMember(StaffRole::Admin);
 
