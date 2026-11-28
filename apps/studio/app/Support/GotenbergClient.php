@@ -19,14 +19,13 @@ class GotenbergClient
 {
     public function __construct(private readonly string $baseUrl = '') {}
 
-    /** `$preferCssPageSize` lets the document's own `@page` set paper size and margins; Chromium defaults to Letter. */
-    public function htmlToPdf(string $html, bool $preferCssPageSize = false): string
+    public function htmlToPdf(string $html): string
     {
         $url = $this->baseUrl ?: config('services.gotenberg.url');
 
         return Http::asMultipart()
             ->attach('files', $html, 'index.html')
-            ->post(rtrim($url, '/').'/forms/chromium/convert/html', $preferCssPageSize ? ['preferCssPageSize' => 'true'] : [])
+            ->post(rtrim($url, '/').'/forms/chromium/convert/html')
             ->throw()
             ->body();
     }

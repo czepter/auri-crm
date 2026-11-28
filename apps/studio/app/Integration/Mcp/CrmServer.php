@@ -4,7 +4,6 @@ namespace App\Integration\Mcp;
 
 use App\Integration\Mcp\Tools\BookingTaskTools;
 use App\Integration\Mcp\Tools\CrmEditTools;
-use App\Integration\Mcp\Tools\FinanceTools;
 use App\Integration\Mcp\Tools\GalleryTools;
 use App\Integration\Mcp\Tools\InvoiceTools;
 use App\Integration\Mcp\Tools\MessageTools;
@@ -29,7 +28,6 @@ class CrmServer extends Server
 
     protected string $instructions = <<<'MARKDOWN'
         The studio's CRM: leads and projects, shoots and crew, quotes, payments, galleries, tasks and messages.
-        Expenses and receipts are filed as drafts; a person books them in the screens.
         Every id in an argument or an answer is a public_id, never a row's internal integer id.
         MARKDOWN;
 
@@ -64,7 +62,6 @@ class CrmServer extends Server
             ...MessageTools::definitions(),
             ...GalleryTools::definitions(),
             ...StudioOpsTools::definitions(),
-            ...FinanceTools::definitions(),
         ];
     }
 }

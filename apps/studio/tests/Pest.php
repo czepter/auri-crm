@@ -14,7 +14,6 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
-use App\Finance\Models\ExpenseCategory;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Support\GalleryGuestPass;
@@ -463,24 +462,6 @@ function creditableInstallment(SettledVia $via = SettledVia::Transfer, ?string $
     app(MarkInstallmentPaid::class)($installment->fresh(), $via, '2026-09-02', $reference);
 
     return $installment->fresh();
-}
-
-/** A valid expense form for the Finance screens, hosting at 19 %. */
-function expensePayload(array $overrides = []): array
-{
-    return [
-        'vendor' => 'Nordhost Hosting GmbH',
-        'paid_at' => '2026-03-04',
-        'invoice_date' => '2026-03-01',
-        'net' => 10000,
-        'vat_rate' => 1900,
-        'vat' => 1900,
-        'gross' => 11900,
-        'currency' => 'EUR',
-        'category_id' => ExpenseCategory::query()->where('key', 'hosting_domains')->value('public_id'),
-        'business_share' => 100,
-        ...$overrides,
-    ];
 }
 
 /**
