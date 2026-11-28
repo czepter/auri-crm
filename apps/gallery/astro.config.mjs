@@ -10,6 +10,10 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   output: 'server',
   adapter: node({ mode: 'standalone' }),
+  // TLS endet am Proxy. Ohne vertrautes X-Forwarded-Proto rekonstruiert Astro
+  // http://… und die Origin-Prüfung weist jedes POST-Formular ab. Jede Studio-
+  // Domain ist erlaubt, weil der Container nur hinter dem Proxy erreichbar ist.
+  security: { allowedDomains: [{}] },
   // Dasselbe Tailwind wie im Studio, damit die beiden Oberflächen nicht auf
   // zwei Systemen für eine Gestaltung auseinanderlaufen.
   vite: { plugins: [tailwindcss()] },
