@@ -2,13 +2,9 @@
 
 namespace App\Staff\Listeners;
 
-use App\Gallery\Notifications\GalleryEmailVerificationLink;
-use App\Gallery\Notifications\GalleryGuestCode;
 use App\Models\StudioSettings;
 use App\Models\User;
-use App\Portal\Notifications\ClientAccessLink;
-use App\Staff\Notifications\StaffEmailChangeConfirmation;
-use App\Staff\Notifications\StaffInvited;
+use App\Notifications\Contracts\IgnoresClientMailSwitch;
 use App\Support\AuditLogger;
 use Illuminate\Notifications\Events\NotificationSending;
 
@@ -18,8 +14,7 @@ use Illuminate\Notifications\Events\NotificationSending;
  * mails dispatch SendMailNotification themselves.
  *
  * Everyone who is not staff counts as a client, so an on-demand staff mail
- * added later stays withheld until it is listed here. Login mails pass: the
- * client asked for them, and without them portal and gallery stay locked.
+ * stays withheld unless it implements IgnoresClientMailSwitch.
  */
 class WithholdClientMail
 {
@@ -27,11 +22,7 @@ class WithholdClientMail
     {
         if ($event->channel !== 'mail'
             || $event->notifiable instanceof User
-            || $event->notification instanceof StaffInvited
-            || $event->notification instanceof StaffEmailChangeConfirmation
-            || $event->notification instanceof ClientAccessLink
-            || $event->notification instanceof GalleryGuestCode
-            || $event->notification instanceof GalleryEmailVerificationLink
+            || $event->notification instanceof IgnoresClientMailSwitch
             || (bool) StudioSettings::current()->mail_clients_enabled) {
             return null;
         }

@@ -1,6 +1,8 @@
 <?php
 
 use App\Crm\Models\Contact;
+use App\Gallery\Models\Gallery;
+use App\Gallery\Notifications\GalleryZipReady;
 use App\Models\User;
 use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Models\InAppNotification;
@@ -145,8 +147,12 @@ it('withholds mail to clients while the studio has switched it off, and still ma
         NotificationFacade::route('mail', $contact->email),
         new ClientAccessLink($contact, 'https://example.test/zugang/one'),
     );
+    app(NotificationService::class)->send(
+        NotificationFacade::route('mail', 'gast@example.test'),
+        new GalleryZipReady(Gallery::factory()->create(), 'https://example.test/download/one', 1),
+    );
 
-    expect($sent)->toBe([E07DemoNotification::class, ClientAccessLink::class]);
+    expect($sent)->toBe([E07DemoNotification::class, ClientAccessLink::class, GalleryZipReady::class]);
 });
 
 it('refuses to write an in-app row for a notifiable with no persisted identity', function () {

@@ -5,6 +5,7 @@ namespace App\Portal\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Crm\Models\Contact;
 use App\Models\StudioSettings;
+use App\Notifications\Contracts\IgnoresClientMailSwitch;
 use App\Notifications\Contracts\Transactional;
 use App\Portal\Models\EmailChange;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -16,7 +17,7 @@ use Illuminate\Notifications\Notification;
  * same reason the magic link is: the client is waiting on it, and a client
  * mid-way through changing their login is not someone to keep waiting.
  */
-class EmailChangeConfirmation extends Notification implements Transactional
+class EmailChangeConfirmation extends Notification implements IgnoresClientMailSwitch, Transactional
 {
     use AppliesStudioMailIdentity;
 
