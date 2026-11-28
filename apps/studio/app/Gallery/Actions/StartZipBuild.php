@@ -3,6 +3,7 @@
 namespace App\Gallery\Actions;
 
 use App\Gallery\Jobs\BuildZip;
+use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
@@ -21,6 +22,8 @@ use App\Media\Models\ZipBuildWaiter;
  */
 class StartZipBuild
 {
+    public function __construct(private readonly NotifyZipWaiters $notify) {}
+
     public function __invoke(
         GalleryVersion $version,
         ZipBuildSize $size,
@@ -40,6 +43,12 @@ class StartZipBuild
         ]);
 
         if ($build->exists && $build->status === ZipBuildStatus::Ready && $build->updated_at->gt(now()->subHours($freshHours))) {
+            // Ein fertiges Archiv löst keine Mail mehr aus; wer jetzt fragt, bekommt sie sofort.
+            if ($waiterEmail !== null) {
+                $this->wait($build, $version->gallery, $waiterEmail);
+                ($this->notify)($build);
+            }
+
             return;
         }
 
@@ -57,14 +66,20 @@ class StartZipBuild
         // teilen sich die Bände —, also hängt die Zustelladresse an einer
         // eigenen Zeile und nicht am Bau.
         if ($waiterEmail !== null) {
-            ZipBuildWaiter::query()->firstOrCreate([
-                'zip_build_id' => $build->id,
-                'gallery_guest_id' => GalleryGuest::forGallery($version->gallery, $waiterEmail)->id,
-            ]);
+            $this->wait($build, $version->gallery, $waiterEmail);
         }
 
         if (! $running) {
             BuildZip::dispatch($build);
         }
+    }
+
+    // notified_at zurück: wer nach einem Neubau oder ein zweites Mal fragt, will auch wieder Bescheid.
+    private function wait(ZipBuild $build, Gallery $gallery, string $email): void
+    {
+        ZipBuildWaiter::query()->updateOrCreate([
+            'zip_build_id' => $build->id,
+            'gallery_guest_id' => GalleryGuest::forGallery($gallery, $email)->id,
+        ], ['notified_at' => null]);
     }
 }

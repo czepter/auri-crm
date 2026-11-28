@@ -4,6 +4,8 @@ namespace App\Gallery\Actions;
 
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryDownloadLink;
+use App\Gallery\Models\GalleryGuest;
+use App\Media\Models\ZipBuild;
 
 /**
  * Mints the "Herunterladen" mail's own link — signed by a stored token
@@ -17,15 +19,22 @@ use App\Gallery\Models\GalleryDownloadLink;
  */
 class IssueGalleryDownloadLink
 {
-    public function __invoke(Gallery $gallery): string
+    /** Mit $guestBuild führt der Link auf die Galerie-Adresse, sonst ins Portal. */
+    public function __invoke(Gallery $gallery, ?ZipBuild $guestBuild = null, ?GalleryGuest $guest = null): string
     {
         $token = bin2hex(random_bytes(32));
 
         GalleryDownloadLink::create([
             'gallery_id' => $gallery->id,
+            'zip_build_id' => $guestBuild?->id,
+            'gallery_guest_id' => $guest?->id,
             'token_hash' => GalleryDownloadLink::hash($token),
             'expires_at' => now()->addDays(GalleryDownloadLink::VALID_FOR_DAYS),
         ]);
+
+        if ($guestBuild !== null) {
+            return $gallery->publicUrl()."/download/{$token}";
+        }
 
         return rtrim((string) config('portal.url'), '/')."/galerien/{$gallery->public_id}/download/mail/{$token}";
     }

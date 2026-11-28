@@ -43,25 +43,26 @@ img { max-width: 100%; height: auto; }
 .lock .display { color: #fff; text-shadow: 0 2px 60px rgba(0,0,0,.4); }
 .lock .meta { color: rgba(246,241,235,.78); margin-top: var(--s4); font-size: 15px; }
 
-.hair { width: 48px; height: 1px; background: rgba(246,241,235,.45); margin: var(--s8) auto var(--s6); }
+.lock > div { margin-top: var(--s7); }
 
-/* A line instead of a box: on a photograph every box is a foreign object. */
-.field { display: block; width: min(340px, 100%); margin: 0 auto; text-align: center; }
-.field label {
-  display: block; font: 600 10.5px/1 var(--sans); letter-spacing: .17em;
-  text-transform: uppercase; color: rgba(246,241,235,.68); margin-bottom: var(--s4);
-}
+/* Beschriftung über dem Feld und ein Rand mit 3 : 1 gegen den Grund
+   (WCAG 1.4.11): ein Strich allein liest sich nicht als Feld. */
+.lock form { width: min(340px, 100%); margin: 0 auto; text-align: left; }
+.field { display: grid; gap: var(--s2); }
+.field + .field { margin-top: var(--s4); }
+.field label { font: 500 14px/20px var(--sans); color: var(--void-ink-2); }
 .field input {
-  width: 100%; background: transparent; border: 0;
-  border-bottom: 1px solid rgba(246,241,235,.65);
-  padding: 10px 2px; color: #fff; text-align: center;
-  font: 400 20px/1.3 var(--sans); letter-spacing: .22em;
+  width: 100%; height: 44px; padding: 0 var(--s3);
+  background: var(--void-2); border: 1px solid #6C625A; border-radius: var(--r-sm);
+  color: var(--void-ink); font: 400 16px/20px var(--sans);
   outline: none; transition: border-color .25s var(--ease);
 }
-.field input::placeholder { color: rgba(246,241,235,.35); }
 .field input:focus { border-color: var(--accent); }
 
-.gate .btn { margin-top: var(--s6); background: #fff; color: var(--void); padding: 16px 34px; }
+.gate .btn {
+  width: 100%; height: 44px; justify-content: center; margin-top: var(--s5); padding: 0 var(--s4);
+  border-radius: var(--r-sm); background: #fff; color: var(--void);
+}
 .gate .btn:hover { background: var(--accent); color: #fff; }
 
 .hint { margin-top: var(--s6); font-size: 12.5px; color: rgba(246,241,235,.66); }
@@ -114,7 +115,7 @@ img { max-width: 100%; height: auto; }
 .bar .who b { color: var(--void-ink); font-weight: 600; }
 .barbtn {
   display: inline-flex; align-items: center; gap: 8px;
-  min-height: 44px; padding: 9px 16px; border-radius: var(--r-pill);
+  min-height: 44px; padding: 9px 16px; border-radius: var(--r-sm);
   border: 1px solid var(--void-line); background: transparent;
   color: var(--void-ink); font: 500 14px/1 var(--sans); text-decoration: none; cursor: pointer;
   transition: background .2s var(--ease), border-color .2s var(--ease);
@@ -154,32 +155,34 @@ img { max-width: 100%; height: auto; }
    ansehen darf jeder, und wer nur schaut, wegklicken muss er nichts. */
 .signin {
   position: fixed; inset: auto 0 0; z-index: 20;
-  max-width: var(--page); margin: 0 auto; padding: var(--s5);
+  max-width: calc(36rem + 2 * var(--s5)); margin: 0 auto; padding: var(--s4) var(--s5) var(--s5);
   background: var(--void-2); border: 1px solid var(--void-line); border-bottom: 0;
   border-radius: var(--r) var(--r) 0 0; box-shadow: 0 -20px 48px -16px rgba(0,0,0,.6);
 }
 .signin[hidden] { display: none; }
-.signin p { margin: 0 0 var(--s3); font-size: 13.5px; color: var(--void-ink-2); }
-.signin .eyebrow { margin-bottom: var(--s3); }
-.signin .row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s2); }
-.signin label { flex: 1 1 200px; display: grid; gap: 6px; font: 500 13px/1 var(--sans); color: var(--void-ink-2); }
-.signin input {
-  flex: 1 1 200px; min-width: 0; padding: 13px 15px;
-  border: 1px solid #6C625A; border-radius: var(--r-sm);
-  background: var(--void-2); color: var(--void-ink);
-  font: 400 14px/1.2 var(--sans);
+.sheethead { display: flex; align-items: center; justify-content: space-between; gap: var(--s4); margin-bottom: var(--s4); }
+.sheethead h2 { margin: 0; font: 600 18px/24px var(--sans); color: var(--void-ink); }
+.close {
+  display: grid; place-items: center; width: 40px; height: 40px; margin-right: calc(-1 * var(--s2));
+  border-radius: var(--r-sm); color: var(--void-ink-2);
 }
-.signin input:focus { outline: none; border-color: var(--accent); }
-.signin input[name='code'] { flex: 0 0 140px; letter-spacing: .32em; font-variant-numeric: tabular-nums; }
+.close:hover { color: var(--void-ink); background: var(--void-line); }
+.close svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+.signin form { display: grid; gap: var(--s4); }
+.signin p { margin: 0; font-size: 14px; line-height: 20px; color: var(--void-ink-2); }
+.signin .field + .field { margin-top: 0; }
+.signin .barbtn { justify-content: center; }
+.signin .err { margin: 0; color: #E4805C; }
+.signin input[name='code'] { letter-spacing: .32em; font-variant-numeric: tabular-nums; }
 /* Sechs Felder statt einem: das Skript unter der Anmeldung baut sie aus dem
    Feld oben, sobald JavaScript läuft. Ohne es bleibt das eine Feld stehen. */
 .signin input[hidden] { display: none; }
-.signin .pin { display: flex; gap: var(--s1, 6px); }
-.signin .pin input {
-  flex: 0 0 44px; padding-inline: 0; text-align: center; letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-}
-.signin .err { margin: var(--s2) 0 0; color: #E4805C; }
+.signin .pin { display: flex; gap: var(--s2); }
+.signin .pin input { width: 44px; padding-inline: 0; text-align: center; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.sizes { display: flex; flex-wrap: wrap; gap: 0 var(--s5); margin: 0; padding: 0; border: 0; }
+.sizes legend { padding: 0; margin-bottom: var(--s2); font: 500 14px/20px var(--sans); color: var(--void-ink-2); }
+.sizes label { display: flex; align-items: center; gap: var(--s2); height: 44px; color: var(--void-ink); cursor: pointer; }
+.sizes input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
 
 .gfoot .who { display: flex; align-items: center; gap: var(--s2); }
 .gfoot .who b { font-weight: 600; color: var(--void-ink); }
@@ -270,7 +273,7 @@ img { max-width: 100%; height: auto; }
   .cover { height: 82svh; }
   .covertext { bottom: var(--s8); }
   .bar .who { display: none; }
-  .hair { margin: var(--s7) auto var(--s5); }
+  .lock > div { margin-top: var(--s6); }
 }
 
 /* ── download ─────────────────────────────────────────────────────────── */
@@ -279,7 +282,7 @@ img { max-width: 100%; height: auto; }
 .dl-name { flex: 1; color: #fff; font-weight: 600; }
 .dl-size, .dl-state { color: rgba(246,241,235,.66); font-size: 13px; }
 .dl-parts { display: flex; flex-wrap: wrap; gap: var(--s2); }
-.hint a { color: inherit; }
+.hint a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 
 
 /* ── Gestaltung ──────────────────────────────────────────────────────────
@@ -349,7 +352,7 @@ html[data-gcover='geteilt'] .scrollcue { color: var(--void-ink-2); }
 .introbox { width: 100%; padding: var(--s6) var(--s5) calc(var(--s6) + env(safe-area-inset-bottom)); background: var(--void); color: var(--void-ink); border-radius: 16px 16px 0 0; }
 .introbox h2 { margin: 0 0 var(--s5); font-size: 18px; font-weight: 600; }
 .introbox ul { margin: 0 0 var(--s6); padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s4); font-size: 15px; }
-.introbox .btn { width: 100%; padding: 14px 20px; border: 0; border-radius: 999px; background: #fff; color: var(--void); font: inherit; font-weight: 600; cursor: pointer; }
+.introbox .btn { width: 100%; padding: 14px 20px; border: 0; border-radius: var(--r-sm); background: #fff; color: var(--void); font: inherit; font-weight: 600; cursor: pointer; }
 @media (min-width: 761px) {
   .intro { align-items: center; }
   .introbox { max-width: 400px; border-radius: 16px; padding-bottom: var(--s6); }
@@ -369,7 +372,7 @@ html[data-gcover='geteilt'] .scrollcue { color: var(--void-ink-2); }
 .home .logo a { display: inline-flex; }
 .home .flt { display: flex; gap: 8px; padding-block: 8px 40px; margin-top: -8px; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: 20px; }
 .home .flt::-webkit-scrollbar { display: none; }
-.home .flt a { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid rgba(246,241,235,.2); border-radius: 999px; color: var(--void-ink-2); font: 500 14px/1 var(--sans); white-space: nowrap; }
+.home .flt a { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid rgba(246,241,235,.2); border-radius: var(--r-sm); color: var(--void-ink-2); font: 500 14px/1 var(--sans); white-space: nowrap; }
 .home .flt a:hover { color: var(--void-ink); border-color: rgba(246,241,235,.45); }
 .home .flt a[aria-current] { border-color: var(--void-ink); background: var(--void-ink); color: var(--void); scroll-initial-target: nearest; }
 .home .grid { flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px 32px; align-content: start; padding-bottom: 72px; }
@@ -388,7 +391,7 @@ html[data-gcover='geteilt'] .scrollcue { color: var(--void-ink-2); }
 .home .tile .k + b { margin-top: 2px; }
 .home .d { display: block; margin-top: 2px; color: var(--void-ink-2); font-size: 14px; }
 .home .mo { display: flex; justify-content: center; padding-bottom: 96px; }
-.home .more { display: inline-flex; align-items: center; min-height: 48px; padding: 0 28px; border: 1px solid rgba(246,241,235,.4); border-radius: 999px; font: 600 14.5px/1 var(--sans); }
+.home .more { display: inline-flex; align-items: center; min-height: 48px; padding: 0 28px; border: 1px solid rgba(246,241,235,.4); border-radius: var(--r-sm); font: 600 14.5px/1 var(--sans); }
 .home .more:hover { border-color: var(--void-ink); }
 .home .pf { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: auto; padding-block: 32px 40px; border-top: 1px solid var(--void-line); color: var(--void-ink-2); font-size: 14px; }
 .home .pf nav { display: flex; gap: 32px; }

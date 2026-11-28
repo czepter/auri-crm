@@ -10,6 +10,7 @@ use App\Gallery\Support\GalleryPreviewPass;
 use App\Gallery\Support\GalleryViewPass;
 use App\Gallery\Support\GuardsGalleryViewPassword;
 use App\Http\Controllers\Controller;
+use App\Media\Enums\ZipBuildSize;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -142,6 +143,8 @@ class GalleryReadController extends Controller
             'intro' => $gallery->intro_enabled,
             'locked' => $gallery->view_mode === 'locked',
             'downloads' => GalleryDownloadGate::allows($gallery),
+            'downloadSizes' => array_map(fn (ZipBuildSize $size) => $size->value, GalleryDownloadGate::sizes($gallery)),
+            'downloadPin' => $gallery->requiresDownloadPin(),
             'downloadAfterPayment' => $gallery->download_rule === 'after_payment' && ! GalleryDownloadGate::allows($gallery),
             'sets' => $gallery->sets()->where('access', GallerySet::GUESTS)->get()
                 ->map(fn (GallerySet $set) => ['id' => $set->public_id, 'name' => $set->name])

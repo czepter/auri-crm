@@ -137,18 +137,20 @@ it('judges by issued invoices when the project has no plan', function () {
         ->and(GalleryDownloadGate::allows($gallery->fresh()))->toBeTrue();
 });
 
-it('answers 403 on the guest download route while payment is outstanding', function () {
+it('answers 403 on the guest download request while payment is outstanding', function () {
     useSurface(Surface::API);
     $gallery = Gallery::factory()->create(['download_rule' => 'after_payment']);
     GalleryVersion::factory()->for($gallery)->create();
     invoiceOn($gallery->case, paid: false);
 
-    $this->getJson("/api/galleries/{$gallery->public_id}/download")->assertForbidden();
+    $payload = ['email' => 'anna@example.test', 'size' => 'web'];
+
+    $this->postJson("/api/galleries/{$gallery->public_id}/download/link", $payload)->assertForbidden();
 
     Invoice::query()->where('case_id', $gallery->case_id)->get()
         ->each(fn (Invoice $invoice) => $invoice->installments()->update(['status' => PaymentInstallmentStatus::Paid]));
 
-    $this->getJson("/api/galleries/{$gallery->public_id}/download")->assertOk();
+    $this->postJson("/api/galleries/{$gallery->public_id}/download/link", $payload)->assertStatus(202);
 });
 
 it('offers only the sizes the gallery allows', function () {

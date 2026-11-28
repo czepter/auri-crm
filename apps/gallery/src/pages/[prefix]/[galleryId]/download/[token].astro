@@ -1,0 +1,62 @@
+---
+import { galleryRef } from '../../../../lib/address'
+import { formatBytes, readDownloadLink } from '../../../../lib/download'
+import { imageUrl, passGate, versionImageBase } from '../../../../lib/images'
+import { objectPosition } from '../../../../lib/design'
+import '../../../../styles/app.css'
+
+Astro.response.headers.set('Cache-Control', 'no-store')
+
+const apiBase = process.env.API_URL ?? 'http://localhost:8000'
+const publicApi = process.env.PUBLIC_API_URL ?? apiBase
+const { prefix, galleryId: slug, token } = Astro.params
+const page = await readDownloadLink(apiBase, galleryRef(prefix!, slug!), Astro.locals.requestId, token!)
+
+if (page === null) {
+  return new Response(null, { status: 404 })
+}
+
+const SIZE_LABEL = { original: 'Original', web: 'Web' } as const
+const cover = page.gallery.cover
+---
+
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>{page.gallery.title}</title>
+  </head>
+  <body>
+    <section class="gate">
+      {cover && (
+        <img
+          src={imageUrl(publicApi, versionImageBase(cover.version), cover.key, 2400, 'jpeg', passGate(cover.pass))}
+          style={`object-position:${objectPosition(cover.focal)}`}
+          alt=""
+        />
+      )}
+      <div class="lock">
+        <h1 class="display">{page.gallery.title}</h1>
+        <p class="meta">{page.gallery.count} Bilder</p>
+
+        <div>
+          <ul class="dl">
+            <li>
+              <span class="dl-name">{SIZE_LABEL[page.size]}</span>
+              <span class="dl-size">{formatBytes(page.bytes)}</span>
+              <span class="dl-parts">
+                {page.parts.map((part) => (
+                  <a class="barbtn solid" href={`${publicApi}${part.path}`}>
+                    {page.parts.length > 1 ? `Teil ${part.number}` : 'Herunterladen'}
+                  </a>
+                ))}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
