@@ -6,6 +6,7 @@ use App\Concerns\AppliesStudioMailIdentity;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryEmailVerification;
 use App\Models\StudioSettings;
+use App\Notifications\Contracts\IgnoresClientMailSwitch;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -14,7 +15,7 @@ use Illuminate\Notifications\Notification;
  * wer die Mail auf dem Telefon liest, sitzt meistens vor der Galerie am
  * Rechner, und ein Klick öffnet sie dort im falschen Browser.
  */
-class GalleryGuestCode extends Notification
+class GalleryGuestCode extends Notification implements IgnoresClientMailSwitch
 {
     use AppliesStudioMailIdentity;
 

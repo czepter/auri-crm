@@ -6,6 +6,7 @@ use App\Concerns\AppliesStudioMailIdentity;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryEmailVerification;
 use App\Models\StudioSettings;
+use App\Notifications\Contracts\IgnoresClientMailSwitch;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -15,7 +16,7 @@ use Illuminate\Notifications\Notification;
  * send. This one only ever establishes identity: clicking it grants the
  * email claim (App\Gallery\Support\GalleryAccessSession), nothing more.
  */
-class GalleryEmailVerificationLink extends Notification
+class GalleryEmailVerificationLink extends Notification implements IgnoresClientMailSwitch
 {
     use AppliesStudioMailIdentity;
 

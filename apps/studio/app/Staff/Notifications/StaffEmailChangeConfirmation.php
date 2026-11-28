@@ -5,6 +5,7 @@ namespace App\Staff\Notifications;
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Models\User;
 use App\Models\UserEmailChange;
+use App\Notifications\Contracts\IgnoresClientMailSwitch;
 use App\Notifications\Contracts\Transactional;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -16,7 +17,7 @@ use Illuminate\Notifications\Notification;
  * register over; staff are addressed with "du", clients with "Sie", and the
  * copy is the reason the two are not one class.
  */
-class StaffEmailChangeConfirmation extends Notification implements Transactional
+class StaffEmailChangeConfirmation extends Notification implements IgnoresClientMailSwitch, Transactional
 {
     use AppliesStudioMailIdentity;
 
