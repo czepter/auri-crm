@@ -127,10 +127,6 @@ const PUBLIC_ROUTES = [
         // Mail-Link über sein Token, die Teile über die Signatur.
         'api/galleries/{gallery}/download/link', 'api/galleries/{gallery}/download-mail/{token}',
         'api/galleries/{gallery}/download/{zipBuildPart}/{guestId}',
-        // The bytes of a finance receipt. The signed address that
-        // api/finance/documents/uploads handed out is the whole credential:
-        // 15 minutes, one row, throttled.
-        'api/finance/documents/{document}/content',
     ],
 
     // The client's way in. Public by necessity — the only person who needs it

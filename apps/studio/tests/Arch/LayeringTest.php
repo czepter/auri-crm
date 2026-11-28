@@ -10,7 +10,7 @@ $kernel = ['App\Concerns', 'App\Support', 'App\Enums', 'App\Models', 'App\Data',
 $modules = [
     'App\Numbering', 'App\Documents', 'App\Media', 'App\Crm',
     'App\Catalog', 'App\Engagement', 'App\Portal', 'App\Quotes', 'App\Contracts', 'App\Payments',
-    'App\Gallery', 'App\Automation', 'App\Settings', 'App\Reporting', 'App\Finance', 'App\Privacy',
+    'App\Gallery', 'App\Automation', 'App\Settings', 'App\Reporting', 'App\Privacy',
     'App\Integration', 'App\Help', 'App\Releases', 'App\Staff',
 ];
 

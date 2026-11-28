@@ -61,14 +61,6 @@ describe('Sidebar-Navigation', () => {
         expect(planung(['manage_settings'] as Cap[])).toEqual(['kalender', 'abwesenheiten', 'schliesszeiten'])
     })
 
-    it('zeigt Finanzen nur mit Befugnis und auf dem Telefon unter Mehr', () => {
-        const finanzen = (can: Cap[]) => navItems(can).find((item) => item.key === 'finanzen')?.children?.map((c) => c.key)
-
-        expect(finanzen([])).toBeUndefined()
-        expect(finanzen(['manage_finances'] as Cap[])).toEqual(['ausgaben', 'anlagen', 'euer'])
-        expect(phoneNav(navItems(['manage_finances'] as Cap[])).more.map((item) => item.key)).toEqual(['benachrichtigungen', 'aufgaben', 'abwesenheiten', 'ausgaben', 'anlagen', 'euer'])
-    })
-
     it('führt Aufgaben ohne Befugnis, weil der Screen keine verlangt', () => {
         expect(keys([])).toContain('aufgaben')
     })
