@@ -21,6 +21,9 @@ use Illuminate\Notifications\Notification;
  * gespeichertes Token mit eigener Gültigkeit — GalleryDownloadLink::
  * VALID_FOR_DAYS —, unabhängig davon, ob das Archiv dahinter noch frisch ist
  * oder auf Anfrage neu gebaut wird.
+ *
+ * Bei Gast-Bauten führt der Link auf die Galerie-Adresse und öffnet dort die
+ * Teile des Archivs allein mit seinem Token.
  */
 class GalleryZipReady extends Notification
 {

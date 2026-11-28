@@ -123,10 +123,9 @@ const PUBLIC_ROUTES = [
         // GalleryDraftImageController itself — the same shape as the
         // password pass above, not an `audience:` guard.
         'api/galleries/{gallery}/entwurf-bilder/{key}',
-        // Der Download des Gastes: Ansichtspass, PIN-Pass und Gast-Pass als
-        // Credentials, die Teile zusätzlich über die Signatur.
-        'api/galleries/{gallery}/download', 'api/galleries/{gallery}/download/pin',
-        'api/galleries/{gallery}/download/vorbereiten',
+        // Der Download des Gastes: Ansichtspass und PIN als Credentials, der
+        // Mail-Link über sein Token, die Teile über die Signatur.
+        'api/galleries/{gallery}/download/link', 'api/galleries/{gallery}/download-mail/{token}',
         'api/galleries/{gallery}/download/{zipBuildPart}/{guestId}',
         // The bytes of a finance receipt. The signed address that
         // api/finance/documents/uploads handed out is the whole credential:

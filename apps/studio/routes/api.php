@@ -131,20 +131,22 @@ Route::middleware('gallery.pass')->group(function () {
         ->name('api.galleries.guest.confirm');
 });
 
-// Der Download des Gastes, damit er auf der Galerie-Adresse bleibt. Die PIN
-// kauft einen GalleryDownloadPass, die Adresse ist der bestätigte Gast; die
-// Teile liefert dieselbe Auslieferung wie im Portal.
-Route::middleware(['gallery.pass', 'gallery.feature:downloads'])->group(function () {
-    Route::get('/galleries/{gallery}/download', [GalleryDownloadOfferController::class, 'show'])
-        ->name('api.galleries.download.show');
-    Route::post('/galleries/{gallery}/download/pin', [GalleryDownloadOfferController::class, 'pin'])
-        ->name('api.galleries.download.pin');
-    Route::post('/galleries/{gallery}/download/vorbereiten', [GalleryDownloadOfferController::class, 'prepare'])
-        ->name('api.galleries.download.prepare');
-});
+// Der Download des Gastes, damit er auf der Galerie-Adresse bleibt: die
+// Adresse nennen und den Bau anstoßen. Die Teile liefert dieselbe
+// Auslieferung wie im Portal.
+Route::middleware(['gallery.pass', 'gallery.feature:downloads'])
+    ->post('/galleries/{gallery}/download/link', [GalleryDownloadOfferController::class, 'store'])
+    ->name('api.galleries.download.link');
+
+// Der Link aus der Mail öffnet allein mit seinem Token, ohne Ansichtspasswort
+// und ohne PIN; der Pfad liegt neben /download/, damit er nicht auf die
+// Teile-Route unten fällt.
+Route::middleware('gallery.feature:downloads')
+    ->get('/galleries/{gallery}/download-mail/{token}', [GalleryDownloadOfferController::class, 'show'])
+    ->name('api.galleries.download.mail');
 
 // Außerhalb von gallery.pass: der Browser holt die Teile ohne Bearer, und die
-// Signatur wurde erst nach beiden Toren ausgestellt.
+// Signatur wurde erst nach dem Link-Token der Mail ausgestellt.
 Route::middleware(['gallery.feature:downloads', 'signed:relative'])
     ->get('/galleries/{gallery}/download/{zipBuildPart}/{guestId}', DownloadZipPartController::class)
     ->where('guestId', '[^/]{1,64}')

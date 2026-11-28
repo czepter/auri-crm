@@ -2,6 +2,7 @@
 
 use App\Gallery\Actions\NotifyZipWaiters;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryDownloadLink;
 use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Notifications\GalleryZipReady;
 use App\Media\Enums\ZipBuildScope;
@@ -95,4 +96,19 @@ it('carries the address from the download screen through to the mail', function 
         GalleryZipReady::class,
         fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === 'anna@example.test',
     );
+});
+
+// Ein Gast-Bau führt auf die Galerie-Adresse, ein Portal-Bau ins Portal.
+it('links a guest archive to the gallery address and a portal archive to the portal', function () {
+    waits($this->gallery, $this->build, 'anna@example.test');
+
+    app(NotifyZipWaiters::class)($this->build);
+
+    $this->build->forceFill(['guests' => true])->save();
+    ZipBuildWaiter::query()->update(['notified_at' => null]);
+
+    app(NotifyZipWaiters::class)($this->build->fresh());
+
+    expect(GalleryDownloadLink::query()->whereNull('zip_build_id')->count())->toBe(1)
+        ->and(GalleryDownloadLink::query()->where('zip_build_id', $this->build->id)->count())->toBe(1);
 });

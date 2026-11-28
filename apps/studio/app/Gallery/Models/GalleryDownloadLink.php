@@ -3,6 +3,7 @@
 namespace App\Gallery\Models;
 
 use App\Concerns\BelongsToTenant;
+use App\Media\Models\ZipBuild;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * apart, not once. The archive it leads to is never deleted just because
  * this row goes stale; GalleryDownloadController::prepare() rebuilds one
  * that has, on request, from the download screen itself.
+ *
+ * Ein Gast-Link trägt Bau und Gast: das Token allein öffnet dessen Teile auf
+ * der Galerie-Adresse, ohne PIN und ohne Ansichtspasswort.
  */
 class GalleryDownloadLink extends Model
 {
@@ -20,7 +24,7 @@ class GalleryDownloadLink extends Model
 
     public const VALID_FOR_DAYS = 7;
 
-    protected $fillable = ['gallery_id', 'token_hash', 'expires_at'];
+    protected $fillable = ['gallery_id', 'zip_build_id', 'gallery_guest_id', 'token_hash', 'expires_at'];
 
     protected $hidden = ['token_hash'];
 
@@ -32,6 +36,16 @@ class GalleryDownloadLink extends Model
     public function gallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class);
+    }
+
+    public function zipBuild(): BelongsTo
+    {
+        return $this->belongsTo(ZipBuild::class);
+    }
+
+    public function guest(): BelongsTo
+    {
+        return $this->belongsTo(GalleryGuest::class, 'gallery_guest_id');
     }
 
     public function scopeLive(Builder $query): void

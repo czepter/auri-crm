@@ -4,88 +4,80 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Actions\StartZipBuild;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryDownloadLink;
 use App\Gallery\Models\GalleryGuest;
-use App\Gallery\Support\GalleryDownloadPass;
-use App\Gallery\Support\GalleryGuestPass;
 use App\Gallery\Support\GallerySecretGate;
 use App\Gallery\Support\GalleryViewPass;
-use App\Gallery\Support\ZipSizes;
 use App\Http\Controllers\Controller;
 use App\Media\Enums\ZipBuildSize;
 use App\Media\Enums\ZipBuildStatus;
-use App\Media\Models\ZipBuild;
 use App\Media\Models\ZipBuildPart;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 
 /**
  * Der Download für Gäste, auf der zustandslosen api-Fläche — damit der Gast
- * auf der Galerie-Adresse bleibt. Die Schritte sind die des Portals
- * (GalleryDownloadController::step()), die Adresse ist der bestätigte Gast
- * des Betrachters (GalleryGuestPass), die PIN-Freigabe ein GalleryDownloadPass.
+ * auf der Galerie-Adresse bleibt. Zwei Aufrufe: die Adresse nennen und den
+ * Bau anstoßen (store), und mit dem Token aus der Mail die Teile holen (show).
+ * Dass der Link an die genannte Adresse geht, ist der Nachweis; einen Code
+ * gibt es hier nicht.
  *
  * Nur "Alle": eine benannte Liste gehört dem angemeldeten Kunden im Portal.
  */
 class GalleryDownloadOfferController extends Controller
 {
-    public function show(Request $request, Gallery $gallery, GalleryDownloadPass $pass, GalleryGuestPass $guests): JsonResponse
+    /** Wie beim Anmeldecode (GalleryGuestController): genug für Vertipper, nicht für einen Angriff. */
+    private const REQUESTS_PER_HOUR = 3;
+
+    /** Ein Galerie-Link würde sonst beliebig viele Mails und Bauten auslösen. */
+    private const REQUESTS_PER_GALLERY_HOUR = 200;
+
+    public function store(Request $request, Gallery $gallery, GallerySecretGate $gate, StartZipBuild $start): JsonResponse
     {
-        return response()->json($this->state($gallery, $this->step($request, $gallery, $pass, $guests), $this->guest($request, $gallery, $guests)));
-    }
+        abort_if($gallery->isWithdrawn() || $gallery->currentVersion === null, 404);
 
-    public function pin(Request $request, string $gallery, GallerySecretGate $gate, GalleryDownloadPass $pass, GalleryViewPass $view): JsonResponse
-    {
-        $model = Gallery::findByReference($gallery);
-
-        // Der String-Parameter umgeht gallery.pass (siehe GalleryPassController):
-        // die Ansichtsfreigabe wird hier selbst geprüft, einheitlich als "gibt es nicht".
-        if ($model?->isWithdrawn() || ($model?->requiresViewPassword() && ! $view->opens($model, $request->bearerToken()))) {
-            $model = null;
-        }
-
-        if ($model !== null && ! $model->requiresDownloadPin()) {
-            return response()->json(['pass' => $pass->issue($model)]);
-        }
-
-        $pin = $request->validate(['pin' => ['required', 'string']])['pin'];
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+            'size' => ['required', Rule::enum(ZipBuildSize::class)],
+            'pin' => [Rule::requiredIf($gallery->requiresDownloadPin()), 'nullable', 'string'],
+        ]);
 
         // Eigener Zähler: ein Erfolg am Ansichtspasswort, das jeder Gast kennt,
         // setzte sonst den der PIN zurück.
-        $granted = $gate->attempt(null, 'pin:'.($model?->id ?? $gallery), $model === null ? null : $model->checkDownloadPin(...), $pin);
-
-        if (! $granted || $model === null) {
-            return response()->json(['message' => __('gallery.pin_wrong')], 422);
+        if ($gallery->requiresDownloadPin()
+            && ! $gate->attempt(null, 'pin:'.$gallery->id, $gallery->checkDownloadPin(...), (string) $validated['pin'])) {
+            return response()->json(['message' => __('gallery.pin_wrong'), 'errors' => ['pin' => [__('gallery.pin_wrong')]]], 422);
         }
 
-        return response()->json(['pass' => $pass->issue($model)]);
+        $key = 'gallery-download:'.$gallery->public_id.':'.mb_strtolower(trim($validated['email']));
+        $galleryKey = 'gallery-download-gallery:'.$gallery->public_id;
+
+        foreach ([[$key, self::REQUESTS_PER_HOUR], [$galleryKey, self::REQUESTS_PER_GALLERY_HOUR]] as [$limit, $max]) {
+            if (RateLimiter::tooManyAttempts($limit, $max)) {
+                return response()->json(['sent' => false, 'retryAfter' => RateLimiter::availableIn($limit)], 429);
+            }
+        }
+
+        RateLimiter::hit($key, 3600);
+        RateLimiter::hit($galleryKey, 3600);
+
+        $start($gallery->currentVersion, ZipBuildSize::from($validated['size']), null, $validated['email'], GalleryDownloadController::PARTS_LIVE_HOURS, guests: true);
+
+        return response()->json(['sent' => true], 202);
     }
 
-    public function prepare(
-        Request $request,
-        Gallery $gallery,
-        GalleryDownloadPass $pass,
-        GalleryGuestPass $guests,
-        StartZipBuild $start,
-    ): JsonResponse {
-        $step = $this->step($request, $gallery, $pass, $guests);
-        $guest = $this->guest($request, $gallery, $guests);
-
-        abort_unless($step === 'ready' && $guest !== null, 404);
-
-        $size = ZipBuildSize::from($request->validate([
-            'size' => ['required', Rule::enum(ZipBuildSize::class)],
-        ])['size']);
-
-        $start($gallery->currentVersion, $size, null, $guest->email, GalleryDownloadController::PARTS_LIVE_HOURS, guests: true);
-
-        return response()->json($this->state($gallery, $step, $guest));
-    }
-
-    private function state(Gallery $gallery, string $step, ?GalleryGuest $guest): array
+    public function show(Gallery $gallery, string $token, GalleryViewPass $view): JsonResponse
     {
+        $link = GalleryDownloadLink::forToken($token);
+        $build = $link?->zipBuild;
+        $guest = $link?->guest;
+
         abort_if($gallery->isWithdrawn(), 404);
+        abort_unless($link !== null && $link->gallery_id === $gallery->id && $build !== null && $guest !== null, 404);
+        abort_unless($build->status === ZipBuildStatus::Ready && $build->parts()->exists(), 404);
 
         $version = $gallery->currentVersion;
 
@@ -96,43 +88,31 @@ class GalleryDownloadOfferController extends Controller
             ->filter()
             ->values();
 
-        $state = [
-            'step' => $step,
+        // Das Titelbild hinter der Seite. Eine gesperrte Galerie zeigt
+        // auch auf der Galerieseite kein Bild.
+        $coverKey = $gallery->view_mode === 'locked' ? null : ($version->cover_key ?? $keys->first());
+
+        $parts = $build->parts()->orderBy('part_number')->get();
+
+        return response()->json([
             'gallery' => [
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
                 'count' => $keys->count(),
-                'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
+                'cover' => $coverKey === null ? null : [
+                    ...$gallery->coverFor($coverKey),
+                    'version' => $version->public_id,
+                    'pass' => $gallery->requiresViewPassword() ? $view->issueForImages($gallery) : null,
+                ],
             ],
-            'sizes' => [],
-            'builds' => [],
-        ];
-
-        if ($step !== 'ready') {
-            return $state;
-        }
-
-        $state['sizes'] = ZipSizes::for($gallery, $keys->all());
-        $state['builds'] = ZipBuild::query()
-            ->where('gallery_version_id', $version->id)
-            ->where('guests', true)
-            ->whereNull('gallery_list_id')
-            ->with('parts')
-            ->get()
-            ->map(fn (ZipBuild $build) => [
-                'size' => $build->size->value,
-                'status' => $build->status->value,
-                'parts' => $build->status === ZipBuildStatus::Ready
-                    ? $build->parts->sortBy('part_number')->map(fn (ZipBuildPart $part) => [
-                        'number' => $part->part_number,
-                        'bytes' => (int) $part->byte_size,
-                        'path' => $this->partPath($gallery, $part, $guest),
-                    ])->values()->all()
-                    : [],
-            ])
-            ->all();
-
-        return $state;
+            'size' => $build->size->value,
+            'bytes' => (int) $parts->sum('byte_size'),
+            'parts' => $parts->map(fn (ZipBuildPart $part) => [
+                'number' => $part->part_number,
+                'bytes' => (int) $part->byte_size,
+                'path' => $this->partPath($gallery, $part, $guest),
+            ])->all(),
+        ]);
     }
 
     /**
@@ -148,25 +128,5 @@ class GalleryDownloadOfferController extends Controller
             ['gallery' => $gallery->public_id, 'zipBuildPart' => $part->public_id, 'guestId' => $guest->identifier, 'pv' => $gallery->download_pin_version, 'vv' => $gallery->view_password_version],
             absolute: false,
         );
-    }
-
-    private function step(Request $request, Gallery $gallery, GalleryDownloadPass $pass, GalleryGuestPass $guests): string
-    {
-        if ($gallery->requiresDownloadPin() && ! $pass->opens($gallery, $request->header('X-Download-Pass'))) {
-            return 'pin';
-        }
-
-        return $this->guest($request, $gallery, $guests) === null ? 'email' : 'ready';
-    }
-
-    private function guest(Request $request, Gallery $gallery, GalleryGuestPass $guests): ?GalleryGuest
-    {
-        $identifier = $guests->identify($gallery, $request->header('X-Guest-Pass'));
-
-        return $identifier === null ? null : GalleryGuest::query()
-            ->where('gallery_id', $gallery->id)
-            ->where('identifier', $identifier)
-            ->whereNotNull('confirmed_at')
-            ->first();
     }
 }
